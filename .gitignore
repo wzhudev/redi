@@ -1,0 +1,9 @@
+# test
+coverage/
+
+# node.js
+node_modules
+yarn.lock
+
+# r-packagr
+r-packagr/
