@@ -7,3 +7,9 @@ export { DependencyPair, Dependency } from './dependencyCollection'
 export { DependencyIdentifier } from './dependencyIdentifier'
 export { Disposable } from './dispose'
 export { registerSingleton } from './dependencySingletons'
+export {
+    ValueDependencyItem,
+    FactoryDependencyItem,
+    ClassDependencyItem,
+    AsyncDependencyItem,
+} from './dependencyItem'

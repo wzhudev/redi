@@ -20,7 +20,7 @@ import {
     AsyncHook,
     isAsyncHook,
     isCtor,
-    InstanceDependencyItem,
+    ValueDependencyItem,
 } from './dependencyItem'
 import { LookUp } from './dependencyLookUp'
 import { Quantity } from './dependencyQuantity'
@@ -235,7 +235,7 @@ export class DecoratorInjector {
 
     private resolveInstanceDependency<T>(
         id: DependencyIdentifier<T>,
-        item: InstanceDependencyItem<T>
+        item: ValueDependencyItem<T>
     ): T {
         const thing = item.useValue
         this.resolvedDependencyCollection.add(id, thing)

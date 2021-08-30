@@ -4,6 +4,8 @@ coverage/
 # node.js
 node_modules
 yarn.lock
+yarn-error.log
 
-# r-packagr
-r-packagr/
+esm/
+dist/
+lib/

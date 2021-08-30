@@ -50,12 +50,12 @@ export function isFactoryDependencyItem<T>(
     return false
 }
 
-export interface InstanceDependencyItem<T> {
+export interface ValueDependencyItem<T> {
     useValue: T
 }
 export function isInstanceDependencyItem<T>(
     thing: any
-): thing is InstanceDependencyItem<T> {
+): thing is ValueDependencyItem<T> {
     if (thing && typeof (thing as any).useValue !== 'undefined') {
         return true
     }
@@ -92,6 +92,6 @@ export function isAsyncHook<T>(thing: any): thing is AsyncHook<T> {
 export type SyncDependencyItem<T> =
     | ClassDependencyItem<T>
     | FactoryDependencyItem<T>
-    | InstanceDependencyItem<T>
+    | ValueDependencyItem<T>
 
 export type DependencyItem<T> = SyncDependencyItem<T> | AsyncDependencyItem<T>

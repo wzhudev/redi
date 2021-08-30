@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest --coverage",
     "lint": "prettier --write 'src/**/*.{ts,tsx}'",
-    "build": "rb --build"
+    "build": "tsc"
   },
   "author": "wendellhu95 <wendellhu95@gmail.com>",
   "license": "MIT",
