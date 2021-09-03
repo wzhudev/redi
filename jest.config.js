@@ -8,8 +8,8 @@ module.exports = {
     '**/src/**/*.{ts,tsx}'
   ],
   moduleNameMapper: {
-    "^redi$": '<rootDir>/src/publicApi.ts',
-    "^redi/react$": '<rootDir>/src/redi-react/publicApi.ts',
+    "^@wendellhu/redi$": '<rootDir>/src/publicApi.ts',
+    "^@wendellhu/redi/react-bindings$": '<rootDir>/src/react-bindings/publicApi.ts',
   },
   moduleDirectories: ['.', 'src', 'node_modules']
 };

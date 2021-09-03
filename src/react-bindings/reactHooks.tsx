@@ -1,5 +1,10 @@
 import * as React from 'react'
-import { Injector, DependencyIdentifier, Quantity, LookUp } from 'redi'
+import {
+    Injector,
+    DependencyIdentifier,
+    Quantity,
+    LookUp,
+} from '@wendellhu/redi'
 
 import { RediContext } from './reactContext'
 
@@ -33,9 +38,7 @@ export function WithDependency<T>(
     quantity?: Quantity,
     lookUp?: LookUp
 ): any {
-    return function (
-        _target: any,
-    ) {
+    return function (_target: any) {
         return {
             get(): T | T[] | null {
                 const thisComponent: React.Component<T> = this as any

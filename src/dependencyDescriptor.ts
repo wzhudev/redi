@@ -1,4 +1,3 @@
-import { getDependencyByIndex } from './decorators'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, FactoryDep, FactoryDepModifier } from './dependencyItem'
 import { LookUp, Self, SkipSelf } from './dependencyLookUp'

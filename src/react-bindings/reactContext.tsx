@@ -1,7 +1,7 @@
-import { createContext } from 'react'
-import { Injector } from 'redi'
+import * as React from 'react'
+import { Injector } from '@wendellhu/redi'
 
-export const RediContext = createContext<{ injector: Injector | null }>({
+export const RediContext = React.createContext<{ injector: Injector | null }>({
     injector: null,
 })
 RediContext.displayName = 'RediContext'

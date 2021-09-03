@@ -8,7 +8,7 @@ import {
     Self,
     Optional,
     forwardRef,
-} from 'redi'
+} from '@wendellhu/redi'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'

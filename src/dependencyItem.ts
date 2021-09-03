@@ -1,4 +1,3 @@
-import { DependencyPair } from './dependencyCollection'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Self, SkipSelf } from './dependencyLookUp'
 import { Many, Optional } from './dependencyQuantity'

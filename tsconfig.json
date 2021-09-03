@@ -4,7 +4,7 @@
     "jsx": "react",
     "lib": ["esnext", "dom"],
     "sourceMap": true,
-    "target": "es6",
+    "target": "es5",
     "outDir": "esm",
     "module": "esnext",
     "moduleResolution": "node",
@@ -20,9 +20,9 @@
     "types": ["node", "jest"],
     "typeRoots": ["./node_modules/@types"],
     "paths": {
-      "redi": ["./src/index.ts"],
-      "redi/react": ["./src/redi-react/index.ts"],
-    }
+      "@wendellhu/redi": ["./src/index.ts"],
+      "@wendellhu/redi/react-bindings": ["src/react-bindings/index.ts"],
+    },
   },
   "include": ["src/**/*"]
 }

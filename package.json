@@ -1,12 +1,18 @@
 {
-  "name": "redi",
-  "version": "0.1.0",
+  "name": "@wendellhu/redi",
+  "version": "0.1.1",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
     "lint": "prettier --write 'src/**/*.{ts,tsx}'",
-    "build": "tsc"
+    "build": "squirrel"
+  },
+  "squirrel": {
+    "copyFiles": [
+      "README.md",
+      "README-zh.md"
+    ]
   },
   "author": "wendellhu95 <wendellhu95@gmail.com>",
   "license": "MIT",
@@ -14,6 +20,7 @@
     "@testing-library/react": "^9.4.0",
     "@types/jest": "^27.0.0",
     "@types/react": "^16.8.0",
+    "@wendellhu/squirrel": "^0.1.2",
     "eslint": "^7.32.0",
     "jest": "^27.0.6",
     "prettier": "^2.3.2",

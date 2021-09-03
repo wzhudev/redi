@@ -4,8 +4,14 @@
 
 import { render } from '@testing-library/react'
 import React from 'react'
-import { createIdentifier, Injector } from 'redi'
-import { WithDependency, connectInjector, connectDependencies, useInjector, RediContext } from 'redi/react'
+import { createIdentifier, Injector } from '@wendellhu/redi'
+import {
+    WithDependency,
+    connectInjector,
+    connectDependencies,
+    useInjector,
+    RediContext,
+} from '@wendellhu/redi/react-bindings'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'

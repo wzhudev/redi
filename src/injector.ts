@@ -27,7 +27,6 @@ import { Quantity } from './dependencyQuantity'
 import { normalizeForwardRef } from './dependencyForwardRef'
 import { IdleValue } from './idleValue'
 import { getSingletonDependencies } from './dependencySingletons'
-import { Injector } from './publicApi'
 
 const MAX_RESOLUTIONS_QUEUED = 300
 

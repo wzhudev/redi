@@ -1,13 +1,13 @@
-import React, { ComponentType, PropsWithChildren, useRef } from 'react'
-import { Dependency, Injector } from 'redi'
+import * as React from 'react'
+import { Injector, Dependency } from '@wendellhu/redi'
 
 import { RediProvider, RediConsumer } from './reactContext'
 
 function RediInjector(
-    props: PropsWithChildren<{ dependencies: Dependency[] }>
+    props: React.PropsWithChildren<{ dependencies: Dependency[] }>
 ) {
     const { children, dependencies } = props
-    const childInjectorRef = useRef<Injector | null>(null)
+    const childInjectorRef = React.useRef<Injector | null>(null)
 
     return (
         <RediConsumer>
@@ -35,9 +35,9 @@ function RediInjector(
 }
 
 export function connectInjector<T>(
-    Comp: ComponentType<T>,
+    Comp: React.ComponentType<T>,
     injector: Injector
-): ComponentType<T> {
+): React.ComponentType<T> {
     return function ComponentWithInjector(props: T) {
         return (
             <RediProvider value={{ injector }}>
@@ -48,9 +48,9 @@ export function connectInjector<T>(
 }
 
 export function connectDependencies<T>(
-    Comp: ComponentType<T>,
+    Comp: React.ComponentType<T>,
     dependencies: Dependency[]
-): ComponentType<T> {
+): React.ComponentType<T> {
     return function ComponentWithInjector(props: T) {
         return (
             <RediInjector dependencies={dependencies}>
