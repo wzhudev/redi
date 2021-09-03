@@ -1,4 +1,5 @@
-import { DependencyPair, Inject } from 'redi'
+import { DependencyPair, Inject } from '@wendellhu/redi'
+
 import { AA, BB, bbI } from './async.base'
 
 export class BBImpl implements BB {

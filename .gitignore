@@ -6,6 +6,4 @@ node_modules
 yarn.lock
 yarn-error.log
 
-esm/
-dist/
-lib/
+publish/

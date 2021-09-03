@@ -1,0 +1,4 @@
+{
+    "$schema": "../../scripts/build/src/schema/squirrel.schema.json",
+    "entry": "./publicApi.ts"
+}

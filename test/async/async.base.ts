@@ -1,4 +1,4 @@
-import { createIdentifier } from 'redi'
+import { createIdentifier } from '@wendellhu/redi'
 
 export class AA {
     key = 'aa'
