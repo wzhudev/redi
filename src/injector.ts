@@ -81,7 +81,7 @@ export class DecoratorInjector {
         this.resolvedDependencyCollection = new ResolvedDependencyCollection()
     }
 
-    public createChild(dependencies?: Dependency[]) {
+    public createChild(dependencies?: Dependency[]): DecoratorInjector {
         this.ensureInjectorNotDisposed()
 
         return new DecoratorInjector(dependencies, this)
@@ -102,7 +102,7 @@ export class DecoratorInjector {
     public add<T>(
         idOrCtor: Ctor<T> | DependencyIdentifier<T>,
         item?: DependencyItem<T> | T
-    ) {
+    ): void {
         if (typeof item !== 'undefined') {
             if (
                 isAsyncDependencyItem(item) ||
@@ -277,7 +277,7 @@ export class DecoratorInjector {
                     key: string | number | symbol,
                     value: any
                 ): boolean {
-                    ;(idle.getValue() as any)[key] = value
+                    (idle.getValue() as any)[key] = value
                     return true
                 },
             })

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
-    "lint": "prettier --write 'src/**/*.{ts,tsx}'",
+    "lint": "eslint --fix 'src/**/*.ts'",
+    "lint:prettier": "prettier --write 'src/**/*.{ts,tsx}'",
     "build": "squirrel"
   },
   "squirrel": {
@@ -20,6 +21,8 @@
     "@testing-library/react": "^9.4.0",
     "@types/jest": "^27.0.0",
     "@types/react": "^16.8.0",
+    "@typescript-eslint/eslint-plugin": "^4.30.0",
+    "@typescript-eslint/parser": "^4.30.0",
     "@wendellhu/squirrel": "^0.1.2",
     "eslint": "^7.32.0",
     "jest": "^27.0.6",
@@ -27,7 +30,7 @@
     "react": "^16.8.0",
     "react-dom": "^16.8.0",
     "ts-jest": "^27.0.4",
-    "typescript": "^4.3.5"
+    "typescript": "^4.4.2"
   },
   "peerDependencies": {
     "react": "^16.8.0"

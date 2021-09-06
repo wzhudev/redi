@@ -14,7 +14,7 @@ export function forwardRef<T>(wrapper: () => Ctor<T>): ForwardRef<T> {
     }
 }
 
-export function isForwardRef<T = any>(thing: any): thing is ForwardRef<T> {
+export function isForwardRef<T = any>(thing: unknown): thing is ForwardRef<T> {
     return !!thing && typeof (thing as any).unwrap === 'function'
 }
 

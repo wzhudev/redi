@@ -75,7 +75,7 @@ export class IdleValue<T> implements Disposable {
     private readonly executor: () => void
     private readonly disposeCallback: () => void
 
-    private didRun: boolean = false
+    private didRun = false
     private value?: T
     private error?: Error
 
@@ -104,6 +104,7 @@ export class IdleValue<T> implements Disposable {
         if (this.error) {
             throw this.error
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.value!
     }
 }

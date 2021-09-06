@@ -25,6 +25,7 @@ function lookupDecoratorFactoryProducer(lookUp: LookUp) {
 
 interface SkipSelfDecorator {
     (): any
+    // eslint-disable-next-line @typescript-eslint/no-misused-new
     new (): SkipSelfDecorator
 }
 /**
@@ -36,6 +37,7 @@ export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(
 
 interface SelfDecorator {
     (): any
+    // eslint-disable-next-line @typescript-eslint/no-misused-new
     new (): SelfDecorator
 }
 /**
