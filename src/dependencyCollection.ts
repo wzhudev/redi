@@ -77,6 +77,7 @@ export class DependencyCollection implements Disposable {
         id: DependencyIdentifier<T>,
         quantity: Quantity = Quantity.REQUIRED
     ): DependencyItem<T> | DependencyItem<T>[] | null {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const ret = this.dependencyMap.get(id)!
 
         checkQuantity(id, quantity, ret.length)
@@ -93,7 +94,7 @@ export class DependencyCollection implements Disposable {
         )
     }
 
-    public dispose() {
+    public dispose(): void {
         this.dependencyMap.clear()
     }
 
@@ -104,7 +105,7 @@ export class DependencyCollection implements Disposable {
         dependencies: Dependency[]
     ): DependencyPair<any>[] {
         return dependencies.map((dependency) => {
-            let id = dependency[0]
+            const id = dependency[0]
             let val: DependencyItem<any>
             if (isBareClassDependency(dependency)) {
                 val = {

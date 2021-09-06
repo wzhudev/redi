@@ -66,7 +66,7 @@ export function setDependency<T>(
     identifier: DependencyIdentifier<T>,
     paramIndex: number,
     quantity: Quantity = Quantity.REQUIRED
-) {
+): void {
     const descriptor: DependencyDescriptor<T> = {
         paramIndex,
         identifier,
@@ -106,6 +106,6 @@ export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
 }
 
 /* istanbul ignore next */
-export function TEST_ONLY_clearKnownIdentifiers() {
+export function TEST_ONLY_clearKnownIdentifiers(): void {
     knownIdentifiers.clear()
 }

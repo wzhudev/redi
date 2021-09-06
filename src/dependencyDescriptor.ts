@@ -1,7 +1,7 @@
 import { DependencyIdentifier } from './dependencyIdentifier'
-import { Ctor, FactoryDep, FactoryDepModifier } from './dependencyItem'
+import { FactoryDep, FactoryDepModifier } from './dependencyItem'
 import { LookUp, Self, SkipSelf } from './dependencyLookUp'
-import { Many, Optional, Quantity } from './dependencyQuantity'
+import { Optional, Quantity } from './dependencyQuantity'
 
 export interface DependencyDescriptor<T> {
     paramIndex: number
@@ -17,7 +17,7 @@ export interface Dependencies {
     dependencies: DependencyDescriptor<any>[]
 }
 
-class NotValidDependencyModifierError extends Error {}
+// class NotValidDependencyModifierError extends Error {}
 
 export function normalizeFactoryDeps(
     deps?: FactoryDep<any>[]

@@ -7,7 +7,7 @@ export interface Ctor<T> {
 
     name: string // constructor function has a name
 }
-export function isCtor<T>(thing: any): thing is Ctor<T> {
+export function isCtor<T>(thing: unknown): thing is Ctor<T> {
     return typeof thing === 'function'
 }
 
@@ -16,7 +16,7 @@ export interface ClassDependencyItem<T> {
     lazy?: boolean
 }
 export function isClassDependencyItem<T>(
-    thing: any
+    thing: unknown
 ): thing is ClassDependencyItem<T> {
     if (thing && typeof (thing as any).useClass !== 'undefined') {
         return true
@@ -40,7 +40,7 @@ export interface FactoryDependencyItem<T> {
     deps?: FactoryDep<any>[]
 }
 export function isFactoryDependencyItem<T>(
-    thing: any
+    thing: unknown
 ): thing is FactoryDependencyItem<T> {
     if (thing && typeof (thing as any).useFactory !== 'undefined') {
         return true
@@ -53,7 +53,7 @@ export interface ValueDependencyItem<T> {
     useValue: T
 }
 export function isInstanceDependencyItem<T>(
-    thing: any
+    thing: unknown
 ): thing is ValueDependencyItem<T> {
     if (thing && typeof (thing as any).useValue !== 'undefined') {
         return true
@@ -68,7 +68,7 @@ export interface AsyncDependencyItem<T> {
     >
 }
 export function isAsyncDependencyItem<T>(
-    thing: any
+    thing: unknown
 ): thing is AsyncDependencyItem<T> {
     if (thing && typeof (thing as any).useAsync !== 'undefined') {
         return true
@@ -80,7 +80,7 @@ export function isAsyncDependencyItem<T>(
 export interface AsyncHook<T> {
     whenReady(): Promise<T>
 }
-export function isAsyncHook<T>(thing: any): thing is AsyncHook<T> {
+export function isAsyncHook<T>(thing: unknown): thing is AsyncHook<T> {
     if (thing && typeof (thing as any).whenReady !== 'undefined') {
         return true
     }
