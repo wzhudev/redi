@@ -85,7 +85,7 @@ import { Injector } from '@wendellhu/redi'
 const injector = new Injector([[FileListService], [AuthService]])
 ```
 
-Then you don't instantiate a `FileListService` by yourself. You get a `FileListService` from the injector you just created.
+You don't instantiate a `FileListService` by yourself. You get a `FileListService` from the injector just created.
 
 Step 3. Get a dependency.
 
@@ -94,6 +94,23 @@ const fileListService = injector.get(FileListService)
 ```
 
 That's it!
+
+### React Bindings
+
+redi provides a set of React bindings in it's secondary entry point `@wendellhu/redi/react-bindings' that can help you use it in your React application easily.
+
+```tsx
+import { withDependencies } from '@wendellhu/redi/react-bindings'
+
+const App = withDependencies(
+    function AppImpl() {
+        const injector = useInjector()
+        const fileListService = injector.get(FileListService)
+        // ...
+    },
+    [[FileListService], [AuthService]]
+)
+```
 
 ## License
 
