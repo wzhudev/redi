@@ -61,7 +61,7 @@ class AuthService {
     }
 }
 
-import { Inject } from '@wendellhu/redi'
++ import { Inject } from '@wendellhu/redi'
 
 class FileListService {
 -   constructor() {}
@@ -94,3 +94,7 @@ const fileListService = injector.get(FileListService)
 ```
 
 That's it!
+
+## License
+
+MIT. Copyright 2021 Wendell Hu.
