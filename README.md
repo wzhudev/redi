@@ -8,7 +8,7 @@ A dependency library for TypeScript and JavaScript, along with a binding for Rea
 
 -   **Completely opt-in**. Unlike Angular, redi let you decide when and where to use dependency injection.
 -   **Hierarchical dependency tree.**
--   Supports **multi kinds of injection items**, including
+-   Supports **multi kinds of dependency items**, including
     -   classes
     -   instances
     -   factories
@@ -45,7 +45,7 @@ Let's get started with a real-word example:
 
 ```typescript
 class AuthService {
-    public getCurrentUserInfo(): UserInfo {
+    static public getCurrentUserInfo(): UserInfo {
         // your implementation here...
     }
 }
@@ -138,11 +138,123 @@ const App = withDependencies(
 
 ### Decorators
 
+**`createIdentifier`**
+
+```ts
+function createIdentifier<T>(id: string): IdentifierDecorator<T>
+```
+
+Create a token that could identify a dependency. The token could be used as an decorator to declare dependencies.
+
+```ts
+import { createIdentifier } from '@wendellhu/redi'
+
+interface IPlatformService {
+    copy(): Promise<boolean>
+}
+
+const IPlatformService = createIdentifier<IPlatformService>()
+
+class Editor {
+    constructor(@IPlatformService private readonly ipfs: IPlatformService) {}
+}
+```
+
+**`Inject Many Optional`**
+
+-   `Inject` marks the parameter as being a required dependency. By default, token returned from `createIdentifier` marks the parameter as required as well.
+-   `Many` marks the parameter and being a n-ary dependency.
+-   `Optional` marks the parameter as being an optional dependency.
+
+```ts
+class MobileEditor {
+    constructor(
+        @Inject(SoftKeyboard) private readonly softKeyboard: SoftKeyboard,
+        @Many(Menu) private readonly menus: Menu[],
+        @Optional(IPlatformService) private readonly ipfs?: IPlatformService
+    ) {}
+}
+```
+
+**`Self SkipSelf`**
+
+-   `Self` marks that the parameter should only be resolved by the current injector.
+-   `SkipSelf` marks that parameter should be resolved from the current injector's parent.
+
+```ts
+import { Self, SkipSelf } from '@wendellhu/redi'
+
+class Person {
+    constructor() {
+        @Self() @Inject(forwardRef(() => Father)) private readonly father: Father,
+        @SkipSelf() @Inject(forwardRef(() => Father)) private readonly grandfather: Father
+    }
+}
+
+class Father extends Person {}
+```
+
 ### Dependency Items
+
+**`ClassItem`**
+
+```ts
+interface ClassDependencyItem<T> {
+    useClass: Ctor<T>
+    lazy?: boolean
+}
+```
+
+-   `useClass` the class
+-   `lazy` enable lazy instantiation
+
+**`ValueDependencyItem`**
+
+```ts
+export interface ValueDependencyItem<T> {
+    useValue: T
+}
+```
+
+**`FactoryDependencyItem`**
+
+```ts
+export interface FactoryDependencyItem<T> {
+    useFactory: (...deps: any[]) => T
+    deps?: FactoryDep<any>[]
+}
+```
+
+**`AsyncDependencyItem`**
+
+```ts
+export type SyncDependencyItem<T> =
+    | ClassDependencyItem<T>
+    | FactoryDependencyItem<T>
+    | ValueDependencyItem<T>
+
+interface AsyncDependencyItem<T> {
+    useAsync: () => Promise<
+        T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]
+    >
+}
+```
 
 ### Injector
 
+### `forwardRef`
+
+### Singletons
+
 ### React Bindings
+
+## JavaScript
+
+## Best Practices
+
+**Multi webpack entry**
+
+## Motivation
 
 ## License
 

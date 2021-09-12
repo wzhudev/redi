@@ -50,22 +50,19 @@ class AsyncItemReturnAsyncItemError<T> extends Error {
     }
 }
 
-export class DecoratorInjector {
+export class Injector {
     private readonly dependencyCollection: DependencyCollection
     private readonly resolvedDependencyCollection =
         new ResolvedDependencyCollection()
 
-    private readonly parent: DecoratorInjector | null
-    private readonly children: DecoratorInjector[] = []
+    private readonly parent: Injector | null
+    private readonly children: Injector[] = []
 
     private resolutionOngoing = 0
 
     private disposed = false
 
-    constructor(
-        collectionOrDependencies?: Dependency[],
-        parent?: DecoratorInjector
-    ) {
+    constructor(collectionOrDependencies?: Dependency[], parent?: Injector) {
         this.dependencyCollection = new DependencyCollection(
             collectionOrDependencies || []
         )
@@ -81,10 +78,10 @@ export class DecoratorInjector {
         this.resolvedDependencyCollection = new ResolvedDependencyCollection()
     }
 
-    public createChild(dependencies?: Dependency[]): DecoratorInjector {
+    public createChild(dependencies?: Dependency[]): Injector {
         this.ensureInjectorNotDisposed()
 
-        return new DecoratorInjector(dependencies, this)
+        return new Injector(dependencies, this)
     }
 
     public dispose(): void {
@@ -277,7 +274,7 @@ export class DecoratorInjector {
                     key: string | number | symbol,
                     value: any
                 ): boolean {
-                    (idle.getValue() as any)[key] = value
+                    ;(idle.getValue() as any)[key] = value
                     return true
                 },
             })
@@ -483,7 +480,7 @@ export class DecoratorInjector {
             return onParent()
         }
 
-        if ((id as any as Ctor<DecoratorInjector>) === DecoratorInjector) {
+        if ((id as any as Ctor<Injector>) === Injector) {
             return this as any as T
         }
 
