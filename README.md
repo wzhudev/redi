@@ -2,14 +2,24 @@
 
 A dependency library for TypeScript and JavaScript, along with a binding for React.
 
-## What's This?
+## Features
 
 **redi** (pronounced 'ready') is a dependency injection library for TypeScript (& JavaScript with some babel config). It also provides a set of bindings to let you adopt the pattern in your React applications.
 
--   redi is completely opt-in. Unlike Angular, redi let you decide when and where to use dependency injection.
--   redi provides a multi-layered dependency injection system.
--   redi supports multi kinds of injection items, including classes, instances, and factories.
--   redi supports advanced features such as async injection item, lazy instantiation to boot your application's performance.
+-   **Completely opt-in**. Unlike Angular, redi let you decide when and where to use dependency injection.
+-   **Hierarchical dependency tree.**
+-   Supports **multi kinds of injection items**, including
+    -   classes
+    -   instances
+    -   factories
+    -   async items
+-   Supports **n-ary dependencies**
+    -   Required
+    -   Optional
+    -   Many
+-   **Constructor dependencies.**
+-   **Forward ref**, to resolve problems rising from cyclic dependency of JavaScript files.
+-   **Lazy instantiation**, instantiate a dependency only when they are accessed to boost up performance.
 
 ## Getting Started
 
@@ -87,7 +97,7 @@ const injector = new Injector([[FileListService], [AuthService]])
 
 You don't instantiate a `FileListService` by yourself. You get a `FileListService` from the injector just created.
 
-Step 3. Get a dependency.
+Step 3. Wire up!
 
 ```typescript
 const fileListService = injector.get(FileListService)
@@ -111,6 +121,28 @@ const App = withDependencies(
     [[FileListService], [AuthService]]
 )
 ```
+
+## Concepts
+
+-   The **injector** holds a set of bindings and resolves dependencies.
+-   A **binding** maps a token to a dependency item.
+    -   Token works as an identifier. It differentiate a dependency from another. It could be the return value of `createIdentifier`, or a class.
+    -   Dependency could be
+        -   a class
+        -   an instance or value
+        -   a factory function
+        -   an async item, which would be resoled to an other kind of dependency later
+-   Dependency could declare its own dependencies, and contains extra information on how its dependencies should be injected, and contains extra information on how its dependencies should be injected.
+
+## API
+
+### Decorators
+
+### Dependency Items
+
+### Injector
+
+### React Bindings
 
 ## License
 
