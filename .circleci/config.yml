@@ -5,7 +5,7 @@ orbs:
   node: circleci/node@4.7.0
 
 jobs:
-  example-job:
+  install-test:
     docker:
       # replace with your preferred image
       - image: cimg/base:stable
@@ -20,6 +20,6 @@ jobs:
           path: coverage
 
 workflows:
-  example-workflow:
+  test:
     jobs:
-      - example-job
+      - install-test
