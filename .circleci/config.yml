@@ -2,24 +2,26 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@4.7.0
+    node: circleci/node@4.7.0
+    codecov: codecov/codecov@1.2.4
 
 jobs:
-  install-test:
-    docker:
-      # replace with your preferred image
-      - image: cimg/base:stable
-    steps:
-      - node/install:
-          install-npm: false 
-          install-yarn: true 
-      - checkout
-      - run: yarn
-      - run: yarn test
-      - store_artifacts:
-          path: coverage
+    install-test:
+        docker:
+            # replace with your preferred image
+            - image: cimg/base:stable
+        steps:
+            - node/install:
+                  install-npm: false
+                  install-yarn: true
+            - checkout
+            - run: yarn
+            - run: yarn test
+            - store_artifacts:
+                  path: coverage
+            - codecov/upload
 
 workflows:
-  test:
-    jobs:
-      - install-test
+    test:
+        jobs:
+            - install-test
