@@ -13,6 +13,11 @@ jobs:
       - node/install:
           install-npm: false 
           install-yarn: true 
+      - run:
+          name: yarn test
+          command: yarn test
+      - store_artifacts:
+          path: coverage
 
 workflows:
   example-workflow:
