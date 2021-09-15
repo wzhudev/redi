@@ -2,6 +2,10 @@
 
 A dependency library for TypeScript and JavaScript, along with a binding for React.
 
+[![Codecov](https://img.shields.io/codecov/c/github/wendellhu95/redi.svg?style=flat-square)](https://codecov.io/gh/wendellhu95/redi)
+
+[Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [Demo Repo](https://github.com/wendellhu95/redi-todomvc)
+
 ## Features
 
 **redi** (pronounced 'ready') is a dependency injection library for TypeScript (& JavaScript with some babel config). It also provides a set of bindings to let you adopt the pattern in your React applications.
@@ -432,8 +436,6 @@ Redi could also be used in your JavaScript projects, provided that you use Babel
 ### Multi Webpack Entries
 
 ### DI and Responsive Programming
-
-## Motivation
 
 ## License
 
