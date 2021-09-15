@@ -196,7 +196,7 @@ class Father extends Person {}
 
 ### Dependency Items
 
-**`ClassItem`**
+#### **`ClassItem`**
 
 ```ts
 interface ClassDependencyItem<T> {
@@ -206,9 +206,9 @@ interface ClassDependencyItem<T> {
 ```
 
 -   `useClass` the class
--   `lazy` enable lazy instantiation
+-   `lazy` enable lazy instantiation. The dependency would be instantiated only when CPU is idle or its properties or methods are actually accessed.
 
-**`ValueDependencyItem`**
+#### **`ValueDependencyItem`**
 
 ```ts
 export interface ValueDependencyItem<T> {
@@ -216,7 +216,7 @@ export interface ValueDependencyItem<T> {
 }
 ```
 
-**`FactoryDependencyItem`**
+#### **`FactoryDependencyItem`**
 
 ```ts
 export interface FactoryDependencyItem<T> {
@@ -225,7 +225,7 @@ export interface FactoryDependencyItem<T> {
 }
 ```
 
-**`AsyncDependencyItem`**
+#### **`AsyncDependencyItem`**
 
 ```ts
 export type SyncDependencyItem<T> =
@@ -242,17 +242,196 @@ interface AsyncDependencyItem<T> {
 
 ### Injector
 
+```typescript
+class Injector {
+    constructor(collectionOrDependencies?: Dependency[], parent?: Injector) {}
+}
+```
+
+Create an injector with a bunch of bindings.
+
+You can pass in another `Injector` as its parent injector.
+
+```ts
+class Injector {
+    public createChild(dependencies?: Dependency[]): Injector
+}
+```
+
+Create a child injector. When a child injector could not resolve a dependency, it would delegate to its parent injector.
+
+```ts
+class Injector {
+    public dispose(): void
+}
+```
+
+Dispose an injector, its child injectors and all _disposable_ dependencies in the injector tree.
+
+```ts
+class Injector {
+    public add<T>(ctor: Ctor<T>): void
+    public add<T>(
+        id: DependencyIdentifier<T>,
+        item: DependencyItem<T> | T
+    ): void
+    public add<T>(
+        idOrCtor: Ctor<T> | DependencyIdentifier<T>,
+        item?: DependencyItem<T> | T
+    ): void
+}
+```
+
+Add a dependency or a value into the injector.
+
+```ts
+class Injector {
+    public get<T>(id: DependencyIdentifier<T>, lookUp?: LookUp): T
+    public get<T>(
+        id: DependencyIdentifier<T>,
+        quantity: Quantity.MANY,
+        lookUp?: LookUp
+    ): T[]
+    public get<T>(
+        id: DependencyIdentifier<T>,
+        quantity: Quantity.OPTIONAL,
+        lookUp?: LookUp
+    ): T | null
+    public get<T>(
+        id: DependencyIdentifier<T>,
+        quantity: Quantity.REQUIRED,
+        lookUp?: LookUp
+    ): T
+    public get<T>(
+        id: DependencyIdentifier<T>,
+        quantity: Quantity,
+        lookUp?: LookUp
+    ): T
+    public get<T>(
+        id: DependencyIdentifier<T>,
+        quantityOrLookup?: Quantity | LookUp,
+        lookUp?: LookUp
+    ): T[] | T | null
+}
+```
+
+Get a dependency from the injector.
+
+```ts
+class Injector {
+    public getAsync<T>(id: DependencyIdentifier<T>): Promise<T>
+}
+```
+
+Get an async dependency.
+
+```ts
+class Injector {
+    public createInstance<T extends unknown[], U extends unknown[], C>(
+        ctor: new (...args: [...T, ...U]) => C,
+        ...customArgs: T
+    ): C
+}
+```
+
+Instantiate a class-type dependency with extra parameters.
+
 ### `forwardRef`
+
+In the example above, `Person` is declared before `Father`, but it depends on `Father`. In this case, you need to use `forwardRef` to wrap `Father`. Otherwise, `Father` is evaluated to `undefined` in dependency relationship resolution.
+
+```ts
+import { Self, SkipSelf } from '@wendellhu/redi'
+
+class Person {
+    constructor() {
+        @Self() @Inject(forwardRef(() => Father)) private readonly father: Father,
+        @SkipSelf() @Inject(forwardRef(() => Father)) private readonly grandfather: Father
+    }
+}
+
+class Father extends Person {}
+```
 
 ### Singletons
 
+Sometimes you want some dependencies to be singletons. In that case, you don't have to add them to the root injector manually. Instead, you can just use `registerSingleton`.
+
+```ts
+export function registerSingleton<T>(
+    id: DependencyIdentifier<T>,
+    item: DependencyItem<T>
+): void
+```
+
+Singletons would be fetched by the root injectors (in another word, injectors that don't have a parent injector) automatically.
+
+In avoidance of unexpected error, it is strongly recommended to have only one root injector in your application.
+
 ### React Bindings
+
+#### `connectDependencies`
+
+```ts
+export function connectDependencies<T>(
+    Comp: React.ComponentType<T>,
+    dependencies: Dependency[]
+): React.ComponentType<T>
+```
+
+Bind dependencies into a React component. The dependencies would be instantiated when they are used in the React component tree. When you wrap a connected React component inside another, the injectors will hook up as well.
+
+#### React Context
+
+```ts
+export const RediProvider = RediContext.Provider
+export const RediConsumer = RediContext.Consumer
+```
+
+React context to consume or provide an `Injector`. In most cases you don't have to use them.
+
+#### Hooks
+
+```ts
+export function useInjector(): Injector
+```
+
+Get the nearest `Injector`.
+
+#### Decorators
+
+```ts
+export function WithDependency<T>(
+    id: DependencyIdentifier<T>,
+    quantity?: Quantity,
+    lookUp?: LookUp
+): any
+```
+
+A decorator to be used on Class Component to get a dependency from the nearest `Injector`. An example:
+
+```tsx
+class AppImpl extends React.Component<{}> {
+    static contextType = RediContext
+
+    @WithDependency(IPlatformDependency)
+    private readonly platform!: IPlatformDependency
+
+    render() {
+        return <div>{this.a.key}</div>
+    }
+}
+```
 
 ## JavaScript
 
+Redi could also be used in your JavaScript projects, provided that you use Babel to transpile your source files. Just add [this babel plugin](https://github.com/loganfsmyth/babel-plugin-transform-decorators-legacy) to your babel config.
+
 ## Best Practices
 
-**Multi webpack entry**
+### Multi Webpack Entries
+
+### DI and Responsive Programming
 
 ## Motivation
 

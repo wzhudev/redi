@@ -34,6 +34,12 @@ function RediInjector(
     )
 }
 
+/**
+ * @deprecated
+ * @param Comp 
+ * @param injector 
+ * @returns 
+ */
 export function connectInjector<T>(
     Comp: React.ComponentType<T>,
     injector: Injector
