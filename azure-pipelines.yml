@@ -4,18 +4,39 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- master
+  - master
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
+stages:
+  - stage: env
+    jobs:
+      - job: Nodes
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '12.13.1'
+            displayName: 'Install Node.js'
 
-- script: |
-    yarn
-    yarn test
-  displayName: 'npm install and test'
+  # - stage: build
+  #   dependsOn: env
+  #   jobs:
+  #     - job: build
+  #       steps:
+  #         - task: Npm@1
+  #           inputs:
+  #             command: 'install'
+  #         - script: |
+  #             npm run build
+  - stage: test
+    dependsOn: env
+    jobs:
+      - job: test
+        steps:
+          - task: Npm@1
+            inputs:
+              command: 'install'
+          - script: |
+              npm run test
+              cat ./coverage-report/lcov.info | ./node_modules/.bin/codecov
