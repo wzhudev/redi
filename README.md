@@ -2,9 +2,9 @@
 
 A dependency library for TypeScript and JavaScript, along with a binding for React.
 
-[![Codecov](https://img.shields.io/codecov/c/github/wendellhu95/redi.svg?style=flat-square)](https://codecov.io/gh/wendellhu95/redi)
-
 [Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [Demo Repo](https://github.com/wendellhu95/redi-todomvc)
+
+[![Codecov](https://img.shields.io/codecov/c/github/wendellhu95/redi.svg?style=flat-square)](https://codecov.io/gh/wendellhu95/redi)
 
 ## Features
 
