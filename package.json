@@ -1,6 +1,6 @@
 {
   "name": "@wendellhu/redi",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
   "author": "wendellhu95 <wendellhu95@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@testing-library/dom": "^8.5.0",
     "@testing-library/react": "^9.4.0",
     "@types/jest": "^27.0.0",
     "@types/react": "^16.8.0",
