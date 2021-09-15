@@ -11,8 +11,7 @@
   },
   "squirrel": {
     "copyFiles": [
-      "README.md",
-      "README-zh.md"
+      "README.md"
     ]
   },
   "author": "wendellhu95 <wendellhu95@gmail.com>",

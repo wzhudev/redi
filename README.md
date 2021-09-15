@@ -431,12 +431,6 @@ class AppImpl extends React.Component<{}> {
 
 Redi could also be used in your JavaScript projects, provided that you use Babel to transpile your source files. Just add [this babel plugin](https://github.com/loganfsmyth/babel-plugin-transform-decorators-legacy) to your babel config.
 
-## Best Practices
-
-### Multi Webpack Entries
-
-### DI and Responsive Programming
-
 ## License
 
 MIT. Copyright 2021 Wendell Hu.
