@@ -38,7 +38,7 @@ export function WithDependency<T>(
     quantity?: Quantity,
     lookUp?: LookUp
 ): any {
-    return function (_target: any) {
+    return function () {
         return {
             get(): T | T[] | null {
                 const thisComponent: React.Component<T> = this as any
