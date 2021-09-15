@@ -83,7 +83,7 @@ export class IdleValue<T> implements Disposable {
         this.executor = () => {
             try {
                 this.value = executor()
-            } catch (err) {
+            } catch (err: any) {
                 this.error = err
             } finally {
                 this.didRun = true
