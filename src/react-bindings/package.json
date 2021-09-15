@@ -1,4 +1,4 @@
 {
-    "$schema": "../../scripts/build/src/schema/squirrel.schema.json",
-    "entry": "./publicApi.ts"
+    "$schema": "https://raw.githubusercontent.com/wendellhu95/squirrel/master/src/schema/squirrel.schema.json",
+    "entryFileName": "./publicApi.ts"
 }

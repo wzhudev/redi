@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/wendellhu95/squirrel/master/src/schema/package.schema.json",
   "name": "@wendellhu/redi",
   "version": "0.1.6",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
