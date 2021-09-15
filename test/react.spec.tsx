@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 
-import { render } from '@testing-library/react'
+import { render, act, fireEvent } from '@testing-library/react'
 import React from 'react'
-import { createIdentifier, Injector } from '@wendellhu/redi'
+import { createIdentifier, Disposable, Injector } from '@wendellhu/redi'
 import {
     WithDependency,
     connectInjector,
@@ -74,7 +74,7 @@ describe('react', () => {
 
         const injector = new Injector([[aI, { useValue: { key: 'a' } }]])
 
-        class AppImpl extends React.Component<{}> {
+        class AppImpl extends React.Component {
             static contextType = RediContext
 
             @WithDependency(aI)
@@ -93,7 +93,7 @@ describe('react', () => {
 
     it('should throw error when using "useInjector" outside of "RediContext"', () => {
         function App() {
-            const j = useInjector()
+            useInjector()
 
             return <div>a</div>
         }
@@ -110,7 +110,7 @@ describe('react', () => {
 
         const injector = new Injector([[aI, { useValue: { key: 'a' } }]])
 
-        class AppImpl extends React.Component<{}> {
+        class AppImpl extends React.Component {
             @WithDependency(aI)
             private readonly a!: A
 
@@ -122,5 +122,45 @@ describe('react', () => {
         const App = connectInjector(AppImpl, injector)
 
         expectToThrow(() => render(<App />))
+    })
+
+    it('should dispose injector when React component unmounts', async () => {
+        let disposed = false
+
+        class A implements Disposable {
+            key = 'a'
+
+            public dispose(): void {
+                disposed = true
+            }
+        }
+
+        const Child = connectDependencies(
+            function ChildImpl() {
+                const j = useInjector()
+                const a = j.get(A)
+                return <div>{a.key}</div>
+            },
+            [[A]]
+        )
+
+        function App() {
+            const [mounted, setMounted] = React.useState(true)
+
+            return (
+                <div>
+                    <button onClick={() => setMounted(false)}></button>
+                    {mounted && <Child />}
+                </div>
+            )
+        }
+
+        const { container } = render(<App />)
+        await act(() => {
+            fireEvent.click(container.firstElementChild!.firstElementChild!)
+            return new Promise<void>((res) => setTimeout(res, 20))
+        })
+
+        expect(disposed).toBe(true)
     })
 })

@@ -17,6 +17,7 @@
   "author": "wendellhu95 <wendellhu95@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@testing-library/dom": "^8.5.0",
     "@testing-library/react": "^9.4.0",
     "@types/jest": "^27.0.0",
     "@types/react": "^16.8.0",

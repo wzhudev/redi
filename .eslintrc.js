@@ -12,5 +12,6 @@ module.exports = {
         // any is inevitable in libraries I guess
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-extra-semi': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
     }
 };
