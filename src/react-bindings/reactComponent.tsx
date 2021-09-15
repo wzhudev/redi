@@ -9,6 +9,9 @@ function RediInjector(
     const { children, dependencies } = props
     const childInjectorRef = React.useRef<Injector | null>(null)
 
+    // dispose the injector when the container Injector unmounts
+    React.useEffect(() => () => childInjectorRef.current?.dispose(), [])
+
     return (
         <RediConsumer>
             {(context: { injector: Injector | null }) => {
