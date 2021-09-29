@@ -4,17 +4,18 @@ import {
     DependencyIdentifier,
     Quantity,
     LookUp,
+    RediError
 } from '@wendellhu/redi'
 
 import { RediContext } from './reactContext'
 
-class HooksNotInRediContextError extends Error {
+class HooksNotInRediContextError extends RediError {
     constructor() {
         super('Using dependency injection outside of a RediContext.')
     }
 }
 
-class ClassComponentNotInRediContextError<T> extends Error {
+class ClassComponentNotInRediContextError<T> extends RediError {
     constructor(component: React.Component<T>) {
         super(
             `You should make "RediContext" as ${component.constructor.name}'s default context type. ` +

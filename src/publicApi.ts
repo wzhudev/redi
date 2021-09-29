@@ -13,3 +13,4 @@ export {
     ClassDependencyItem,
     AsyncDependencyItem,
 } from './dependencyItem'
+export { RediError } from './error'

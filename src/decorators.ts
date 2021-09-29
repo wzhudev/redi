@@ -6,15 +6,16 @@ import {
 } from './dependencyIdentifier'
 import { Ctor } from './dependencyItem'
 import { Quantity } from './dependencyQuantity'
+import { RediError } from './error'
 
 export const TARGET = Symbol('$$TARGET')
 export const DEPENDENCIES = Symbol('$$DEPENDENCIES')
 
-class DependencyDescriptorNotFoundError extends Error {
+class DependencyDescriptorNotFoundError extends RediError {
     constructor(index: number, target: Ctor<any>) {
-        const msg = `could not find dependency registered on the ${
+        const msg = `Could not find dependency registered on the ${
             index + 1
-        } parameter of the constructor of ${target}`
+        } parameter of the constructor of ${target}.`
 
         super(msg)
     }

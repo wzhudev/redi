@@ -27,26 +27,27 @@ import { Quantity } from './dependencyQuantity'
 import { normalizeForwardRef } from './dependencyForwardRef'
 import { IdleValue } from './idleValue'
 import { getSingletonDependencies } from './dependencySingletons'
+import { RediError } from './error'
 
 const MAX_RESOLUTIONS_QUEUED = 300
 
 const NotInstantiatedSymbol = Symbol('$$NOT_INSTANTIATED_SYMBOL')
 
-class CircularDependencyError<T> extends Error {
+class CircularDependencyError<T> extends RediError {
     constructor(id?: DependencyIdentifier<T>) {
-        super(`Detecting cyclic dependency. The last identifier is ${id}`)
+        super(`Detecting cyclic dependency. The last identifier is ${id}.`)
     }
 }
 
-class InjectorAlreadyDisposedError extends Error {
+class InjectorAlreadyDisposedError extends RediError {
     constructor() {
         super('Injector cannot be accessed after it disposes.')
     }
 }
 
-class AsyncItemReturnAsyncItemError<T> extends Error {
+class AsyncItemReturnAsyncItemError<T> extends RediError {
     constructor(id: DependencyIdentifier<T>) {
-        super(`Async item ${id} returns another async item`)
+        super(`Async item ${id} returns another async item.`)
     }
 }
 
