@@ -1,3 +1,4 @@
+import { RediError } from './error'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { DependencyItem } from './dependencyItem'
 
@@ -8,13 +9,13 @@ const singletonDependencies: [
     DependencyItem<any>
 ][] = []
 
-class DuplicatedRegistrationError extends Error {
+class DuplicatedRegistrationError extends RediError {
     constructor(
         id: DependencyIdentifier<any>,
         item1: DependencyItem<any>,
         item2: DependencyItem<any>
     ) {
-        super(`Duplicated registration of ${id}, 1. ${item1} 2. ${item2}`)
+        super(`Duplicated registration of ${id}, 1. ${item1} 2. ${item2}.`)
     }
 }
 

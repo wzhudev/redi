@@ -2,6 +2,7 @@ import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, DependencyItem } from './dependencyItem'
 import { checkQuantity, Quantity, retrieveQuantity } from './dependencyQuantity'
 import { Disposable, isDisposable } from './dispose'
+import { RediError } from './error'
 
 export type DependencyPair<T> = [DependencyIdentifier<T>, DependencyItem<T>]
 export type DependencyClass<T> = [Ctor<T>]
@@ -13,9 +14,9 @@ export function isBareClassDependency<T>(
     return thing.length === 1
 }
 
-export class DependencyNotFoundError extends Error {
+export class DependencyNotFoundError extends RediError {
     constructor(id: DependencyIdentifier<any>) {
-        const msg = `cannot find ${id} registered by any injector`
+        const msg = `Cannot find ${id} registered by any injector.`
 
         super(msg)
     }

@@ -1,6 +1,7 @@
 import { getDependencyByIndex, setDependency } from './decorators'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor } from './dependencyItem'
+import { RediError } from './error'
 
 export enum Quantity {
     MANY = 'many',
@@ -8,23 +9,23 @@ export enum Quantity {
     REQUIRED = 'required',
 }
 
-class IdentifierUndefinedError extends Error {
+class IdentifierUndefinedError extends RediError {
     constructor(target: Ctor<any>, index: number) {
-        const msg = `it seems that you register "undefined" as dependency on the ${
+        const msg = `It seems that you register "undefined" as dependency on the ${
             index + 1
-        } parameter of ${target}`
+        } parameter of ${target}.`
 
         super(msg)
     }
 }
 
-class QuantityCheckError extends Error {
+class QuantityCheckError extends RediError {
     constructor(
         id: DependencyIdentifier<any>,
         quantity: Quantity,
         actual: number
     ) {
-        const msg = `expect "${quantity}" dependency items for id "${id}" but get ${actual}`
+        const msg = `Expect "${quantity}" dependency items for id "${id}" but get ${actual}.`
 
         super(msg)
     }

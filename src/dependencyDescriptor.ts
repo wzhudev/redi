@@ -17,8 +17,6 @@ export interface Dependencies {
     dependencies: DependencyDescriptor<any>[]
 }
 
-// class NotValidDependencyModifierError extends Error {}
-
 export function normalizeFactoryDeps(
     deps?: FactoryDep<any>[]
 ): DependencyDescriptor<any>[] {
