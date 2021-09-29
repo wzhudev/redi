@@ -141,9 +141,14 @@ export class Injector {
     ): T
     public get<T>(
         id: DependencyIdentifier<T>,
-        quantity: Quantity,
+        quantity?: Quantity,
         lookUp?: LookUp
-    ): T
+    ): T[] | T | null
+    public get<T>(
+        id: DependencyIdentifier<T>,
+        quantityOrLookup?: Quantity | LookUp,
+        lookUp?: LookUp
+    ): T[] | T | null
     public get<T>(
         id: DependencyIdentifier<T>,
         quantityOrLookup?: Quantity | LookUp,

@@ -11,6 +11,7 @@ import {
     connectDependencies,
     useInjector,
     RediContext,
+    useDependency,
 } from '@wendellhu/redi/react-bindings'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
@@ -65,7 +66,7 @@ describe('react', () => {
         expect(container.firstChild!.textContent).toBe('a')
     })
 
-    it('should with dependency work', () => {
+    it('should "withDependency" work', () => {
         interface A {
             key: string
         }
@@ -85,6 +86,25 @@ describe('react', () => {
             }
         }
 
+        const App = connectInjector(AppImpl, injector)
+
+        const { container } = render(<App />)
+        expect(container.firstChild!.textContent).toBe('a')
+    })
+
+    it('should "useDependency" work', () => {
+        interface A {
+            key: string
+        }
+
+        const aI = createIdentifier<A>('aI')
+
+        function AppImpl() {
+            const a = useDependency(aI)
+            return <div>{a.key}</div>
+        }
+
+        const injector = new Injector([[aI, { useValue: { key: 'a' } }]])
         const App = connectInjector(AppImpl, injector)
 
         const { container } = render(<App />)
