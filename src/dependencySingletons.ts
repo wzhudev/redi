@@ -42,7 +42,7 @@ export function getSingletonDependencies(): [
 ][] {
     if (singletonFetchedLock) {
         console.warn(
-            '[redi] Singleton dependencies has been fetched before by an other injector. ' +
+            '[redi]: Singleton dependencies has been fetched before by an other injector. ' +
                 'Please avoid fetching singleton dependencies twice.'
         )
     }
