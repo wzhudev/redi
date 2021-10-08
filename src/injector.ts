@@ -100,13 +100,13 @@ export class Injector {
         item: DependencyItem<T> | T
     ): void
     public add<T>(
-        idOrCtor: Ctor<T> | DependencyPair<T> | DependencyIdentifier<T>,
+        dependency: Ctor<T> | DependencyPair<T> | DependencyIdentifier<T>,
         item?: DependencyItem<T> | T
     ): void {
-        if (typeof item !== 'undefined' || Array.isArray(idOrCtor)) {
-            if (Array.isArray(idOrCtor)) {
-                item = idOrCtor[1]
-                idOrCtor = idOrCtor[0]
+        if (typeof item !== 'undefined' || Array.isArray(dependency)) {
+            if (Array.isArray(dependency)) {
+                item = dependency[1]
+                dependency = dependency[0]
             }
 
             if (
@@ -116,14 +116,14 @@ export class Injector {
                 isFactoryDependencyItem(item)
             ) {
                 this.dependencyCollection.add(
-                    idOrCtor,
+                    dependency,
                     item as DependencyItem<T>
                 )
             } else {
-                this.resolvedDependencyCollection.add(idOrCtor, item as T)
+                this.resolvedDependencyCollection.add(dependency, item as T)
             }
         } else {
-            this.dependencyCollection.add(idOrCtor as Ctor<T>)
+            this.dependencyCollection.add(dependency as Ctor<T>)
         }
     }
 
