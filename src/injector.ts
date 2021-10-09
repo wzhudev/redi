@@ -22,6 +22,7 @@ import {
     isAsyncHook,
     isCtor,
     ValueDependencyItem,
+    prettyPrintIdentifier,
 } from './dependencyItem'
 import { LookUp } from './dependencyLookUp'
 import { Quantity } from './dependencyQuantity'
@@ -35,8 +36,8 @@ const MAX_RESOLUTIONS_QUEUED = 300
 const NotInstantiatedSymbol = Symbol('$$NOT_INSTANTIATED_SYMBOL')
 
 class CircularDependencyError<T> extends RediError {
-    constructor(id?: DependencyIdentifier<T>) {
-        super(`Detecting cyclic dependency. The last identifier is ${id}.`)
+    constructor(id: DependencyIdentifier<T>) {
+        super(`Detecting cyclic dependency. The last identifier is "${prettyPrintIdentifier(id)}".`)
     }
 }
 
@@ -48,14 +49,19 @@ class InjectorAlreadyDisposedError extends RediError {
 
 class AsyncItemReturnAsyncItemError<T> extends RediError {
     constructor(id: DependencyIdentifier<T>) {
-        super(`Async item ${id} returns another async item.`)
+        super(`Async item "${prettyPrintIdentifier(id)}" returns another async item.`)
+    }
+}
+
+class GetAsyncItemFromSyncApiError<T> extends RediError {
+    constructor(id: DependencyIdentifier<T>) {
+        super(`Cannot get async item "${prettyPrintIdentifier(id)}" from sync api.`)
     }
 }
 
 export class Injector {
     private readonly dependencyCollection: DependencyCollection
-    private readonly resolvedDependencyCollection =
-        new ResolvedDependencyCollection()
+    private readonly resolvedDependencyCollection = new ResolvedDependencyCollection()
 
     private readonly parent: Injector | null
     private readonly children: Injector[] = []
@@ -65,9 +71,7 @@ export class Injector {
     private disposed = false
 
     constructor(collectionOrDependencies?: Dependency[], parent?: Injector) {
-        this.dependencyCollection = new DependencyCollection(
-            collectionOrDependencies || []
-        )
+        this.dependencyCollection = new DependencyCollection(collectionOrDependencies || [])
 
         if (!parent) {
             this.parent = null
@@ -95,10 +99,7 @@ export class Injector {
 
     public add<T>(ctor: Ctor<T>): void
     public add<T>(pair: DependencyPair<T>): void
-    public add<T>(
-        id: DependencyIdentifier<T>,
-        item: DependencyItem<T> | T
-    ): void
+    public add<T>(id: DependencyIdentifier<T>, item: DependencyItem<T> | T): void
     public add<T>(
         dependency: Ctor<T> | DependencyPair<T> | DependencyIdentifier<T>,
         item?: DependencyItem<T> | T
@@ -115,10 +116,7 @@ export class Injector {
                 isInstanceDependencyItem(item) ||
                 isFactoryDependencyItem(item)
             ) {
-                this.dependencyCollection.add(
-                    dependency,
-                    item as DependencyItem<T>
-                )
+                this.dependencyCollection.add(dependency, item as DependencyItem<T>)
             } else {
                 this.resolvedDependencyCollection.add(dependency, item as T)
             }
@@ -131,36 +129,12 @@ export class Injector {
      * get a dependency
      */
     public get<T>(id: DependencyIdentifier<T>, lookUp?: LookUp): T
-    public get<T>(
-        id: DependencyIdentifier<T>,
-        quantity: Quantity.MANY,
-        lookUp?: LookUp
-    ): T[]
-    public get<T>(
-        id: DependencyIdentifier<T>,
-        quantity: Quantity.OPTIONAL,
-        lookUp?: LookUp
-    ): T | null
-    public get<T>(
-        id: DependencyIdentifier<T>,
-        quantity: Quantity.REQUIRED,
-        lookUp?: LookUp
-    ): T
-    public get<T>(
-        id: DependencyIdentifier<T>,
-        quantity?: Quantity,
-        lookUp?: LookUp
-    ): T[] | T | null
-    public get<T>(
-        id: DependencyIdentifier<T>,
-        quantityOrLookup?: Quantity | LookUp,
-        lookUp?: LookUp
-    ): T[] | T | null
-    public get<T>(
-        id: DependencyIdentifier<T>,
-        quantityOrLookup?: Quantity | LookUp,
-        lookUp?: LookUp
-    ): T[] | T | null {
+    public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY, lookUp?: LookUp): T[]
+    public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL, lookUp?: LookUp): T | null
+    public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED, lookUp?: LookUp): T
+    public get<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): T[] | T | null
+    public get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null
+    public get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null {
         this.ensureInjectorNotDisposed()
 
         let quantity: Quantity = Quantity.REQUIRED
@@ -182,12 +156,8 @@ export class Injector {
 
         // see if the dependency can be instantiated by itself or its parent
         const newResult = this.createAndCacheDependency(id, quantity, lookUp)
-        if (
-            (Array.isArray(newResult) &&
-                newResult.some((r) => isAsyncHook(r))) ||
-            isAsyncHook(newResult)
-        ) {
-            throw new Error()
+        if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
+            throw new GetAsyncItemFromSyncApiError(id)
         }
 
         return newResult as T | T[] | null
@@ -227,10 +197,7 @@ export class Injector {
     /**
      * resolve different types of dependencies
      */
-    private resolveDependency<T>(
-        id: DependencyIdentifier<T>,
-        item: DependencyItem<T>
-    ): T | AsyncHook<T> {
+    private resolveDependency<T>(id: DependencyIdentifier<T>, item: DependencyItem<T>): T | AsyncHook<T> {
         if (isInstanceDependencyItem(item)) {
             return this.resolveInstanceDependency(id, item)
         } else if (isFactoryDependencyItem(item)) {
@@ -242,19 +209,13 @@ export class Injector {
         }
     }
 
-    private resolveInstanceDependency<T>(
-        id: DependencyIdentifier<T>,
-        item: ValueDependencyItem<T>
-    ): T {
+    private resolveInstanceDependency<T>(id: DependencyIdentifier<T>, item: ValueDependencyItem<T>): T {
         const thing = item.useValue
         this.resolvedDependencyCollection.add(id, thing)
         return thing
     }
 
-    private resolveClass<T>(
-        id: DependencyIdentifier<T> | null,
-        item: ClassDependencyItem<T>
-    ): T {
+    private resolveClass<T>(id: DependencyIdentifier<T> | null, item: ClassDependencyItem<T>): T {
         const ctor = item.useClass
         let thing: T
 
@@ -282,11 +243,7 @@ export class Injector {
                     target[key] = prop
                     return prop
                 },
-                set(
-                    _target: any,
-                    key: string | number | symbol,
-                    value: any
-                ): boolean {
+                set(_target: any, key: string | number | symbol, value: any): boolean {
                     ;(idle.getValue() as any)[key] = value
                     return true
                 },
@@ -303,7 +260,7 @@ export class Injector {
     }
 
     private resolveClass_<T>(ctor: Ctor<T>, ...extraParams: any[]) {
-        this.markNewResolution()
+        this.markNewResolution(ctor)
 
         const declaredDependencies = getDependencies(ctor)
             .sort((a, b) => a.paramIndex - b.paramIndex)
@@ -321,14 +278,10 @@ export class Injector {
 
         let args = [...extraParams]
         const firstDependencyArgIndex =
-            declaredDependencies.length > 0
-                ? declaredDependencies[0].paramIndex
-                : args.length
+            declaredDependencies.length > 0 ? declaredDependencies[0].paramIndex : args.length
 
         if (args.length !== firstDependencyArgIndex) {
-            console.warn(
-                `expect ${firstDependencyArgIndex} custom parameter(s) but get ${args.length}`
-            )
+            console.warn(`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) but get ${args.length}.`)
 
             const delta = firstDependencyArgIndex - args.length
             if (delta > 0) {
@@ -345,11 +298,8 @@ export class Injector {
         return thing
     }
 
-    private resolveFactory<T>(
-        id: DependencyIdentifier<T>,
-        item: FactoryDependencyItem<T>
-    ): T {
-        this.markNewResolution()
+    private resolveFactory<T>(id: DependencyIdentifier<T>, item: FactoryDependencyItem<T>): T {
+        this.markNewResolution(id)
 
         const declaredDependencies = normalizeFactoryDeps(item.deps)
 
@@ -367,20 +317,14 @@ export class Injector {
         return thing
     }
 
-    private resolveAsync<T>(
-        id: DependencyIdentifier<T>,
-        item: AsyncDependencyItem<T>
-    ): AsyncHook<T> {
+    private resolveAsync<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): AsyncHook<T> {
         const asyncLoader: AsyncHook<T> = {
             whenReady: () => this.resolveAsync_(id, item),
         }
         return asyncLoader
     }
 
-    private resolveAsync_<T>(
-        id: DependencyIdentifier<T>,
-        item: AsyncDependencyItem<T>
-    ): Promise<T> {
+    private resolveAsync_<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): Promise<T> {
         return item.useAsync().then((thing) => {
             // check if another promise has been resolved,
             // do not resolve the async item twice
@@ -418,10 +362,7 @@ export class Injector {
         lookUp?: LookUp
     ): null | T | T[] | typeof NotInstantiatedSymbol {
         const onSelf = () => {
-            if (
-                this.dependencyCollection.has(id) &&
-                !this.resolvedDependencyCollection.has(id)
-            ) {
+            if (this.dependencyCollection.has(id) && !this.resolvedDependencyCollection.has(id)) {
                 return NotInstantiatedSymbol
             }
 
@@ -444,10 +385,7 @@ export class Injector {
             return onSelf()
         }
 
-        if (
-            this.resolvedDependencyCollection.has(id) ||
-            this.dependencyCollection.has(id)
-        ) {
+        if (this.resolvedDependencyCollection.has(id) || this.dependencyCollection.has(id)) {
             return onSelf()
         }
 
@@ -467,9 +405,7 @@ export class Injector {
 
             let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null
             if (Array.isArray(registrations)) {
-                ret = registrations.map((dependencyItem) =>
-                    this.resolveDependency(id, dependencyItem)
-                )
+                ret = registrations.map((dependencyItem) => this.resolveDependency(id, dependencyItem))
             } else if (registrations) {
                 ret = this.resolveDependency(id, registrations)
             }
@@ -504,7 +440,7 @@ export class Injector {
         return onParent()
     }
 
-    private markNewResolution<T>(id?: DependencyIdentifier<T>): void {
+    private markNewResolution<T>(id: DependencyIdentifier<T>): void {
         this.resolutionOngoing += 1
 
         if (this.resolutionOngoing >= MAX_RESOLUTIONS_QUEUED) {

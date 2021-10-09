@@ -6,10 +6,7 @@
  *
  * @param func Function that you would normally pass to `expect(func).toThrow()`
  */
-export const expectToThrow = (
-    func: () => unknown,
-    error?: JestToErrorArg
-): void => {
+export const expectToThrow = (func: () => unknown, error?: JestToErrorArg): void => {
     // Even though the error is caught, it still gets printed to the console
     // so we mock that out to avoid the wall of red text.
     const spy = jest.spyOn(console, 'error')
@@ -20,6 +17,4 @@ export const expectToThrow = (
     spy.mockRestore()
 }
 
-type JestToErrorArg = Parameters<
-    jest.Matchers<unknown, () => unknown>['toThrow']
->[0]
+type JestToErrorArg = Parameters<jest.Matchers<unknown, () => unknown>['toThrow']>[0]

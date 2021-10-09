@@ -1,10 +1,4 @@
-import {
-    DependencyIdentifier,
-    Quantity,
-    LookUp,
-    Injector,
-    RediError,
-} from '@wendellhu/redi'
+import { DependencyIdentifier, Quantity, LookUp, Injector, RediError } from '@wendellhu/redi'
 
 class ClassComponentNotInRediContextError<T> extends RediError {
     constructor(component: React.Component<T>) {
@@ -16,11 +10,7 @@ class ClassComponentNotInRediContextError<T> extends RediError {
     }
 }
 
-export function WithDependency<T>(
-    id: DependencyIdentifier<T>,
-    quantity?: Quantity,
-    lookUp?: LookUp
-): any {
+export function WithDependency<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): any {
     return function () {
         return {
             get(): T | T[] | null {
@@ -31,11 +21,7 @@ export function WithDependency<T>(
                 }
 
                 const injector: Injector = thisComponent.context.injector
-                const thing = injector.get(
-                    id,
-                    quantity || Quantity.REQUIRED,
-                    lookUp
-                )
+                const thing = injector.get(id, quantity || Quantity.REQUIRED, lookUp)
 
                 return thing
             },

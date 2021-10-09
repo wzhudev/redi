@@ -17,9 +17,7 @@ export interface Dependencies {
     dependencies: DependencyDescriptor<any>[]
 }
 
-export function normalizeFactoryDeps(
-    deps?: FactoryDep<any>[]
-): DependencyDescriptor<any>[] {
+export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescriptor<any>[] {
     if (!deps) {
         return []
     }
@@ -39,19 +37,17 @@ export function normalizeFactoryDeps(
         let lookUp: LookUp | undefined = undefined
         let quantity = Quantity.REQUIRED
 
-        ;(modifiers as FactoryDepModifier[]).forEach(
-            (modifier: FactoryDepModifier) => {
-                if (modifier instanceof Self) {
-                    lookUp = LookUp.SELF
-                } else if (modifier instanceof SkipSelf) {
-                    lookUp = LookUp.SKIP_SELF
-                } else if (modifier instanceof Optional) {
-                    quantity = Quantity.OPTIONAL
-                } else {
-                    quantity = Quantity.MANY
-                }
+        ;(modifiers as FactoryDepModifier[]).forEach((modifier: FactoryDepModifier) => {
+            if (modifier instanceof Self) {
+                lookUp = LookUp.SELF
+            } else if (modifier instanceof SkipSelf) {
+                lookUp = LookUp.SKIP_SELF
+            } else if (modifier instanceof Optional) {
+                quantity = Quantity.OPTIONAL
+            } else {
+                quantity = Quantity.MANY
             }
-        )
+        })
 
         return {
             paramIndex: index,
