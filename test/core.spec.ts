@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
+
 import {
     Disposable,
     SkipSelf,
@@ -66,6 +69,7 @@ describe('core', () => {
             }
 
             const cI = createIdentifier<C>('cI')
+            const cII = createIdentifier<C>('cII')
 
             const a = new A()
 
@@ -77,12 +81,24 @@ describe('core', () => {
                 }),
                 deps: [A],
             })
+            j.add([
+                cII,
+                {
+                    useFactory: (a: A) => ({
+                        key: a.key,
+                    }),
+                    deps: [A],
+                },
+            ])
 
             const b = j.get(B)
             expect(b.a).toBe(a)
 
             const c = j.get(cI)
             expect(c.key).toBe('a')
+
+            const cii = j.get(cII)
+            expect(cii.key).toBe('a')
         })
 
         it('should "createInstance" work', () => {
