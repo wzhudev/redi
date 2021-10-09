@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
+
 /**
  * Helps prevent error logs blowing up as a result of expecting an error to be thrown,
  * when using a library (such as enzyme)

@@ -59,6 +59,8 @@ function changeQuantity(target: Ctor<any>, index: number, quantity: Quantity) {
 
 function quantifyDecoratorFactoryProducer(quantity: Quantity) {
     return function decoratorFactory<T>(
+        // typescript would remove `this` after transpilation
+        // this line just declare the type of `this`
         this: any,
         id?: DependencyIdentifier<T>
     ) {

@@ -129,9 +129,11 @@ const App = withDependencies(
 ## Concepts
 
 -   The **injector** holds a set of bindings and resolves dependencies.
--   A **binding** maps a token to a dependency item.
-    -   Token works as an identifier. It differentiate a dependency from another. It could be the return value of `createIdentifier`, or a class.
-    -   Dependency could be
+-   A **binding** maps a **token** to a **dependency item**.
+    -   Token works as an identifier. It differentiate a dependency from another. It could be
+        -   the return value of `createIdentifier`
+        -   or a class
+    -   A dependency item could be
         -   a class
         -   an instance or value
         -   a factory function
@@ -199,6 +201,8 @@ class Father extends Person {}
 ```
 
 ### Dependency Items
+
+You can provide different kinds of dependency items, including class items, factory items, value items and async items.
 
 #### **`ClassItem`**
 
