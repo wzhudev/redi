@@ -17,13 +17,6 @@ export type IdentifierDecorator<T> = {
     toString(): string
 }
 
-export type DependencyIdentifier<T> =
-    | string
-    | Ctor<T>
-    | ForwardRef<T>
-    | IdentifierDecorator<T>
+export type DependencyIdentifier<T> = string | Ctor<T> | ForwardRef<T> | IdentifierDecorator<T>
 
-export type NormalizedDependencyIdentifier<T> = Exclude<
-    DependencyIdentifier<T>,
-    ForwardRef<T>
->
+export type NormalizedDependencyIdentifier<T> = Exclude<DependencyIdentifier<T>, ForwardRef<T>>

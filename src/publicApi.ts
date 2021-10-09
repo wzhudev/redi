@@ -12,5 +12,6 @@ export {
     FactoryDependencyItem,
     ClassDependencyItem,
     AsyncDependencyItem,
+    Ctor,
 } from './dependencyItem'
 export { RediError } from './error'

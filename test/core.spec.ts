@@ -17,6 +17,7 @@ import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 
 import { AA, bbI } from './async/async.base'
+import { expectToThrow } from './util/expectToThrow'
 
 function cleanupTest() {
     TEST_ONLY_clearKnownIdentifiers()
@@ -30,9 +31,7 @@ describe('core', () => {
         it('should throw error when identifier has been declared before', () => {
             createIdentifier('a')
 
-            expect(() => {
-                createIdentifier('a')
-            }).toThrowError()
+            expectToThrow(() => createIdentifier('a'), '[redi]: Identifier "a" already exists.')
         })
 
         it('should resolve instance and then cache it', () => {
@@ -122,10 +121,7 @@ describe('core', () => {
             }
 
             class B {
-                constructor(
-                    private readonly otherKey: string,
-                    @Inject(A) public readonly a: A
-                ) {}
+                constructor(private readonly otherKey: string, @Inject(A) public readonly a: A) {}
 
                 get key() {
                     return this.otherKey + 'a'
@@ -163,9 +159,7 @@ describe('core', () => {
             const b = j.createInstance(B, 'another ')
 
             expect(b.key).toBe('another undefined a')
-            expect(spy).toHaveBeenCalledWith(
-                'expect 2 custom parameter(s) but get 1'
-            )
+            expect(spy).toHaveBeenCalledWith('[redi]: Expect 2 custom parameter(s) but get 1.')
 
             spy.mockRestore()
         })
@@ -187,9 +181,7 @@ describe('core', () => {
                 [bI, { useClass: B }],
             ])
 
-            expect(() => {
-                j.get(aI)
-            }).toThrowError()
+            expectToThrow(() => j.get(aI), `[redi]: Detecting cyclic dependency. The last identifier is "B".`)
         })
     })
 
@@ -236,10 +228,7 @@ describe('core', () => {
                     }
                 }
 
-                const j = new Injector([
-                    [B],
-                    [aI, { useClass: A1, lazy: true }],
-                ])
+                const j = new Injector([[B], [aI, { useClass: A1, lazy: true }]])
 
                 const b = j.get(B)
                 expect(flag).toBeFalsy()
@@ -311,10 +300,7 @@ describe('core', () => {
                     [
                         bbI,
                         {
-                            useAsync: () =>
-                                import('./async/async.item').then(
-                                    (module) => module.BBImpl
-                                ),
+                            useAsync: () => import('./async/async.item').then((module) => module.BBImpl),
                         },
                     ],
                 ])
@@ -346,10 +332,7 @@ describe('core', () => {
                     [
                         bbI,
                         {
-                            useAsync: () =>
-                                import('./async/async.item').then(
-                                    (module) => module.BBFactory
-                                ),
+                            useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
                         },
                     ],
                 ])
@@ -366,10 +349,7 @@ describe('core', () => {
                     [
                         bbI,
                         {
-                            useAsync: () =>
-                                import('./async/async.item').then(
-                                    (module) => module.BBValue
-                                ),
+                            useAsync: () => import('./async/async.item').then((module) => module.BBValue),
                         },
                     ],
                 ])
@@ -410,10 +390,7 @@ describe('core', () => {
                     [
                         bbI,
                         {
-                            useAsync: () =>
-                                import('./async/async.item').then(
-                                    (module) => module.BBLoader
-                                ),
+                            useAsync: () => import('./async/async.item').then((module) => module.BBLoader),
                         },
                     ],
                 ])
@@ -434,15 +411,14 @@ describe('core', () => {
                     [
                         bbI,
                         {
-                            useAsync: () =>
-                                import('./async/async.item').then(
-                                    (module) => module.BBFactory
-                                ),
+                            useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
                         },
                     ],
                 ])
 
-                expect(() => j.get(bbI)).toThrowError()
+                expectToThrow(() => {
+                    j.get(bbI)
+                }, '[redi]: Cannot get async item "bb" from sync api.')
             })
         })
 
@@ -552,11 +528,11 @@ describe('core', () => {
         it('should throw error when using decorator on a non-injectable parameter', () => {
             class A {}
 
-            expect(() => {
+            expectToThrow(() => {
                 class B {
                     constructor(@Optional() _a: A) {}
                 }
-            }).toThrowError()
+            }, `[redi]: Could not find dependency registered on the 1 parameter of the constructor of "B".`)
         })
 
         it('should throw error when a required / optional dependency is provided with many values', () => {
@@ -574,13 +550,9 @@ describe('core', () => {
                 }
             }
 
-            const j = new Injector([
-                [B],
-                [aI, { useValue: { key: 'a1' } }],
-                [aI, { useValue: { key: 'a2' } }],
-            ])
+            const j = new Injector([[B], [aI, { useValue: { key: 'a1' } }], [aI, { useValue: { key: 'a2' } }]])
 
-            expect(() => j.get(B)).toThrowError()
+            expectToThrow(() => j.get(B), `[redi]: Expect "required" dependency items for id "aI" but get 2.`)
         })
     })
 
@@ -599,10 +571,7 @@ describe('core', () => {
             }
 
             class B {
-                constructor(
-                    @Inject(A) private a: A,
-                    @Inject(cI) private c: C
-                ) {}
+                constructor(@Inject(A) private a: A, @Inject(cI) private c: C) {}
 
                 get key() {
                     return this.a.key + 'b' + this.c.key
@@ -711,7 +680,7 @@ describe('core', () => {
                 ],
             ])
 
-            expect(() => child.get(bI)).toThrowError()
+            expectToThrow(() => child.get(bI), '[redi]: Cannot find "cI" registered by any injector.')
         })
 
         it('should throw error when no ancestor injector could provide dependency', () => {
@@ -719,9 +688,7 @@ describe('core', () => {
 
             const j = new Injector()
 
-            expect(() => {
-                j.get(A)
-            }).toThrowError()
+            expectToThrow(() => j.get(A), `[redi]: Cannot find "A" registered by any injector.`)
         })
     })
 
@@ -729,21 +696,19 @@ describe('core', () => {
         afterEach(() => cleanupTest())
 
         it('should throw Error when forwardRef is not used', () => {
-            expect(() => {
+            expectToThrow(() => {
                 class A {
                     constructor(@Inject(B) private b: B) {}
 
                     get key(): string {
-                        return typeof this.b === 'undefined'
-                            ? 'undefined'
-                            : 'a' + this.b.key
+                        return typeof this.b === 'undefined' ? 'undefined' : 'a' + this.b.key
                     }
                 }
 
                 class B {
                     key = 'b'
                 }
-            }).toThrowError()
+            }, `[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".`)
         })
 
         it('should work when "forwardRef" is used', () => {
@@ -751,9 +716,7 @@ describe('core', () => {
                 constructor(@Inject(forwardRef(() => B)) private b: B) {}
 
                 get key(): string {
-                    return typeof this.b === 'undefined'
-                        ? 'undefined'
-                        : 'a' + this.b.key
+                    return typeof this.b === 'undefined' ? 'undefined' : 'a' + this.b.key
                 }
             }
 
@@ -803,9 +766,7 @@ describe('core', () => {
             const j = new Injector()
             j.dispose()
 
-            expect(() => {
-                j.get(A)
-            }).toThrowError()
+            expectToThrow(() => j.get(A), '')
         })
     })
 })
