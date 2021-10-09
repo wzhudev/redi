@@ -17,7 +17,6 @@ jobs:
             - checkout
             - run: yarn
             - run: yarn test
-            - run: yarn build
             - store_artifacts:
                   path: coverage
             - codecov/upload
