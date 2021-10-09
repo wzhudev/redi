@@ -11,30 +11,18 @@ export type DisposableCallback = () => void
  * this run the callback when CPU is idle. Will fallback to setTimeout if
  * the browser doesn't support requestIdleCallback
  */
-export let runWhenIdle: (
-    callback: (idle?: IdleDeadline) => void,
-    timeout?: number
-) => DisposableCallback
+export let runWhenIdle: (callback: (idle?: IdleDeadline) => void, timeout?: number) => DisposableCallback
 
 // declare global variables because apparently the type file doesn't have it, for now
-declare function requestIdleCallback(
-    callback: (args: IdleDeadline) => void,
-    options?: { timeout: number }
-): number
+declare function requestIdleCallback(callback: (args: IdleDeadline) => void, options?: { timeout: number }): number
 declare function cancelIdleCallback(handle: number): void
 
 // use an IIFE to set up runWhenIdle
 ;(function () {
-    if (
-        typeof requestIdleCallback !== 'undefined' &&
-        typeof cancelIdleCallback !== 'undefined'
-    ) {
+    if (typeof requestIdleCallback !== 'undefined' && typeof cancelIdleCallback !== 'undefined') {
         // use native requestIdleCallback
         runWhenIdle = (runner, timeout?) => {
-            const handle: number = requestIdleCallback(
-                runner,
-                typeof timeout === 'number' ? { timeout } : undefined
-            )
+            const handle: number = requestIdleCallback(runner, typeof timeout === 'number' ? { timeout } : undefined)
             let disposed = false
             return () => {
                 if (disposed) {

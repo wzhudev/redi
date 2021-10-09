@@ -1,10 +1,6 @@
 import { DependencyDescriptor } from './dependencyDescriptor'
-import {
-    DependencyIdentifier,
-    IdentifierDecorator,
-    IdentifierDecoratorSymbol,
-} from './dependencyIdentifier'
-import { Ctor } from './dependencyItem'
+import { DependencyIdentifier, IdentifierDecorator, IdentifierDecoratorSymbol } from './dependencyIdentifier'
+import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { Quantity } from './dependencyQuantity'
 import { RediError } from './error'
 
@@ -15,7 +11,7 @@ class DependencyDescriptorNotFoundError extends RediError {
     constructor(index: number, target: Ctor<any>) {
         const msg = `Could not find dependency registered on the ${
             index + 1
-        } parameter of the constructor of ${target}.`
+        } parameter of the constructor of "${prettyPrintIdentifier(target)}".`
 
         super(msg)
     }
@@ -27,21 +23,14 @@ class DependencyDescriptorNotFoundError extends RediError {
  * @param registerTarget the class
  * @returns dependencies
  */
-export function getDependencies<T>(
-    registerTarget: Ctor<T>
-): DependencyDescriptor<any>[] {
+export function getDependencies<T>(registerTarget: Ctor<T>): DependencyDescriptor<any>[] {
     const target = registerTarget as any
     return target[DEPENDENCIES] || []
 }
 
-export function getDependencyByIndex<T>(
-    registerTarget: Ctor<T>,
-    index: number
-): DependencyDescriptor<any> {
+export function getDependencyByIndex<T>(registerTarget: Ctor<T>, index: number): DependencyDescriptor<any> {
     const allDependencies = getDependencies(registerTarget)
-    const dep = allDependencies.find(
-        (descriptor) => descriptor.paramIndex === index
-    )
+    const dep = allDependencies.find((descriptor) => descriptor.paramIndex === index)
 
     if (!dep) {
         throw new DependencyDescriptorNotFoundError(index, registerTarget)
@@ -87,16 +76,12 @@ export function setDependency<T>(
 const knownIdentifiers = new Set<string>()
 export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
     if (knownIdentifiers.has(id)) {
-        throw new Error(`identifier "${id}" already exists`)
+        throw new RediError(`Identifier "${id}" already exists.`)
     } else {
         knownIdentifiers.add(id)
     }
 
-    const decorator = function (
-        registerTarget: Ctor<T>,
-        _key: string,
-        index: number
-    ): void {
+    const decorator = function (registerTarget: Ctor<T>, _key: string, index: number): void {
         setDependency(registerTarget, decorator, index)
     } as IdentifierDecorator<T> // decorator as an identifier
 
