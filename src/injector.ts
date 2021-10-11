@@ -135,6 +135,20 @@ export class Injector {
     public get<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): T[] | T | null
     public get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null
     public get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null {
+        const newResult = this._get(id, quantityOrLookup, lookUp)
+
+        if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
+            throw new GetAsyncItemFromSyncApiError(id)
+        }
+
+        return newResult as T | T[] | null
+    }
+
+    public _get<T>(
+        id: DependencyIdentifier<T>,
+        quantityOrLookup?: Quantity | LookUp,
+        lookUp?: LookUp
+    ): T[] | T | AsyncHook<T> | null {
         this.ensureInjectorNotDisposed()
 
         let quantity: Quantity = Quantity.REQUIRED
@@ -155,12 +169,7 @@ export class Injector {
         }
 
         // see if the dependency can be instantiated by itself or its parent
-        const newResult = this.createAndCacheDependency(id, quantity, lookUp)
-        if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
-            throw new GetAsyncItemFromSyncApiError(id)
-        }
-
-        return newResult as T | T[] | null
+        return this.createAndCacheDependency(id, quantity, lookUp) as T[] | T | AsyncHook<T> | null
     }
 
     /**
@@ -272,7 +281,7 @@ export class Injector {
         const resolvedArgs: any[] = []
 
         for (const dep of declaredDependencies) {
-            const thing = this.get(dep.identifier, dep.quantity, dep.lookUp) // recursive happens here
+            const thing = this._get(dep.identifier, dep.quantity, dep.lookUp) // recursive happens here
             resolvedArgs.push(thing)
         }
 

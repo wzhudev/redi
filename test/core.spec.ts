@@ -12,11 +12,12 @@ import {
     Optional,
     forwardRef,
 } from '@wendellhu/redi'
+import { AsyncHook, isCtor } from 'src/dependencyItem'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 
-import { AA, bbI } from './async/async.base'
+import { AA, BB, bbI } from './async/async.base'
 import { expectToThrow } from './util/expectToThrow'
 
 function cleanupTest() {
@@ -419,6 +420,38 @@ describe('core', () => {
                 expectToThrow(() => {
                     j.get(bbI)
                 }, '[redi]: Cannot get async item "bb" from sync api.')
+            })
+
+            it('should "AsyncHook" work', (done) => {
+                class A {
+                    constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) {}
+
+                    public readKey(): Promise<string> {
+                        return this.bbILoader.whenReady().then((bb) => bb.key)
+                    }
+                }
+
+                const j = new Injector([
+                    [A],
+                    [AA],
+                    [
+                        bbI,
+                        {
+                            useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
+                        },
+                    ],
+                ])
+
+                j.get(A)
+                    .readKey()
+                    .then((key) => {
+                        expect(key).toBe('aabb2')
+                        done()
+                    })
+                    .catch(() => {
+                        expect(false).toBeTruthy() // intent to make this test fail
+                        done()
+                    })
             })
         })
 
