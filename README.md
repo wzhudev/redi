@@ -1,18 +1,9 @@
 # redi
 
-<img
-    alt="stars"
-    src="https://badgen.net/github/stars/wendellhu95/redi"
-    className="inline-block mr-2"
-  /> <img
-    alt="downloads"
-    src="https://badgen.net/npm/dt/@wendellhu/redi"
-    className="inline-block mr-2"
-  /> <img
-    alt="license"
-    src="https://badgen.net/github/license/wendellhu95/redi"
-    className="inline-block mr-2"
-  /> [![Codecov](https://img.shields.io/codecov/c/github/wendellhu95/redi.svg)](https://codecov.io/gh/wendellhu95/redi)
+![Stars](https://badgen.net/github/stars/wendellhu95/redi)
+![Downloads](https://badgen.net/npm/dt/@wendellhu/redi)
+![Codecov](https://badgen.net/github/license/wendellhu95/redi)
+[![Codecov](https://img.shields.io/codecov/c/github/wendellhu95/redi.svg)](https://codecov.io/gh/wendellhu95/redi)
 
 A dependency library for TypeScript and JavaScript, along with a binding for React.
 
@@ -37,8 +28,6 @@ injector.get(AuthService)
 ```
 
 **View full documentation and examples on [redi.wendell.fun](https://redi.wendell.fun/).**
-
-That's it!
 
 ## License
 
