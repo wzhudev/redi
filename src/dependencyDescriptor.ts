@@ -1,7 +1,8 @@
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { FactoryDep, FactoryDepModifier } from './dependencyItem'
-import { LookUp, Self, SkipSelf } from './dependencyLookUp'
-import { Optional, Quantity } from './dependencyQuantity'
+import { Self, SkipSelf } from './dependencyLookUp'
+import { Optional } from './dependencyQuantity'
+import { LookUp, Quantity } from './types'
 
 export interface DependencyDescriptor<T> {
     paramIndex: number

@@ -1,10 +1,6 @@
 import { getDependencyByIndex } from './decorators'
 import { Ctor } from './dependencyItem'
-
-export enum LookUp {
-    SELF = 'self',
-    SKIP_SELF = 'skipSelf',
-}
+import { LookUp } from './types'
 
 function changeLookup(target: Ctor<any>, index: number, lookUp: LookUp) {
     const descriptor = getDependencyByIndex(target, index)

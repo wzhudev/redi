@@ -2,12 +2,7 @@ import { getDependencyByIndex, setDependency } from './decorators'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
-
-export enum Quantity {
-    MANY = 'many',
-    OPTIONAL = 'optional',
-    REQUIRED = 'required',
-}
+import { Quantity } from './types'
 
 class IdentifierUndefinedError extends RediError {
     constructor(target: Ctor<any>, index: number) {
