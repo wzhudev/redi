@@ -24,12 +24,11 @@ import {
     ValueDependencyItem,
     prettyPrintIdentifier,
 } from './dependencyItem'
-import { LookUp } from './dependencyLookUp'
-import { Quantity } from './dependencyQuantity'
 import { normalizeForwardRef } from './dependencyForwardRef'
 import { IdleValue } from './idleValue'
 import { getSingletonDependencies } from './dependencySingletons'
 import { RediError } from './error'
+import { Quantity, LookUp } from './types'
 
 const MAX_RESOLUTIONS_QUEUED = 300
 

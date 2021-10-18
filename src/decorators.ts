@@ -1,7 +1,7 @@
 import { DependencyDescriptor } from './dependencyDescriptor'
 import { DependencyIdentifier, IdentifierDecorator, IdentifierDecoratorSymbol } from './dependencyIdentifier'
 import { Ctor, prettyPrintIdentifier } from './dependencyItem'
-import { Quantity } from './dependencyQuantity'
+import { Quantity } from './types'
 import { RediError } from './error'
 
 export const TARGET = Symbol('$$TARGET')

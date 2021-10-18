@@ -1,7 +1,8 @@
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, DependencyItem, prettyPrintIdentifier } from './dependencyItem'
-import { checkQuantity, Quantity, retrieveQuantity } from './dependencyQuantity'
+import { checkQuantity, retrieveQuantity } from './dependencyQuantity'
 import { Disposable, isDisposable } from './dispose'
+import { Quantity } from './types'
 import { RediError } from './error'
 
 export type DependencyPair<T> = [DependencyIdentifier<T>, DependencyItem<T>]
