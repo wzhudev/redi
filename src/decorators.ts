@@ -1,6 +1,6 @@
-import { DependencyDescriptor, normalizeFactoryDeps } from './dependencyDescriptor'
+import { DependencyDescriptor } from './dependencyDescriptor'
 import { DependencyIdentifier, IdentifierDecorator, IdentifierDecoratorSymbol } from './dependencyIdentifier'
-import { Ctor, FactoryDep, prettyPrintIdentifier } from './dependencyItem'
+import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { LookUp, Quantity } from './types'
 import { RediError } from './error'
 
@@ -74,19 +74,6 @@ export function setDependency<T, U>(
         target[DEPENDENCIES] = [descriptor]
         target[TARGET] = target
     }
-}
-
-export function setDependencies<U>(registerTarget: Ctor<U>, deps: FactoryDep<any>[]): void {
-    const normalizedDescriptors = normalizeFactoryDeps(deps)
-    normalizedDescriptors.forEach((descriptor) => {
-        setDependency(
-            registerTarget,
-            descriptor.identifier,
-            descriptor.paramIndex,
-            descriptor.quantity,
-            descriptor.lookUp
-        )
-    })
 }
 
 const knownIdentifiers = new Set<string>()

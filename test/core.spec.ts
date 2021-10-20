@@ -12,7 +12,7 @@ import {
     Optional,
     forwardRef,
 } from '@wendellhu/redi'
-import { AsyncHook, isCtor } from 'src/dependencyItem'
+import { AsyncHook } from 'src/dependencyItem'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
