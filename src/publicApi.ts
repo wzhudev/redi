@@ -7,12 +7,19 @@ export { SkipSelf, Self } from './dependencyLookUp'
 export { DependencyPair, Dependency } from './dependencyCollection'
 export { DependencyIdentifier } from './dependencyIdentifier'
 export { Disposable } from './dispose'
+export { setDependencies } from './dependencyDeclare'
 export { registerSingleton } from './dependencySingletons'
 export {
-    ValueDependencyItem,
-    FactoryDependencyItem,
-    ClassDependencyItem,
     AsyncDependencyItem,
+    ClassDependencyItem,
     Ctor,
+    FactoryDependencyItem,
+    isAsyncDependencyItem,
+    isAsyncHook,
+    isClassDependencyItem,
+    isCtor,
+    isFactoryDependencyItem,
+    isInstanceDependencyItem,
+    ValueDependencyItem
 } from './dependencyItem'
 export { RediError } from './error'
