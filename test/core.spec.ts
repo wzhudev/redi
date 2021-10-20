@@ -11,6 +11,7 @@ import {
     Self,
     Optional,
     forwardRef,
+    setDependencies
 } from '@wendellhu/redi'
 import { AsyncHook } from 'src/dependencyItem'
 
@@ -244,7 +245,23 @@ describe('core', () => {
                 expect(b.getAnotherKey()).toBe('another changed b')
             })
 
-            it('should lazily throw error when error happened when constructing', () => {})
+            it('should support "setDependencies"', () => {
+                class A {
+                    key = 'a'
+                }
+
+                class B {
+                    constructor(public readonly a: A) {}
+                }
+
+                setDependencies(B, [[A]]);
+
+                const j = new Injector([[A], [B]]);
+
+                const b = j.get(B)
+
+                expect(b.a.key).toBe('a')
+            })
         })
 
         describe('instance item', () => {
