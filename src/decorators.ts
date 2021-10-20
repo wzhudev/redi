@@ -1,7 +1,7 @@
-import { DependencyDescriptor } from './dependencyDescriptor'
+import { DependencyDescriptor, normalizeFactoryDeps } from './dependencyDescriptor'
 import { DependencyIdentifier, IdentifierDecorator, IdentifierDecoratorSymbol } from './dependencyIdentifier'
-import { Ctor, prettyPrintIdentifier } from './dependencyItem'
-import { Quantity } from './types'
+import { Ctor, FactoryDep, prettyPrintIdentifier } from './dependencyItem'
+import { LookUp, Quantity } from './types'
 import { RediError } from './error'
 
 export const TARGET = Symbol('$$TARGET')
@@ -49,18 +49,21 @@ export function getDependencyByIndex<T>(registerTarget: Ctor<T>, index: number):
  * @param registerTarget the class to be registered
  * @param identifier dependency item identifier
  * @param paramIndex index of the decorator constructor parameter
- * @param quantity
+ * @param quantity quantity of the dependency
+ * @param lookUp optional lookup
  */
-export function setDependency<T>(
-    registerTarget: Ctor<T>,
+export function setDependency<T, U>(
+    registerTarget: Ctor<U>,
     identifier: DependencyIdentifier<T>,
     paramIndex: number,
-    quantity: Quantity = Quantity.REQUIRED
+    quantity: Quantity = Quantity.REQUIRED,
+    lookUp?: LookUp
 ): void {
     const descriptor: DependencyDescriptor<T> = {
         paramIndex,
         identifier,
         quantity,
+        lookUp,
     }
 
     const target = registerTarget as any
@@ -71,6 +74,19 @@ export function setDependency<T>(
         target[DEPENDENCIES] = [descriptor]
         target[TARGET] = target
     }
+}
+
+export function setDependencies<U>(registerTarget: Ctor<U>, deps: FactoryDep<any>[]): void {
+    const normalizedDescriptors = normalizeFactoryDeps(deps)
+    normalizedDescriptors.forEach((descriptor) => {
+        setDependency(
+            registerTarget,
+            descriptor.identifier,
+            descriptor.paramIndex,
+            descriptor.quantity,
+            descriptor.lookUp
+        )
+    })
 }
 
 const knownIdentifiers = new Set<string>()
