@@ -20,6 +20,6 @@ export {
     isCtor,
     isFactoryDependencyItem,
     isInstanceDependencyItem,
-    ValueDependencyItem
+    ValueDependencyItem,
 } from './dependencyItem'
 export { RediError } from './error'
