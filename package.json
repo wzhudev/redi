@@ -1,9 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/wendellhu95/squirrel/master/src/schema/package.schema.json",
   "name": "@wendellhu/redi",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
-  "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
     "lint": "eslint --fix 'src/**/*.ts'",

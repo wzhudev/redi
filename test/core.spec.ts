@@ -11,7 +11,7 @@ import {
     Self,
     Optional,
     forwardRef,
-    setDependencies
+    setDependencies,
 } from '@wendellhu/redi'
 import { AsyncHook } from 'src/dependencyItem'
 
@@ -254,9 +254,9 @@ describe('core', () => {
                     constructor(public readonly a: A) {}
                 }
 
-                setDependencies(B, [[A]]);
+                setDependencies(B, [[A]])
 
-                const j = new Injector([[A], [B]]);
+                const j = new Injector([[A], [B]])
 
                 const b = j.get(B)
 
