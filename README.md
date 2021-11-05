@@ -6,7 +6,6 @@
 [![Codecov](https://img.shields.io/codecov/c/github/wendellhu95/redi.svg)](https://codecov.io/gh/wendellhu95/redi)
 
 A dependency library for TypeScript and JavaScript, along with a binding for React.
-no
 
 ## Overview
 
