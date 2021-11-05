@@ -29,6 +29,12 @@ injector.get(AuthService)
 
 **View full documentation and examples on [redi.wendell.fun](https://redi.wendell.fun/).**
 
+## Links
+
+* [Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [source](ttps://github.com/wendellhu95/redi-todomvc)
+* Doc site [source](https://github.com/wendellhu95/redi-site)
+* [scaffold](https://github.com/wendellhu95/redi-starter)
+
 ## License
 
 MIT. Copyright 2021 Wendell Hu.
