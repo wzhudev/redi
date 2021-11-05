@@ -262,6 +262,27 @@ describe('core', () => {
 
                 expect(b.a.key).toBe('a')
             })
+
+            it('should warn use when a dependency is missing', () => {
+                class A {
+                    constructor(private b: typeof B) {}
+
+                    get key(): string {
+                        return typeof this.b === 'undefined' ? 'undefined' : 'a' + this.b.key
+                    }
+                }
+
+                // mock that B is not assigned to the class constructor
+                let B: any = undefined;
+
+                expectToThrow(() => {
+                    setDependencies(A, [[B]])
+                }, '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".')
+
+                B = class {
+                    key = 'b'
+                }
+            });
         })
 
         describe('instance item', () => {
