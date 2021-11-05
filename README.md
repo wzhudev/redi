@@ -31,7 +31,7 @@ injector.get(AuthService)
 
 ## Links
 
-* [Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [source](ttps://github.com/wendellhu95/redi-todomvc)
+* [Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [source](https://github.com/wendellhu95/redi-todomvc)
 * Doc site [source](https://github.com/wendellhu95/redi-site)
 * [scaffold](https://github.com/wendellhu95/redi-starter)
 
