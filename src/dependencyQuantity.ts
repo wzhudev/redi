@@ -1,18 +1,8 @@
-import { getDependencyByIndex, setDependency } from './decorators'
+import { getDependencyByIndex, IdentifierUndefinedError, setDependency } from './decorators'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
 import { Quantity } from './types'
-
-class IdentifierUndefinedError extends RediError {
-    constructor(target: Ctor<any>, index: number) {
-        const msg = `It seems that you register "undefined" as dependency on the ${
-            index + 1
-        } parameter of "${prettyPrintIdentifier(target)}".`
-
-        super(msg)
-    }
-}
 
 class QuantityCheckError extends RediError {
     constructor(id: DependencyIdentifier<any>, quantity: Quantity, actual: number) {

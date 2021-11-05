@@ -17,6 +17,18 @@ class DependencyDescriptorNotFoundError extends RediError {
     }
 }
 
+export class IdentifierUndefinedError extends RediError {
+    constructor(target: Ctor<any>, index: number) {
+        const msg = `It seems that you register "undefined" as dependency on the ${
+            index + 1
+        } parameter of "${prettyPrintIdentifier(
+            target
+        )}". Please make sure that there is not cyclic dependency among your TypeScript files, or consider using "forwardRef".`
+
+        super(msg)
+    }
+}
+
 /**
  * get dependencies declared on a class
  *
@@ -64,6 +76,12 @@ export function setDependency<T, U>(
         identifier,
         quantity,
         lookUp,
+    }
+
+    // sometimes identifier could be 'undefined' if user meant to pass in an ES class
+    // this is related to how classes are transpiled
+    if (typeof identifier === 'undefined') {
+        throw new IdentifierUndefinedError(registerTarget, paramIndex)
     }
 
     const target = registerTarget as any
