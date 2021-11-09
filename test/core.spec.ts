@@ -273,7 +273,7 @@ describe('core', () => {
                 }
 
                 // mock that B is not assigned to the class constructor
-                let B: any = undefined;
+                let B: any = undefined
 
                 expectToThrow(() => {
                     setDependencies(A, [[B]])
@@ -282,7 +282,7 @@ describe('core', () => {
                 B = class {
                     key = 'b'
                 }
-            });
+            })
         })
 
         describe('instance item', () => {
