@@ -38,6 +38,10 @@ injector.get(AuthService)
 * Doc site [source](https://github.com/wendellhu95/redi-site)
 * [scaffold](https://github.com/wendellhu95/redi-starter)
 
+## Users
+
+* Team Lark at ByteDance
+
 ## License
 
 MIT. Copyright 2021 Wendell Hu.

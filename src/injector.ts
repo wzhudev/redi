@@ -92,6 +92,7 @@ export class Injector {
     public dispose(): void {
         this.dependencyCollection.dispose()
         this.resolvedDependencyCollection.dispose()
+        this.deleteThisFromParent();
 
         this.disposed = true
     }
@@ -463,6 +464,13 @@ export class Injector {
     private ensureInjectorNotDisposed(): void {
         if (this.disposed) {
             throw new InjectorAlreadyDisposedError()
+        }
+    }
+
+    private deleteThisFromParent(): void {
+        if (this.parent) {
+            const index = this.parent.children.indexOf(this)
+            this.parent.children.splice(index, 1);
         }
     }
 }
