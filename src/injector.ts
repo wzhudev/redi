@@ -92,7 +92,7 @@ export class Injector {
     public dispose(): void {
         this.dependencyCollection.dispose()
         this.resolvedDependencyCollection.dispose()
-        this.deleteThisFromParent();
+        this.deleteThisFromParent()
 
         this.disposed = true
     }
@@ -123,6 +123,14 @@ export class Injector {
         } else {
             this.dependencyCollection.add(dependency as Ctor<T>)
         }
+    }
+
+    /**
+     * delete a dependency and instantiated values from an injector
+     */
+    public delete<T>(id: DependencyIdentifier<T>): void {
+        this.dependencyCollection.delete(id)
+        this.resolvedDependencyCollection.delete(id)
     }
 
     /**
@@ -470,7 +478,7 @@ export class Injector {
     private deleteThisFromParent(): void {
         if (this.parent) {
             const index = this.parent.children.indexOf(this)
-            this.parent.children.splice(index, 1);
+            this.parent.children.splice(index, 1)
         }
     }
 }

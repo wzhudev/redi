@@ -48,6 +48,10 @@ export class DependencyCollection implements Disposable {
         arr.push(val)
     }
 
+    public delete<T>(id: DependencyIdentifier<T>): void {
+        this.dependencyMap.delete(id)
+    }
+
     public get<T>(id: DependencyIdentifier<T>): DependencyItem<T>
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED): DependencyItem<T>
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY): DependencyItem<T>[]
@@ -119,6 +123,14 @@ export class ResolvedDependencyCollection implements Disposable {
         return this.resolvedDependencies.has(id)
     }
 
+    public delete<T>(id: DependencyIdentifier<T>): void {
+        if (this.resolvedDependencies.has(id)) {
+            const things = this.resolvedDependencies.get(id)!
+            things.forEach((t) => (isDisposable(t) ? t.dispose() : void 0))
+            this.resolvedDependencies.delete(id)
+        }
+    }
+
     public get<T>(id: DependencyIdentifier<T>): T
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL): T | null
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED): T
@@ -142,11 +154,7 @@ export class ResolvedDependencyCollection implements Disposable {
 
     public dispose(): void {
         Array.from(this.resolvedDependencies.values()).forEach((items) => {
-            items.forEach((item) => {
-                if (isDisposable(item)) {
-                    item.dispose()
-                }
-            })
+            items.forEach((item) => (isDisposable(item) ? item.dispose() : void 0))
         })
 
         this.resolvedDependencies.clear()
