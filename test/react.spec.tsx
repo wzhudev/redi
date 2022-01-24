@@ -76,12 +76,12 @@ describe('react', () => {
         const injector = new Injector([[aI, { useValue: { key: 'a' } }]])
 
         class AppImpl extends React.Component {
-            static contextType = RediContext
+            static override contextType = RediContext
 
             @WithDependency(aI)
             private readonly a!: A
 
-            render() {
+            override render() {
                 return <div>{this.a.key}</div>
             }
         }
@@ -134,7 +134,7 @@ describe('react', () => {
             @WithDependency(aI)
             private readonly a!: A
 
-            render() {
+            override render() {
                 return <div>{this.a.key}</div>
             }
         }

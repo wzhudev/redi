@@ -77,5 +77,10 @@ export type SyncDependencyItem<T> = ClassDependencyItem<T> | FactoryDependencyIt
 export type DependencyItem<T> = SyncDependencyItem<T> | AsyncDependencyItem<T>
 
 export function prettyPrintIdentifier<T>(id: DependencyIdentifier<T>): string {
-    return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol] ? id.name : id.toString()
+  if (typeof id === 'undefined') {
+    return 'undefined'  
+  }
+
+  return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol] ? id.name : id.toString()
 }
+
