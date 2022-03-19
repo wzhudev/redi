@@ -13,13 +13,15 @@ export {
     AsyncDependencyItem,
     ClassDependencyItem,
     Ctor,
+    DependencyItem,
     FactoryDependencyItem,
     isAsyncDependencyItem,
     isAsyncHook,
     isClassDependencyItem,
     isCtor,
     isFactoryDependencyItem,
-    isInstanceDependencyItem,
+    isValueDependencyItem,
+    SyncDependencyItem,
     ValueDependencyItem,
 } from './dependencyItem'
 export { RediError } from './error'

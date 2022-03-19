@@ -29,6 +29,7 @@ export type FactoryDep<T> = [...FactoryDepModifier[], DependencyIdentifier<T>] |
 
 export interface FactoryDependencyItem<T> {
     useFactory: (...deps: any[]) => T
+    dynamic?: true
     deps?: FactoryDep<any>[]
 }
 export function isFactoryDependencyItem<T>(thing: unknown): thing is FactoryDependencyItem<T> {
@@ -42,7 +43,7 @@ export function isFactoryDependencyItem<T>(thing: unknown): thing is FactoryDepe
 export interface ValueDependencyItem<T> {
     useValue: T
 }
-export function isInstanceDependencyItem<T>(thing: unknown): thing is ValueDependencyItem<T> {
+export function isValueDependencyItem<T>(thing: unknown): thing is ValueDependencyItem<T> {
     if (thing && typeof (thing as any).useValue !== 'undefined') {
         return true
     }
@@ -77,10 +78,9 @@ export type SyncDependencyItem<T> = ClassDependencyItem<T> | FactoryDependencyIt
 export type DependencyItem<T> = SyncDependencyItem<T> | AsyncDependencyItem<T>
 
 export function prettyPrintIdentifier<T>(id: DependencyIdentifier<T>): string {
-  if (typeof id === 'undefined') {
-    return 'undefined'  
-  }
+    if (typeof id === 'undefined') {
+        return 'undefined'
+    }
 
-  return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol] ? id.name : id.toString()
+    return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol] ? id.name : id.toString()
 }
-

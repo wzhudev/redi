@@ -14,7 +14,7 @@ import {
     AsyncDependencyItem,
     isClassDependencyItem,
     isFactoryDependencyItem,
-    isInstanceDependencyItem,
+    isValueDependencyItem,
     isAsyncDependencyItem,
     ClassDependencyItem,
     FactoryDependencyItem,
@@ -113,7 +113,7 @@ export class Injector {
             if (
                 isAsyncDependencyItem(item) ||
                 isClassDependencyItem(item) ||
-                isInstanceDependencyItem(item) ||
+                isValueDependencyItem(item) ||
                 isFactoryDependencyItem(item)
             ) {
                 this.dependencyCollection.add(dependency, item as DependencyItem<T>)
@@ -215,8 +215,8 @@ export class Injector {
      * resolve different types of dependencies
      */
     private resolveDependency<T>(id: DependencyIdentifier<T>, item: DependencyItem<T>): T | AsyncHook<T> {
-        if (isInstanceDependencyItem(item)) {
-            return this.resolveInstanceDependency(id, item)
+        if (isValueDependencyItem(item)) {
+            return this.resolveValueDependency(id, item)
         } else if (isFactoryDependencyItem(item)) {
             return this.resolveFactory(id, item)
         } else if (isClassDependencyItem(item)) {
@@ -226,7 +226,7 @@ export class Injector {
         }
     }
 
-    private resolveInstanceDependency<T>(id: DependencyIdentifier<T>, item: ValueDependencyItem<T>): T {
+    private resolveValueDependency<T>(id: DependencyIdentifier<T>, item: ValueDependencyItem<T>): T {
         const thing = item.useValue
         this.resolvedDependencyCollection.add(id, thing)
         return thing
