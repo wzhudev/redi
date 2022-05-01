@@ -13,8 +13,7 @@ A dependency library for TypeScript and JavaScript, along with a binding for Rea
 import { Inject } from '@wendellhu/redi'
 
 class AuthService {
-    public getCurrentUserInfo(): UserInfo {
-    }
+    public getCurrentUserInfo(): UserInfo {}
 }
 
 class FileListService {
@@ -34,14 +33,14 @@ injector.get(AuthService)
 
 ## Links
 
-* [Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [source](https://github.com/wendellhu95/redi-todomvc)
-* Doc site [source](https://github.com/wendellhu95/redi-site)
-* [scaffold](https://github.com/wendellhu95/redi-starter)
+-   [Demo TodoMVC](https://wendellhu95.github.io/redi-todomvc/) | [source](https://github.com/wendellhu95/redi-todomvc)
+-   Doc site [source](https://github.com/wendellhu95/redi-site)
+-   [scaffold](https://github.com/wendellhu95/redi-starter)
 
 ## Users
 
-* Team Lark at ByteDance
+-   Team Lark at ByteDance
 
 ## License
 
-MIT. Copyright 2021 Wendell Hu.
+MIT. Copyright 2021-2022 Wendell Hu.
