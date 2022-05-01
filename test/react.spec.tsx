@@ -4,6 +4,7 @@
 
 import { render, act, fireEvent } from '@testing-library/react'
 import React from 'react'
+
 import { createIdentifier, Disposable, Injector } from '@wendellhu/redi'
 import {
     WithDependency,
