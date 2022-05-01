@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { act, render } from '@testing-library/react'
@@ -19,7 +19,6 @@ import {
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
-
 import { expectToThrow } from './util/expectToThrow'
 
 describe('rx', () => {
@@ -234,7 +233,7 @@ describe('rx', () => {
                 this.loop = setInterval(() => {
                     this.number += 1
                     this.updater$.next()
-                }, 1000) as any as number
+                }, 100) as any as number
             }
 
             dispose(): void {
@@ -260,7 +259,7 @@ describe('rx', () => {
         const { container } = render(<App />)
         expect(container.firstChild!.textContent).toBe('0')
 
-        await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 3100)))
+        await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 310)))
         expect(container.firstChild!.textContent).toBe('3')
     })
 })

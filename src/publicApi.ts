@@ -11,6 +11,7 @@ export { setDependencies } from './dependencyDeclare'
 export { registerSingleton } from './dependencySingletons'
 export {
     AsyncDependencyItem,
+    AsyncHook,
     ClassDependencyItem,
     Ctor,
     DependencyItem,

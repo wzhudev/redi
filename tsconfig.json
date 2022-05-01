@@ -20,7 +20,7 @@
         "strictPropertyInitialization": true,
         "experimentalDecorators": true,
         "esModuleInterop": true,
-        "types": ["node", "jest"],
+        "types": ["node", "vitest/globals"],
         "typeRoots": ["./node_modules/@types"],
         "paths": {
             "@wendellhu/redi": ["./src/index.ts"],

@@ -1,4 +1,6 @@
+import { vi } from 'vitest'
 import { createIdentifier, Injector, registerSingleton } from '@wendellhu/redi'
+
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 
@@ -54,7 +56,7 @@ describe('singleton', () => {
 
         expect(j.get(aI).key).toBe('a')
 
-        const spy = jest.spyOn(console, 'warn')
+        const spy = vi.spyOn(console, 'warn')
         spy.mockImplementation(() => {})
 
         new Injector()

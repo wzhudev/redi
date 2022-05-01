@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { render, act, fireEvent } from '@testing-library/react'
@@ -17,7 +17,7 @@ import {
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 
-import { expectToThrow } from './util/expectToThrow'
+import { expectToThrow } from './util/expectToThrow';
 
 describe('react', () => {
     afterEach(() => {

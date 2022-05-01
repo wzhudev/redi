@@ -4,7 +4,7 @@
   "version": "0.5.0",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "scripts": {
-    "test": "jest --coverage",
+    "test": "vitest --coverage",
     "lint": "eslint --fix 'src/**/*.ts'",
     "lint:prettier": "prettier --write '{src,test}/**/*.{ts,tsx}'",
     "build": "squirrel"
@@ -16,24 +16,24 @@
       "LICENSE"
     ]
   },
-  "author": "wendellhu95 <hullis@foxmail.com>",
+  "author": "hullis <hullis@foxmail.com>",
   "license": "MIT",
   "devDependencies": {
     "@testing-library/dom": "^8.5.0",
     "@testing-library/react": "^12.1.2",
-    "@types/jest": "^27.0.0",
     "@types/react": ">=16.8.0",
     "@typescript-eslint/eslint-plugin": "^4.30.0",
     "@typescript-eslint/parser": "^4.30.0",
     "@wendellhu/squirrel": "^0.1.4",
+    "c8": "^7.11.2",
     "eslint": "^7.32.0",
-    "jest": "^27.0.6",
+    "jsdom": "^19.0.0",
     "prettier": "^2.3.2",
     "react": "^16.8.0",
     "react-dom": "^16.8.0",
     "rxjs": "^6.2.1",
-    "ts-jest": "^27.0.4",
-    "typescript": "^4.4.2"
+    "typescript": "^4.4.2",
+    "vitest": "^0.10.0"
   },
   "peerDependencies": {
     "react": ">= 16.8.0",

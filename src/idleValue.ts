@@ -40,6 +40,7 @@ declare function cancelIdleCallback(handle: number): void
                 return 15
             },
         })
+
         runWhenIdle = (runner) => {
             const handle = setTimeout(() => runner(dummyIdle))
             let disposed = false

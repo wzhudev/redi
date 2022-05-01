@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
+import { vi } from 'vitest'
+
 import {
     Disposable,
     SkipSelf,
@@ -12,8 +14,8 @@ import {
     Optional,
     forwardRef,
     setDependencies,
+    AsyncHook,
 } from '@wendellhu/redi'
-import { AsyncHook } from 'src/dependencyItem'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
@@ -154,7 +156,7 @@ describe('core', () => {
                 }
             }
 
-            const spy = jest.spyOn(console, 'warn')
+            const spy = vi.spyOn(console, 'warn')
             spy.mockImplementation(() => {})
 
             const j = new Injector([[A]])
@@ -333,116 +335,121 @@ describe('core', () => {
         describe('async item', () => {
             afterEach(() => cleanupTest())
 
-            it('should support async loaded ctor', (done) => {
-                const j = new Injector([
-                    [AA],
-                    [
-                        bbI,
-                        {
-                            useAsync: () => import('./async/async.item').then((module) => module.BBImpl),
-                        },
-                    ],
-                ])
+            it('should support async loaded ctor', () =>
+                new Promise((done) => {
+                    const j = new Injector([
+                        [AA],
+                        [
+                            bbI,
+                            {
+                                useAsync: () => import('./async/async.item').then((module) => module.BBImpl),
+                            },
+                        ],
+                    ])
 
-                j.getAsync(bbI).then((bb) => {
-                    expect(bb.key).toBe('aabb')
-                    expect(bb.getConstructedTime?.()).toBe(1)
-                })
-
-                // should check if instantiated in whenReady
-                j.getAsync(bbI).then((bb) => {
-                    expect(bb.key).toBe('aabb')
-                    expect(bb.getConstructedTime?.()).toBe(1)
-                })
-
-                new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
-                    // should use cached value this time
                     j.getAsync(bbI).then((bb) => {
                         expect(bb.key).toBe('aabb')
                         expect(bb.getConstructedTime?.()).toBe(1)
-                        done()
                     })
-                })
-            })
 
-            it('should support async loaded factory', (done) => {
-                const j = new Injector([
-                    [AA],
-                    [
-                        bbI,
-                        {
-                            useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
-                        },
-                    ],
-                ])
+                    // should check if instantiated in whenReady
+                    j.getAsync(bbI).then((bb) => {
+                        expect(bb.key).toBe('aabb')
+                        expect(bb.getConstructedTime?.()).toBe(1)
+                    })
 
-                j.getAsync(bbI).then((bb) => {
-                    expect(bb.key).toBe('aabb2')
-                    done()
-                })
-            })
+                    new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
+                        // should use cached value this time
+                        j.getAsync(bbI).then((bb) => {
+                            expect(bb.key).toBe('aabb')
+                            expect(bb.getConstructedTime?.()).toBe(1)
+                            done()
+                        })
+                    })
+                }))
 
-            it('should support async loaded value', (done) => {
-                const j = new Injector([
-                    [AA],
-                    [
-                        bbI,
-                        {
-                            useAsync: () => import('./async/async.item').then((module) => module.BBValue),
-                        },
-                    ],
-                ])
-
-                j.getAsync(bbI).then((bb) => {
-                    expect(bb.key).toBe('bb3')
-                    done()
-                })
-            })
-
-            it('should "getAsync" support sync dependency items', (done) => {
-                interface A {
-                    key: string
-                }
-
-                const iA = createIdentifier<A>('iA')
-
-                const j = new Injector([
-                    [
-                        iA,
-                        {
-                            useValue: {
-                                key: 'a',
+            it('should support async loaded factory', () =>
+                new Promise((done) => {
+                    const j = new Injector([
+                        [AA],
+                        [
+                            bbI,
+                            {
+                                useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
                             },
-                        },
-                    ],
-                ])
+                        ],
+                    ])
 
-                j.getAsync(iA).then((a) => {
-                    expect(a.key).toBe('a')
-                    done()
-                })
-            })
-
-            it('should throw error when async loader returns a async loader', (done) => {
-                const j = new Injector([
-                    [AA],
-                    [
-                        bbI,
-                        {
-                            useAsync: () => import('./async/async.item').then((module) => module.BBLoader),
-                        },
-                    ],
-                ])
-
-                j.getAsync(bbI)
-                    .then((bb) => {
+                    j.getAsync(bbI).then((bb) => {
                         expect(bb.key).toBe('aabb2')
-                    })
-                    .catch(() => {
-                        // the test would end up here
                         done()
                     })
-            })
+                }))
+
+            it('should support async loaded value', () =>
+                new Promise((done) => {
+                    const j = new Injector([
+                        [AA],
+                        [
+                            bbI,
+                            {
+                                useAsync: () => import('./async/async.item').then((module) => module.BBValue),
+                            },
+                        ],
+                    ])
+
+                    j.getAsync(bbI).then((bb) => {
+                        expect(bb.key).toBe('bb3')
+                        done()
+                    })
+                }))
+
+            it('should "getAsync" support sync dependency items', () =>
+                new Promise((done) => {
+                    interface A {
+                        key: string
+                    }
+
+                    const iA = createIdentifier<A>('iA')
+
+                    const j = new Injector([
+                        [
+                            iA,
+                            {
+                                useValue: {
+                                    key: 'a',
+                                },
+                            },
+                        ],
+                    ])
+
+                    j.getAsync(iA).then((a) => {
+                        expect(a.key).toBe('a')
+                        done()
+                    })
+                }))
+
+            it('should throw error when async loader returns a async loader', () =>
+                new Promise((done) => {
+                    const j = new Injector([
+                        [AA],
+                        [
+                            bbI,
+                            {
+                                useAsync: () => import('./async/async.item').then((module) => module.BBLoader),
+                            },
+                        ],
+                    ])
+
+                    j.getAsync(bbI)
+                        .then((bb) => {
+                            expect(bb.key).toBe('aabb2')
+                        })
+                        .catch(() => {
+                            // the test would end up here
+                            done()
+                        })
+                }))
 
             it('should throw error when get an async item via "get"', () => {
                 const j = new Injector([
@@ -460,37 +467,38 @@ describe('core', () => {
                 }, '[redi]: Cannot get async item "bb" from sync api.')
             })
 
-            it('should "AsyncHook" work', (done) => {
-                class A {
-                    constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) {}
+            it('should "AsyncHook" work', () =>
+                new Promise((done) => {
+                    class A {
+                        constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) {}
 
-                    public readKey(): Promise<string> {
-                        return this.bbILoader.whenReady().then((bb) => bb.key)
+                        public readKey(): Promise<string> {
+                            return this.bbILoader.whenReady().then((bb) => bb.key)
+                        }
                     }
-                }
 
-                const j = new Injector([
-                    [A],
-                    [AA],
-                    [
-                        bbI,
-                        {
-                            useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
-                        },
-                    ],
-                ])
+                    const j = new Injector([
+                        [A],
+                        [AA],
+                        [
+                            bbI,
+                            {
+                                useAsync: () => import('./async/async.item').then((module) => module.BBFactory),
+                            },
+                        ],
+                    ])
 
-                j.get(A)
-                    .readKey()
-                    .then((key) => {
-                        expect(key).toBe('aabb2')
-                        done()
-                    })
-                    .catch(() => {
-                        expect(false).toBeTruthy() // intent to make this test fail
-                        done()
-                    })
-            })
+                    j.get(A)
+                        .readKey()
+                        .then((key) => {
+                            expect(key).toBe('aabb2')
+                            done()
+                        })
+                        .catch(() => {
+                            expect(false).toBeTruthy() // intent to make this test fail
+                            done()
+                        })
+                }))
         })
 
         describe('injector', () => {
@@ -779,7 +787,7 @@ describe('core', () => {
                 class B {
                     key = 'b'
                 }
-            }, `[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".`)
+            }, `Cannot access 'B' before initialization`)
         })
 
         it('should work when "forwardRef" is used', () => {
