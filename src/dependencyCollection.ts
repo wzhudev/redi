@@ -29,7 +29,7 @@ export class DependencyNotFoundError extends RediError {
 export class DependencyCollection implements Disposable {
     private readonly dependencyMap = new Map<DependencyIdentifier<any>, DependencyItem<any>[]>()
 
-    constructor(private readonly dependencies: Dependency[]) {
+    constructor(dependencies: Dependency[]) {
         this.normalizeDependencies(dependencies).map((pair) => this.add(pair[0], pair[1]))
     }
 
@@ -135,7 +135,7 @@ export class ResolvedDependencyCollection implements Disposable {
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL): T | null
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED): T
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY): T[]
-    public get<T>(id: DependencyIdentifier<T>, quantity: Quantity): T[]
+    public get<T>(id: DependencyIdentifier<T>, quantity: Quantity): T[] | T | null
     public get<T>(id: DependencyIdentifier<T>, quantity: Quantity = Quantity.REQUIRED): T | T[] | null {
         const ret = this.resolvedDependencies.get(id)
 
