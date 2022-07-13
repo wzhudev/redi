@@ -1,7 +1,9 @@
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { FactoryDep, FactoryDepModifier } from './dependencyItem'
 import { Self, SkipSelf } from './dependencyLookUp'
-import { Optional } from './dependencyQuantity'
+import { Many, Optional } from './dependencyQuantity'
+import { WithNew } from './dependencyWithNew'
+import { RediError } from './error'
 import { LookUp, Quantity } from './types'
 
 export interface DependencyDescriptor<T> {
@@ -9,6 +11,7 @@ export interface DependencyDescriptor<T> {
     identifier: DependencyIdentifier<T>
     quantity: Quantity
     lookUp?: LookUp
+    withNew: boolean
 }
 
 /**
@@ -29,6 +32,7 @@ export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescri
                 paramIndex: index,
                 identifier: dep,
                 quantity: Quantity.REQUIRED,
+                withNew: false,
             }
         }
 
@@ -37,6 +41,7 @@ export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescri
 
         let lookUp: LookUp | undefined = undefined
         let quantity = Quantity.REQUIRED
+        let withNew = false
 
         ;(modifiers as FactoryDepModifier[]).forEach((modifier: FactoryDepModifier) => {
             if (modifier instanceof Self) {
@@ -45,8 +50,12 @@ export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescri
                 lookUp = LookUp.SKIP_SELF
             } else if (modifier instanceof Optional) {
                 quantity = Quantity.OPTIONAL
-            } else {
+            } else if (modifier instanceof Many) {
                 quantity = Quantity.MANY
+            } else if (modifier instanceof WithNew) {
+                withNew = true
+            } else {
+                throw new RediError(`unknown dep modifier ${modifier}.`)
             }
         })
 
@@ -55,6 +64,7 @@ export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescri
             identifier: identifier as DependencyIdentifier<any>,
             quantity,
             lookUp,
+            withNew,
         }
     })
 }

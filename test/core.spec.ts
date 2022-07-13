@@ -4,17 +4,18 @@
 import { vi } from 'vitest'
 
 import {
-    Disposable,
-    SkipSelf,
-    Many,
-    Injector,
-    Inject,
-    createIdentifier,
-    Self,
-    Optional,
-    forwardRef,
-    setDependencies,
     AsyncHook,
+    createIdentifier,
+    Disposable,
+    forwardRef,
+    Inject,
+    Injector,
+    Many,
+    Optional,
+    Self,
+    setDependencies,
+    SkipSelf,
+    WithNew,
 } from '@wendellhu/redi'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
@@ -805,6 +806,49 @@ describe('core', () => {
 
             const j = new Injector([[A], [B]])
             expect(j.get(A).key).toBe('ab')
+        })
+    })
+
+    describe('non singleton', () => {
+        it('should work with "WithNew" - classes', () => {
+            let c = 0
+
+            class A {
+                count = c++
+            }
+
+            class B {
+                constructor(@WithNew() @Inject(A) private readonly a: A) {}
+
+                get(): number {
+                    return this.a.count
+                }
+            }
+
+            const j = new Injector([[A], [B]])
+            const b1 = j.createInstance(B)
+            const b2 = j.createInstance(B)
+
+            expect(b1.get()).toBe(0)
+            expect(b2.get()).toBe(1)
+        })
+
+        it('should work with "WithNew" - factories', () => {
+            let c = 0
+
+            const ICount = createIdentifier<number>('ICount')
+
+            class B {
+                constructor(@WithNew() @Inject(ICount) public readonly count: number) {}
+            }
+
+            const j = new Injector([[B], [ICount, { useFactory: () => c++ }]])
+
+            const b1 = j.createInstance(B)
+            const b2 = j.createInstance(B)
+
+            expect(b1.count).toBe(0)
+            expect(b2.count).toBe(1)
         })
     })
 

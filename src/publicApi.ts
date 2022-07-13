@@ -9,6 +9,7 @@ export { DependencyIdentifier } from './dependencyIdentifier'
 export { Disposable } from './dispose'
 export { setDependencies } from './dependencyDeclare'
 export { registerSingleton } from './dependencySingletons'
+export { WithNew } from './dependencyWithNew'
 export {
     AsyncDependencyItem,
     AsyncHook,

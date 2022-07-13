@@ -1,6 +1,7 @@
 import { DependencyIdentifier, IdentifierDecoratorSymbol } from './dependencyIdentifier'
 import { Self, SkipSelf } from './dependencyLookUp'
 import { Many, Optional } from './dependencyQuantity'
+import { WithNew } from './dependencyWithNew'
 
 export interface Ctor<T> {
     new (...args: any[]): T
@@ -23,7 +24,7 @@ export function isClassDependencyItem<T>(thing: unknown): thing is ClassDependen
     return false
 }
 
-export type FactoryDepModifier = typeof Self | typeof SkipSelf | typeof Optional | typeof Many
+export type FactoryDepModifier = typeof Self | typeof SkipSelf | typeof Optional | typeof Many | typeof WithNew
 
 export type FactoryDep<T> = [...FactoryDepModifier[], DependencyIdentifier<T>] | DependencyIdentifier<T>
 

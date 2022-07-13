@@ -29,6 +29,7 @@ import { IdleValue } from './idleValue'
 import { getSingletonDependencies } from './dependencySingletons'
 import { RediError } from './error'
 import { Quantity, LookUp } from './types'
+import { should } from 'vitest'
 
 const MAX_RESOLUTIONS_QUEUED = 300
 
@@ -155,7 +156,8 @@ export class Injector {
     public _get<T>(
         id: DependencyIdentifier<T>,
         quantityOrLookup?: Quantity | LookUp,
-        lookUp?: LookUp
+        lookUp?: LookUp,
+        toSelf?: boolean
     ): T[] | T | AsyncHook<T> | null {
         this.ensureInjectorNotDisposed()
 
@@ -170,14 +172,16 @@ export class Injector {
             lookUp = quantityOrLookup as LookUp
         }
 
-        // see if the dependency is already resolved, return it and check quantity
-        const cachedResult = this.getValue(id, quantity, lookUp)
-        if (cachedResult !== NotInstantiatedSymbol) {
-            return cachedResult
+        if (!toSelf) {
+            // see if the dependency is already resolved, return it and check quantity
+            const cachedResult = this.getValue(id, quantity, lookUp)
+            if (cachedResult !== NotInstantiatedSymbol) {
+                return cachedResult
+            }
         }
 
         // see if the dependency can be instantiated by itself or its parent
-        return this.createAndCacheDependency(id, quantity, lookUp) as T[] | T | AsyncHook<T> | null
+        return this.createDependency(id, quantity, lookUp, !toSelf) as T[] | T | AsyncHook<T> | null
     }
 
     /**
@@ -191,7 +195,7 @@ export class Injector {
             return Promise.resolve(cachedResult as T)
         }
 
-        const newResult = this.createAndCacheDependency(id, Quantity.REQUIRED)
+        const newResult = this.createDependency(id, Quantity.REQUIRED)
         if (!isAsyncHook(newResult)) {
             return Promise.resolve(newResult as T)
         }
@@ -214,13 +218,17 @@ export class Injector {
     /**
      * resolve different types of dependencies
      */
-    private resolveDependency<T>(id: DependencyIdentifier<T>, item: DependencyItem<T>): T | AsyncHook<T> {
+    private resolveDependency<T>(
+        id: DependencyIdentifier<T>,
+        item: DependencyItem<T>,
+        shouldCache = true
+    ): T | AsyncHook<T> {
         if (isValueDependencyItem(item)) {
             return this.resolveValueDependency(id, item)
         } else if (isFactoryDependencyItem(item)) {
-            return this.resolveFactory(id, item)
+            return this.resolveFactory(id, item, shouldCache)
         } else if (isClassDependencyItem(item)) {
-            return this.resolveClass(id, item)
+            return this.resolveClass(id, item, shouldCache)
         } else {
             return this.resolveAsync(id, item)
         }
@@ -232,7 +240,7 @@ export class Injector {
         return thing
     }
 
-    private resolveClass<T>(id: DependencyIdentifier<T> | null, item: ClassDependencyItem<T>): T {
+    private resolveClass<T>(id: DependencyIdentifier<T> | null, item: ClassDependencyItem<T>, shouldCache = true): T {
         const ctor = item.useClass
         let thing: T
 
@@ -269,7 +277,7 @@ export class Injector {
             thing = this.resolveClass_(ctor)
         }
 
-        if (id) {
+        if (id && shouldCache) {
             this.resolvedDependencyCollection.add(id, thing)
         }
 
@@ -289,7 +297,8 @@ export class Injector {
         const resolvedArgs: any[] = []
 
         for (const dep of declaredDependencies) {
-            const thing = this._get(dep.identifier, dep.quantity, dep.lookUp) // recursive happens here
+            // recursive happens here
+            const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
             resolvedArgs.push(thing)
         }
 
@@ -315,20 +324,23 @@ export class Injector {
         return thing
     }
 
-    private resolveFactory<T>(id: DependencyIdentifier<T>, item: FactoryDependencyItem<T>): T {
+    private resolveFactory<T>(id: DependencyIdentifier<T>, item: FactoryDependencyItem<T>, shouldCache: boolean): T {
         this.markNewResolution(id)
 
         const declaredDependencies = normalizeFactoryDeps(item.deps)
 
         const resolvedArgs: any[] = []
         for (const dep of declaredDependencies) {
-            const thing = this.get(dep.identifier, dep.quantity, dep.lookUp)
+            const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
             resolvedArgs.push(thing)
         }
 
         const thing = item.useFactory.apply(null, resolvedArgs)
 
-        this.resolvedDependencyCollection.add(id, thing)
+        if (shouldCache) {
+            this.resolvedDependencyCollection.add(id, thing)
+        }
+
         this.markResolutionCompleted()
 
         return thing
@@ -412,19 +424,20 @@ export class Injector {
     /**
      * create instance on the correct injector
      */
-    private createAndCacheDependency<T>(
+    private createDependency<T>(
         id: DependencyIdentifier<T>,
         quantity: Quantity = Quantity.REQUIRED,
-        lookUp?: LookUp
+        lookUp?: LookUp,
+        shouldCache = true
     ): null | T | T[] | AsyncHook<T> | (T | AsyncHook<T>)[] {
         const onSelf = () => {
             const registrations = this.dependencyCollection.get(id, quantity)
 
             let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null
             if (Array.isArray(registrations)) {
-                ret = registrations.map((dependencyItem) => this.resolveDependency(id, dependencyItem))
+                ret = registrations.map((dependencyItem) => this.resolveDependency(id, dependencyItem, shouldCache))
             } else if (registrations) {
-                ret = this.resolveDependency(id, registrations)
+                ret = this.resolveDependency(id, registrations, shouldCache)
             }
 
             return ret
@@ -432,7 +445,7 @@ export class Injector {
 
         const onParent = () => {
             if (this.parent) {
-                return this.parent.createAndCacheDependency(id, quantity)
+                return this.parent.createDependency(id, quantity, undefined, shouldCache)
             } else {
                 if (quantity === Quantity.OPTIONAL) {
                     return null
