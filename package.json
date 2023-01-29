@@ -16,7 +16,7 @@
             "LICENSE"
         ]
     },
-    "author": "hullis <hullis@foxmail.com>",
+    "author": "Wenzhao Hu<wendellhu95@gmail.com>",
     "license": "MIT",
     "devDependencies": {
         "@testing-library/dom": "^8.5.0",
