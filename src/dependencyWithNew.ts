@@ -24,4 +24,7 @@ interface ToSelfDecorator {
     new (): ToSelfDecorator
 }
 
+/**
+ * Always initialize a new instance of that dependency instead of getting the cached instance from the injector.
+ */
 export const WithNew: ToSelfDecorator = withNewDecoratorFactoryProducer(true)
