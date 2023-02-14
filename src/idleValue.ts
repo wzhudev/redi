@@ -81,6 +81,10 @@ export class IdleValue<T> implements Disposable {
         this.disposeCallback = runWhenIdle(() => this.executor())
     }
 
+    hasRun(): boolean {
+        return this.didRun
+    }
+
     dispose(): void {
         this.disposeCallback()
     }

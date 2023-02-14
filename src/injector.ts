@@ -29,7 +29,6 @@ import { IdleValue } from './idleValue'
 import { getSingletonDependencies } from './dependencySingletons'
 import { RediError } from './error'
 import { Quantity, LookUp } from './types'
-import { should } from 'vitest'
 
 const MAX_RESOLUTIONS_QUEUED = 300
 
@@ -224,13 +223,13 @@ export class Injector {
         shouldCache = true
     ): T | AsyncHook<T> {
         if (isValueDependencyItem(item)) {
-            return this.resolveValueDependency(id, item)
+            return this.resolveValueDependency(id, item as ValueDependencyItem<T>)
         } else if (isFactoryDependencyItem(item)) {
-            return this.resolveFactory(id, item, shouldCache)
+            return this.resolveFactory(id, item as FactoryDependencyItem<T>, shouldCache)
         } else if (isClassDependencyItem(item)) {
-            return this.resolveClass(id, item, shouldCache)
+            return this.resolveClass(id, item as ClassDependencyItem<T>, shouldCache)
         } else {
-            return this.resolveAsync(id, item)
+            return this.resolveAsync(id, item as AsyncDependencyItem<T>)
         }
     }
 
@@ -257,16 +256,21 @@ export class Injector {
                         return undefined
                     }
 
-                    const val = idle.getValue()
-
-                    let prop = (val as any)[key]
-                    if (typeof prop !== 'function') {
-                        return prop
+                    const hasInstantiated = idle.hasRun()
+                    const thing = idle.getValue()
+                    if (!hasInstantiated) {
+                        item.onInstantiation?.(thing)
                     }
 
-                    prop = prop.bind(val)
-                    target[key] = prop
-                    return prop
+                    let property = (thing as any)[key]
+                    if (typeof property !== 'function') {
+                        return property
+                    }
+
+                    property = property.bind(thing)
+                    target[key] = property
+
+                    return property
                 },
                 set(_target: any, key: string | number | symbol, value: any): boolean {
                     ;(idle.getValue() as any)[key] = value
@@ -342,6 +346,8 @@ export class Injector {
         }
 
         this.markResolutionCompleted()
+
+        item?.onInstantiation?.(thing)
 
         return thing
     }

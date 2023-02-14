@@ -852,6 +852,89 @@ describe('core', () => {
         })
     })
 
+    describe('hooks', () => {
+        afterEach(() => cleanupTest())
+
+        it('should "onInstantiation" work for class dependencies', () => {
+            interface A {
+                key: string
+
+                getAnotherKey(): string
+            }
+
+            let flag = false
+
+            const aI = createIdentifier<A>('aI')
+
+            class A1 implements A {
+                key = 'a'
+
+                constructor() {
+                    flag = true
+                }
+
+                getAnotherKey(): string {
+                    return 'another ' + this.key
+                }
+            }
+
+            class B {
+                constructor(@Inject(aI) private a: A) {}
+
+                get key(): string {
+                    return this.a.key + 'b'
+                }
+
+                getAnotherKey(): string {
+                    return this.a.getAnotherKey() + 'b'
+                }
+
+                setKey(): void {
+                    this.a.key = 'changed '
+                }
+            }
+
+            const j = new Injector([
+                [B],
+                [aI, { useClass: A1, lazy: true, onInstantiation: (i: A) => (i.key = 'a++') }],
+            ])
+
+            const b = j.get(B)
+            expect(flag).toBeFalsy()
+
+            expect(b.key).toBe('a++b')
+            expect(flag).toBeTruthy()
+
+            expect(b.getAnotherKey()).toBe('another a++b')
+
+            b.setKey()
+
+            expect(b.getAnotherKey()).toBe('another changed b')
+        })
+
+        it('should "onInstantiation" work for factory dependencies', () => {
+            interface A {
+                key: string
+            }
+
+            const aI = createIdentifier<A>('aI')
+
+            const j = new Injector([
+                [
+                    aI,
+                    {
+                        useFactory: () => ({
+                            key: 'a',
+                        }),
+                        onInstantiation: (i: A) => (i.key = 'a++'),
+                    },
+                ],
+            ])
+
+            expect(j.get(aI).key).toBe('a++')
+        })
+    })
+
     describe('dispose', () => {
         afterEach(() => cleanupTest())
 

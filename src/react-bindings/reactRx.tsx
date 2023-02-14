@@ -11,7 +11,7 @@ import React, {
 } from 'react'
 import { BehaviorSubject, Observable } from 'rxjs'
 
-import { RediError } from '@wendellhu/redi';
+import { RediError } from '@wendellhu/redi'
 
 /**
  * unwrap an observable value, return it to the component for rendering, and

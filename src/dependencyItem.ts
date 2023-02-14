@@ -12,7 +12,11 @@ export function isCtor<T>(thing: unknown): thing is Ctor<T> {
     return typeof thing === 'function'
 }
 
-export interface ClassDependencyItem<T> {
+export interface DependencyItemHooks<T> {
+    onInstantiation?: (instance: T) => void
+}
+
+export interface ClassDependencyItem<T> extends DependencyItemHooks<T> {
     useClass: Ctor<T>
     lazy?: boolean
 }
@@ -28,7 +32,7 @@ export type FactoryDepModifier = typeof Self | typeof SkipSelf | typeof Optional
 
 export type FactoryDep<T> = [...FactoryDepModifier[], DependencyIdentifier<T>] | DependencyIdentifier<T>
 
-export interface FactoryDependencyItem<T> {
+export interface FactoryDependencyItem<T> extends DependencyItemHooks<T> {
     useFactory: (...deps: any[]) => T
     dynamic?: true
     deps?: FactoryDep<any>[]
@@ -41,7 +45,7 @@ export function isFactoryDependencyItem<T>(thing: unknown): thing is FactoryDepe
     return false
 }
 
-export interface ValueDependencyItem<T> {
+export interface ValueDependencyItem<T> extends DependencyItemHooks<T> {
     useValue: T
 }
 export function isValueDependencyItem<T>(thing: unknown): thing is ValueDependencyItem<T> {
@@ -52,7 +56,7 @@ export function isValueDependencyItem<T>(thing: unknown): thing is ValueDependen
     return false
 }
 
-export interface AsyncDependencyItem<T> {
+export interface AsyncDependencyItem<T> extends DependencyItemHooks<T> {
     useAsync: () => Promise<T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]>
 }
 export function isAsyncDependencyItem<T>(thing: unknown): thing is AsyncDependencyItem<T> {
