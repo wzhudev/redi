@@ -60,7 +60,7 @@ class GetAsyncItemFromSyncApiError<T> extends RediError {
 
 export class Injector {
     private readonly dependencyCollection: DependencyCollection
-    private readonly resolvedDependencyCollection = new ResolvedDependencyCollection()
+    private readonly resolvedDependencyCollection: ResolvedDependencyCollection;
 
     private readonly parent: Injector | null
     private readonly children: Injector[] = []
