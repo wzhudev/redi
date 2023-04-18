@@ -6,17 +6,19 @@ orbs:
     codecov: codecov/codecov@3.1.0
 
 jobs:
-    install-test:
+    test:
         docker:
             # replace with your preferred image
             - image: cimg/base:stable
         steps:
             - node/install:
                   install-npm: false
-                  install-yarn: true
+                  install-yarn: false
+                  install-pnpm: true
             - checkout
-            - run: yarn
-            - run: yarn test
+            - run: pnpm i
+            - run: pnpm run test
+            - run: pnpm run typeCheck
             - store_artifacts:
                   path: coverage
             - codecov/upload
@@ -24,4 +26,4 @@ jobs:
 workflows:
     test:
         jobs:
-            - install-test
+            - test
