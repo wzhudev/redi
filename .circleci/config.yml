@@ -14,8 +14,11 @@ jobs:
             - node/install:
                   install-npm: false
                   install-yarn: false
-                  install-pnpm: true
             - checkout
+            - run:
+                  name: Install pnpm package manager
+                  command: |
+                      curl -L https://pnpm.js.org/pnpm.js | node - add --global pnpm@8
             - run: pnpm i
             - run: pnpm run test
             - run: pnpm run typeCheck
