@@ -28,7 +28,7 @@ export {
 } from './dependencyItem'
 export { RediError } from './error'
 
-const globalObject =
+const globalObject: any =
     (typeof globalThis !== 'undefined' && globalThis) ||
     (typeof window !== 'undefined' && window) ||
     // @ts-ignore

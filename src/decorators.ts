@@ -76,6 +76,7 @@ export function setDependency<T, U>(
         identifier,
         quantity,
         lookUp,
+        withNew: false,
     }
 
     // sometimes identifier could be 'undefined' if user meant to pass in an ES class

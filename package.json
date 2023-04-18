@@ -7,7 +7,8 @@
         "test": "vitest --coverage",
         "lint": "eslint --fix 'src/**/*.ts'",
         "lint:prettier": "prettier --write '{src,test}/**/*.{ts,tsx}'",
-        "build": "squirrel"
+        "build": "squirrel",
+        "typeCheck": "tsc -p tsconfig.json --noEmit"
     },
     "exports": {},
     "squirrel": {
@@ -21,6 +22,7 @@
     "devDependencies": {
         "@testing-library/dom": "^8.5.0",
         "@testing-library/react": "^12.1.2",
+        "@types/node": "^18.15.11",
         "@types/react": ">=16.8.0",
         "@typescript-eslint/eslint-plugin": "^4.30.0",
         "@typescript-eslint/parser": "^4.30.0",
