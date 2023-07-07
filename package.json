@@ -1,14 +1,14 @@
 {
     "$schema": "https://raw.githubusercontent.com/hullis/squirrel/master/src/schema/package.schema.json",
     "name": "@wendellhu/redi",
-    "version": "0.6.4",
+    "version": "0.6.5",
     "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
     "scripts": {
         "test": "vitest --coverage",
         "lint": "eslint --fix 'src/**/*.ts'",
         "lint:prettier": "prettier --write '{src,test}/**/*.{ts,tsx}'",
         "build": "squirrel",
-        "typeCheck": "tsc -p tsconfig.json --noEmit"
+        "typeCheck": "tsc -p tsconfig.check.json --noEmit"
     },
     "exports": {},
     "squirrel": {

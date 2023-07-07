@@ -103,9 +103,9 @@ export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
         knownIdentifiers.add(id)
     }
 
-    const decorator = function (registerTarget: Ctor<T>, _key: string, index: number): void {
+    const decorator = (<any>function (registerTarget: Ctor<T>, _key: string, index: number): void {
         setDependency(registerTarget, decorator, index)
-    } as IdentifierDecorator<T> // decorator as an identifier
+    }) as IdentifierDecorator<T> // decorator as an identifier
 
     decorator.toString = () => id
     decorator[IdentifierDecoratorSymbol] = true

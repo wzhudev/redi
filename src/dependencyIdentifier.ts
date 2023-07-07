@@ -6,15 +6,15 @@ export const IdentifierDecoratorSymbol = Symbol('$$IDENTIFIER_DECORATOR')
 export type IdentifierDecorator<T> = {
     [IdentifierDecoratorSymbol]: true
 
-    /**
-     * decorator
-     */
-    (target: Ctor<T>, key: string, index: number): void
+    // call signature of an decorator
+    (...args: any[]): void
 
     /**
      * beautify console
      */
     toString(): string
+
+    type: T
 }
 
 export type DependencyIdentifier<T> = string | Ctor<T> | ForwardRef<T> | IdentifierDecorator<T>
