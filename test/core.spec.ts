@@ -105,6 +105,65 @@ describe('core', () => {
             expect(cii.key).toBe('a')
         })
 
+		it('should throw error when adding a dependency after it get resovled', () => {
+			const j = new Injector()
+
+			interface IA {
+				key: string;
+			}
+
+			const IA = createIdentifier<IA>('IA')
+
+			class A implements IA {
+                key = 'a'
+            }
+
+
+            class B {
+                constructor(@Inject(IA) public a: IA) {}
+            }
+
+			j.add(IA, { useClass: A })
+            j.add(B)
+
+			j.get(B)
+
+			class AA implements IA {
+				key = 'aa'
+			}
+
+			expectToThrow(() => {
+				j.add(IA, { useClass: AA })
+			})
+		});
+
+		it('should support replacing dependency', () => {
+			const j = new Injector()
+
+			interface IA {
+				key: string;
+			}
+
+			const IA = createIdentifier<IA>('IA')
+
+			class A implements IA {
+                key = 'a'
+            }
+
+			class AA implements IA {
+				key = 'aa'
+			}
+
+            class B {
+                constructor(@Many(IA) public a: IA[]) {}
+            }
+
+			j.add(IA, { useClass: A })
+            j.add(B)
+
+			expect(j.get(B).a.length).toBe(1)
+		})
+
         it('should "createInstance" work', () => {
             class A {
                 key = 'a'

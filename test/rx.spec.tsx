@@ -134,7 +134,7 @@ describe('rx', () => {
 
         await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)))
         expect(container.firstChild!.textContent).toBe('3')
-        expect(childRenderCount).toBe(4)
+        expect(childRenderCount).toBe(2)
     })
 
     it('should not trigger unnecessary re-render with useDependencyContext', async () => {
@@ -183,7 +183,7 @@ describe('rx', () => {
         expect(childRenderCount).toBe(1)
 
         await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)))
-        expect(childRenderCount).toBe(4)
+        expect(childRenderCount).toBe(2)
     })
 
     it('should raise error when no ancestor subscribe an observable value', async () => {
