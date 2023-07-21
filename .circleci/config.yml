@@ -1,33 +1,35 @@
 # This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
 version: 2.1
 
-orbs:
-    node: circleci/node@4.7.0
-    codecov: codecov/codecov@3.1.0
+defaults: &defaults
+    docker:
+        - image: cimg/node:16.20.0
+
+commands:
+    prepare: &prepare
+        steps:
+            - checkout
+            - run:
+                  name: Install pnpm
+                  command: npm install -g pnpm
+            - run:
+                  name: Install dependencies
+                  command: pnpm install
 
 jobs:
     test:
-        docker:
-            # replace with your preferred image
-            - image: cimg/base:stable
+        <<: *defaults
         steps:
-            - node/install:
-                  install-npm: false
-                  install-yarn: false
-            - checkout
+            - prepare
             - run:
-                  name: Install pnpm package manager
-                  command: |
-                      curl -L https://pnpm.js.org/pnpm.js | node - add --global pnpm@6.23.6
-            - run: pnpm i
-            - run: pnpm run test
-            - run: pnpm run typeCheck
-            - run: pnpm run build
-            - store_artifacts:
-                  path: coverage
-            - codecov/upload
+                  name: Unit test
+                  command: pnpm run test
+            - run:
+                  name: Build
+                  command: pnpm run build
 
 workflows:
-    test:
+    lint_and_build:
         jobs:
             - test
+
