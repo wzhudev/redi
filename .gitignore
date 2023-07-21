@@ -7,3 +7,6 @@ yarn.lock
 yarn-error.log
 
 publish/
+
+pnpm-lock.yaml
+
