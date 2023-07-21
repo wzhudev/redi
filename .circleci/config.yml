@@ -18,7 +18,7 @@ jobs:
             - run:
                   name: Install pnpm package manager
                   command: |
-                      curl -L https://pnpm.js.org/pnpm.js | node - add --global pnpm
+                      curl -L https://pnpm.js.org/pnpm.js | node - add --global pnpm@6.23.6
             - run: pnpm i
             - run: pnpm run test
             - run: pnpm run typeCheck
