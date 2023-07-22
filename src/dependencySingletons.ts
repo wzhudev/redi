@@ -2,8 +2,6 @@ import { RediError } from './error'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { DependencyItem, prettyPrintIdentifier } from './dependencyItem'
 
-let singletonFetchedLock = false
-
 const singletonDependencies: [DependencyIdentifier<any>, DependencyItem<any>][] = []
 
 class DuplicatedRegistrationError extends RediError {
@@ -23,21 +21,11 @@ export function registerSingleton<T>(id: DependencyIdentifier<T>, item: Dependen
 }
 
 export function getSingletonDependencies(): [DependencyIdentifier<any>, DependencyItem<any>][] {
-    if (singletonFetchedLock) {
-        console.warn(
-            '[redi]: Singleton dependencies has been fetched before by an other injector. ' +
-                'Please avoid fetching singleton dependencies twice.'
-        )
-    }
-
-    singletonFetchedLock = true
-
     return singletonDependencies
 }
 
 /* istanbul ignore next */
 export function TEST_ONLY_clearSingletonDependencies(): void {
-    singletonFetchedLock = false
-
     singletonDependencies.length = 0
 }
+

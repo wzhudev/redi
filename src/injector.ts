@@ -78,16 +78,12 @@ export class Injector {
 
 	constructor(collectionOrDependencies?: Dependency[], parent?: Injector) {
 		this.dependencyCollection = new DependencyCollection(collectionOrDependencies || [])
+		this.resolvedDependencyCollection = new ResolvedDependencyCollection()
 
-		if (!parent) {
-			this.parent = null
-			this.dependencyCollection.append(getSingletonDependencies())
-		} else {
-			this.parent = parent
+		this.parent = parent || null;
+		if (parent) {
 			parent.children.push(this)
 		}
-
-		this.resolvedDependencyCollection = new ResolvedDependencyCollection()
 	}
 
 	public createChild(dependencies?: Dependency[]): Injector {
