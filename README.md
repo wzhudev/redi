@@ -1,9 +1,9 @@
 # redi
 
-![Stars](https://badgen.net/github/stars/hullis/redi)
+![Stars](https://badgen.net/github/stars/wzhudev/redi)
 ![Downloads](https://badgen.net/npm/dt/@wendellhu/redi)
-![License](https://badgen.net/github/license/hullis/redi)
-[![Codecov](https://img.shields.io/codecov/c/github/hullis/redi.svg)](https://codecov.io/gh/hullis/redi)
+![License](https://badgen.net/github/license/wzhudev/redi)
+[![Codecov](https://img.shields.io/codecov/c/github/wzhudev/redi.svg)](https://codecov.io/gh/wzhudev/redi)
 
 A dependency library for TypeScript and JavaScript, along with a binding for React.
 
@@ -33,14 +33,16 @@ injector.get(AuthService)
 
 ## Links
 
--   [Demo TodoMVC](https://hullis.github.io/redi-todomvc/) | [source](https://github.com/hullis/redi-todomvc)
--   Doc site [source](https://github.com/hullis/redi-site)
--   [scaffold](https://github.com/hullis/redi-starter)
+-   [Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/) | [source](https://github.com/wzhudev/redi-todomvc)
+-   [Doc site](https://redi.wendell.fun) | [source](https://github.com/wzhudev/redi-site)
+-   [Scaffold](https://github.com/wzhudev/redi-starter)
 
 ## Users
 
+-   [Univer](https://github.com/dream-num/univer)
 -   Team Lark at ByteDance
 
 ## License
 
-MIT. Copyright 2021-2022 Wendell Hu.
+MIT. Copyright 2021-present Wenzhao Hu.
+
