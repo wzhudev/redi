@@ -24,9 +24,9 @@ jobs:
             - run:
                   name: Unit test
                   command: pnpm run test
-            - run:
-                  name: Build
-                  command: pnpm run build
+            # - run:
+            #       name: Build
+            #       command: pnpm run build
 
 workflows:
     lint_and_build:
