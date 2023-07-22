@@ -11,7 +11,7 @@ commands:
             - checkout
             - run:
                   name: Install pnpm
-                  command: npm install -g pnpm
+                  command: npm install -g pnpm@8.6.9
             - run:
                   name: Install dependencies
                   command: pnpm install
