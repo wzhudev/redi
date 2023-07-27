@@ -3,6 +3,7 @@ import {
 	Dependency,
 	DependencyCollection,
 	DependencyNotFoundError,
+	DependencyOrInstance,
 	DependencyPair,
 	ResolvedDependencyCollection,
 } from './dependencyCollection'
@@ -102,44 +103,29 @@ export class Injector {
 	}
 
 	/** Add a dependency or its instance into injector. */
-	public add<T>(ctor: Ctor<T>): void
-	public add<T>(pair: DependencyPair<T>): void
-	public add<T>(id: DependencyIdentifier<T>, item: DependencyItem<T> | T): void
-	public add<T>(
-		dependency: Ctor<T> | DependencyPair<T> | DependencyIdentifier<T>,
-		item?: DependencyItem<T> | T
-	): void {
+	public add<T>(dependency: DependencyOrInstance<T>): void {
 		this.ensureInjectorNotDisposed()
+		const identifierOrCtor = dependency[0]
+		const item = dependency[1]
 
-		if (typeof item !== 'undefined' || Array.isArray(dependency)) {
-			if (Array.isArray(dependency)) {
-				item = dependency[1]
-				dependency = dependency[0]
-			}
+		if (this.resolvedDependencyCollection.has(identifierOrCtor)) {
+			throw new AddDependencyAfterResolutionError(identifierOrCtor)
+		}
 
-			if (this.resolvedDependencyCollection.has(dependency)) {
-				throw new AddDependencyAfterResolutionError(dependency)
-			}
-
-			if (
-				isAsyncDependencyItem(item) ||
-				isClassDependencyItem(item) ||
-				isValueDependencyItem(item) ||
-				isFactoryDependencyItem(item)
-			) {
-				// Add depdendency
-				this.dependencyCollection.add(dependency, item as DependencyItem<T>)
-			} else {
-				// Add instance
-				this.resolvedDependencyCollection.add(dependency, item as T)
-			}
-		} else {
-			if (this.resolvedDependencyCollection.has(dependency)) {
-				throw new AddDependencyAfterResolutionError(dependency)
-			}
-
+		if (typeof item === 'undefined') {
 			// Add dependency
-			this.dependencyCollection.add(dependency as Ctor<T>)
+			this.dependencyCollection.add(identifierOrCtor as Ctor<T>)
+		} else if (
+			isAsyncDependencyItem(item) ||
+			isClassDependencyItem(item) ||
+			isValueDependencyItem(item) ||
+			isFactoryDependencyItem(item)
+		) {
+			// Add dependency
+			this.dependencyCollection.add(identifierOrCtor, item as DependencyItem<T>)
+		} else {
+			// Add instance
+			this.resolvedDependencyCollection.add(identifierOrCtor, item as T)
 		}
 	}
 
