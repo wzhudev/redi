@@ -19,12 +19,10 @@ import {
 } from '@wendellhu/redi/react-bindings'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
-import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 import { expectToThrow } from './util/expectToThrow'
 
 describe('rx', () => {
 	afterEach(() => {
-		TEST_ONLY_clearSingletonDependencies()
 		TEST_ONLY_clearKnownIdentifiers()
 	})
 

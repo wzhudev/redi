@@ -19,14 +19,12 @@ import {
 } from '@wendellhu/redi'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
-import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 
 import { AA, BB, bbI } from './async/async.base'
 import { expectToThrow } from './util/expectToThrow'
 
 function cleanupTest() {
 	TEST_ONLY_clearKnownIdentifiers()
-	TEST_ONLY_clearSingletonDependencies()
 }
 
 describe('core', () => {

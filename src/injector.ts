@@ -4,7 +4,6 @@ import {
 	DependencyCollection,
 	DependencyNotFoundError,
 	DependencyOrInstance,
-	DependencyPair,
 	ResolvedDependencyCollection,
 } from './dependencyCollection'
 import { normalizeFactoryDeps } from './dependencyDescriptor'
@@ -26,7 +25,6 @@ import {
 	isValueDependencyItem,
 	prettyPrintIdentifier,
 } from './dependencyItem'
-import { getSingletonDependencies } from './dependencySingletons'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
 import { LookUp, Quantity } from './types'
@@ -65,6 +63,12 @@ class AddDependencyAfterResolutionError<T> extends RediError {
 	}
 }
 
+class DeleteDependencyAfterResolutionError<T> extends RediError {
+	constructor(id: DependencyIdentifier<T>) {
+		super(`Cannot dependency dependency "${prettyPrintIdentifier(id)}" after it is already resolved.`)
+	}
+}
+
 export class Injector {
 	private readonly dependencyCollection: DependencyCollection
 	private readonly resolvedDependencyCollection: ResolvedDependencyCollection
@@ -81,7 +85,7 @@ export class Injector {
 		this.dependencyCollection = new DependencyCollection(collectionOrDependencies || [])
 		this.resolvedDependencyCollection = new ResolvedDependencyCollection()
 
-		this.parent = parent || null;
+		this.parent = parent || null
 		if (parent) {
 			parent.children.push(this)
 		}
@@ -130,24 +134,33 @@ export class Injector {
 	}
 
 	/** Replace an injection mapping for interface-based injection. */
-	public replace<T>(id: DependencyIdentifier<T>, item: DependencyItem<T>): void {
+	public replace<T>(dependency: Dependency<T>): void {
 		this.ensureInjectorNotDisposed()
 
-		if (this.resolvedDependencyCollection.has(id)) {
-			throw new AddDependencyAfterResolutionError(id)
+		const identifier = dependency[0]
+		if (this.resolvedDependencyCollection.has(identifier)) {
+			throw new AddDependencyAfterResolutionError(identifier)
 		}
 
-		this.dependencyCollection.delete(id)
-		this.dependencyCollection.add(id, item)
+		this.dependencyCollection.delete(identifier)
+		if (dependency.length === 1) {
+			this.dependencyCollection.add(identifier as Ctor<T>)
+		} else {
+			this.dependencyCollection.add(identifier, dependency[1])
+		}
 	}
 
 	/**
-	 * Delete a dependency and instantiated values from an injector.
+	 * Delete a dependency from an injector.
 	 */
-	public delete<T>(id: DependencyIdentifier<T>): void {
+	public delete<T>(identifier: DependencyIdentifier<T>): void {
 		this.ensureInjectorNotDisposed()
-		this.dependencyCollection.delete(id)
-		this.resolvedDependencyCollection.delete(id)
+
+		if (this.resolvedDependencyCollection.has(identifier)) {
+			throw new DeleteDependencyAfterResolutionError(identifier)
+		}
+
+		this.dependencyCollection.delete(identifier)
 	}
 
 	/**

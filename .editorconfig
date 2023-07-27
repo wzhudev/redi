@@ -5,6 +5,7 @@ root = true
 
 # Tab indentation
 [*]
+end_of_line = lf
 indent_style = tab
 trim_trailing_whitespace = true
 indent_size = 4

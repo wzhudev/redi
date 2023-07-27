@@ -8,36 +8,35 @@ export { DependencyPair, Dependency } from './dependencyCollection'
 export { DependencyIdentifier, IdentifierDecorator } from './dependencyIdentifier'
 export { Disposable } from './dispose'
 export { setDependencies } from './dependencyDeclare'
-export { registerSingleton } from './dependencySingletons'
 export { WithNew } from './dependencyWithNew'
 export {
-    AsyncDependencyItem,
-    AsyncHook,
-    ClassDependencyItem,
-    Ctor,
-    DependencyItem,
-    FactoryDependencyItem,
-    isAsyncDependencyItem,
-    isAsyncHook,
-    isClassDependencyItem,
-    isCtor,
-    isFactoryDependencyItem,
-    isValueDependencyItem,
-    SyncDependencyItem,
-    ValueDependencyItem,
+	AsyncDependencyItem,
+	AsyncHook,
+	ClassDependencyItem,
+	Ctor,
+	DependencyItem,
+	FactoryDependencyItem,
+	isAsyncDependencyItem,
+	isAsyncHook,
+	isClassDependencyItem,
+	isCtor,
+	isFactoryDependencyItem,
+	isValueDependencyItem,
+	SyncDependencyItem,
+	ValueDependencyItem,
 } from './dependencyItem'
 export { RediError } from './error'
 
 const globalObject: any =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    // @ts-ignore
-    (typeof global !== 'undefined' && global)
+	(typeof globalThis !== 'undefined' && globalThis) ||
+	(typeof window !== 'undefined' && window) ||
+	// @ts-ignore
+	(typeof global !== 'undefined' && global)
 
 const __REDI_GLOBAL_LOCK__ = 'REDI_GLOBAL_LOCK'
 
 if (globalObject[__REDI_GLOBAL_LOCK__]) {
-    console.error('[redi]: Load scripts of redi more than once! This may cause undesired behavior in your application.')
+	console.error('[redi]: Load scripts of redi more than once! This may cause undesired behavior in your application.')
 } else {
-    globalObject[__REDI_GLOBAL_LOCK__] = true
+	globalObject[__REDI_GLOBAL_LOCK__] = true
 }

@@ -8,22 +8,20 @@ import React from 'react'
 
 import { createIdentifier, Disposable, Injector } from '@wendellhu/redi'
 import {
-	WithDependency,
 	connectInjector,
 	connectDependencies,
 	useInjector,
 	RediContext,
 	useDependency,
+	WithDependency,
 } from '@wendellhu/redi/react-bindings'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
-import { TEST_ONLY_clearSingletonDependencies } from '../src/dependencySingletons'
 
 import { expectToThrow } from './util/expectToThrow'
 
 describe('react', () => {
 	afterEach(() => {
-		TEST_ONLY_clearSingletonDependencies()
 		TEST_ONLY_clearKnownIdentifiers()
 	})
 
