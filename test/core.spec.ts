@@ -6,7 +6,7 @@ import { vi, describe, afterEach, it, expect } from 'vitest'
 import {
 	AsyncHook,
 	createIdentifier,
-	Disposable,
+	IDisposable,
 	forwardRef,
 	Inject,
 	Injector,
@@ -1005,7 +1005,7 @@ describe('core', () => {
 				key = 'a'
 			}
 
-			class B implements Disposable {
+			class B implements IDisposable {
 				constructor(@Inject(A) private readonly a: A) {}
 
 				get key(): string {

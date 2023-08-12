@@ -8,7 +8,7 @@ import React, { Component } from 'react'
 import { BehaviorSubject, interval, Subject } from 'rxjs'
 import { scan, startWith } from 'rxjs/operators'
 
-import { Disposable } from '@wendellhu/redi'
+import { IDisposable } from '@wendellhu/redi'
 import {
 	useDependency,
 	useDependencyValue,
@@ -58,7 +58,7 @@ describe('rx', () => {
 	})
 
 	it('should use default value in BehaviorSubject', async () => {
-		class CounterService implements Disposable {
+		class CounterService implements IDisposable {
 			public counter$: BehaviorSubject<number>
 			private number: number
 			private readonly loop?: number
@@ -222,7 +222,7 @@ describe('rx', () => {
 	})
 
 	it('should update whenever `useUpdateBinder` emits', async () => {
-		class CounterService implements Disposable {
+		class CounterService implements IDisposable {
 			public number = 0
 			public updater$ = new Subject<void>()
 

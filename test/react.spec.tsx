@@ -6,7 +6,7 @@ import { describe, afterEach, it, expect } from 'vitest'
 import { render, act, fireEvent } from '@testing-library/react'
 import React from 'react'
 
-import { createIdentifier, Disposable, Injector } from '@wendellhu/redi'
+import { createIdentifier, IDisposable, Injector } from '@wendellhu/redi'
 import {
 	connectInjector,
 	connectDependencies,
@@ -147,7 +147,7 @@ describe('react', () => {
 	it('should dispose injector when React component unmounts', async () => {
 		let disposed = false
 
-		class A implements Disposable {
+		class A implements IDisposable {
 			key = 'a'
 
 			public dispose(): void {

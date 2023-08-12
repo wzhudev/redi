@@ -6,7 +6,7 @@ export { Injector } from './injector'
 export { SkipSelf, Self } from './dependencyLookUp'
 export { DependencyPair, Dependency } from './dependencyCollection'
 export { DependencyIdentifier, IdentifierDecorator } from './dependencyIdentifier'
-export { Disposable } from './dispose'
+export { IDisposable } from './dispose'
 export { setDependencies } from './dependencyDeclare'
 export { WithNew } from './dependencyWithNew'
 export {

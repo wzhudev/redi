@@ -1,4 +1,4 @@
-import { Disposable } from './dispose'
+import { IDisposable } from './dispose'
 
 export interface IdleDeadline {
     readonly didTimeout: boolean
@@ -60,7 +60,7 @@ declare function cancelIdleCallback(handle: number): void
  *
  * the type of the returned value of the executor would be T
  */
-export class IdleValue<T> implements Disposable {
+export class IdleValue<T> implements IDisposable {
     private readonly executor: () => void
     private readonly disposeCallback: () => void
 

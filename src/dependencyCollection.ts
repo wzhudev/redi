@@ -1,7 +1,7 @@
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, DependencyItem, prettyPrintIdentifier } from './dependencyItem'
 import { checkQuantity, retrieveQuantity } from './dependencyQuantity'
-import { Disposable, isDisposable } from './dispose'
+import { IDisposable, isDisposable } from './dispose'
 import { Quantity } from './types'
 import { RediError } from './error'
 
@@ -27,7 +27,7 @@ export class DependencyNotFoundError extends RediError {
  *
  * @internal
  */
-export class DependencyCollection implements Disposable {
+export class DependencyCollection implements IDisposable {
 	private readonly dependencyMap = new Map<DependencyIdentifier<any>, DependencyItem<any>[]>()
 
 	constructor(dependencies: Dependency[]) {
@@ -107,7 +107,7 @@ export class DependencyCollection implements Disposable {
  *
  * @internal
  */
-export class ResolvedDependencyCollection implements Disposable {
+export class ResolvedDependencyCollection implements IDisposable {
 	private readonly resolvedDependencies = new Map<DependencyIdentifier<any>, any[]>()
 
 	public add<T>(id: DependencyIdentifier<T>, val: T | null): void {
