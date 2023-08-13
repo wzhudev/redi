@@ -69,6 +69,10 @@ class DeleteDependencyAfterResolutionError<T> extends RediError {
 	}
 }
 
+interface IAccessor {
+	get: Injector['get']
+}
+
 export class Injector {
 	private readonly dependencyCollection: DependencyCollection
 	private readonly resolvedDependencyCollection: ResolvedDependencyCollection
@@ -161,6 +165,22 @@ export class Injector {
 		}
 
 		this.dependencyCollection.delete(identifier)
+	}
+
+	/**
+	 * Invoke a function with dependencies injected. The function could only get dependency from the injector and other methods are not accessible for the function.
+	 * @param cb the function to be executed
+	 * @param args arguments to be passed into the function
+	 * @returns the return value of the function
+	 */
+	invoke<T, P extends any[] = []>(cb: (accessor: IAccessor, ...args: P) => T, ...args: P): T {
+		const accessor: IAccessor = {
+			get: <D>(id: DependencyIdentifier<D>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp) => {
+				return this._get(id, quantityOrLookup, lookUp)
+			},
+		}
+
+		return cb(accessor, ...args)
 	}
 
 	/**
@@ -437,7 +457,10 @@ export class Injector {
 		const onParent = () => {
 			if (this.parent) {
 				return this.parent.getValue(id, quantity)
-			} else {
+			} else if (quantity === Quantity.OPTIONAL) {
+				return null
+			}
+			{
 				return NotInstantiatedSymbol
 			}
 		}

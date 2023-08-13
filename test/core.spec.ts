@@ -247,6 +247,20 @@ describe('core', () => {
 
 			expectToThrow(() => j.get(aI), `[redi]: Detecting cyclic dependency. The last identifier is "B".`)
 		})
+
+		it('should "invoke" work', () => {
+			class A {
+				a = 'a'
+			}
+
+			const j = new Injector([[A]])
+
+			const a = j.invoke((accessor) => {
+				return accessor.get(A).a
+			})
+
+			expect(a).toBe('a')
+		})
 	})
 
 	describe('different types of dependency items', () => {
