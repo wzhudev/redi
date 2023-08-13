@@ -69,7 +69,7 @@ class DeleteDependencyAfterResolutionError<T> extends RediError {
 	}
 }
 
-interface IAccessor {
+export interface IAccessor {
 	get: Injector['get']
 }
 
