@@ -457,10 +457,7 @@ export class Injector {
 		const onParent = () => {
 			if (this.parent) {
 				return this.parent.getValue(id, quantity)
-			} else if (quantity === Quantity.OPTIONAL) {
-				return null
-			}
-			{
+			} else {
 				return NotInstantiatedSymbol
 			}
 		}
