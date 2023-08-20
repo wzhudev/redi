@@ -685,7 +685,7 @@ describe('core', () => {
 				class B {
 					constructor(@Optional() _a: A) {}
 				}
-			}, `[redi]: Could not find dependency registered on the 1 parameter of the constructor of "B".`)
+			}, `[redi]: Could not find dependency registered on the 0 (indexed) parameter of the constructor of "B".`)
 		})
 
 		it('should throw error when a required / optional dependency is provided with many values', () => {
