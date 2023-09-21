@@ -184,8 +184,14 @@ export class Injector {
 	}
 
 	/**
-	 * Get dependency instance(s).
+	 * Check if the injector could initialize a dependency.
+	 *
+	 * @param id Identifier of the dependency
 	 */
+	public has<T>(id: DependencyIdentifier<T>): boolean {
+		return this.dependencyCollection.has(id) || this.parent?.has(id) || false
+	}
+
 	public get<T>(id: DependencyIdentifier<T>, lookUp?: LookUp): T
 	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY, lookUp?: LookUp): T[]
 	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL, lookUp?: LookUp): T | null
@@ -361,7 +367,11 @@ export class Injector {
 			declaredDependencies.length > 0 ? declaredDependencies[0].paramIndex : args.length
 
 		if (args.length !== firstDependencyArgIndex) {
-			console.warn(`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) but get ${args.length}.`)
+			console.warn(
+				`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${
+					args.length
+				}.`
+			)
 
 			const delta = firstDependencyArgIndex - args.length
 			if (delta > 0) {

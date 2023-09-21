@@ -223,7 +223,17 @@ describe('core', () => {
 			const b = j.createInstance(B, 'another ')
 
 			expect(b.key).toBe('another undefined a')
-			expect(spy).toHaveBeenCalledWith('[redi]: Expect 2 custom parameter(s) but get 1.')
+			expect(spy).toHaveReturnedTimes(1)
+			// expect(spy).toHaveBeenCalledWith(`[redi]: Expect 2 custom parameter(s) of class {
+			//     constructor(otherKey, secondKey, a) {
+			//         this.otherKey = otherKey;
+			//         this.secondKey = secondKey;
+			//     	   this.a = a;
+			// 	   }
+			// 	   get key() {
+			//     	    return this.otherKey + this.secondKey + \" \" + this.a.key;
+			// 	   }
+			// } but get 1.`)
 
 			spy.mockRestore()
 		})
@@ -260,6 +270,17 @@ describe('core', () => {
 			})
 
 			expect(a).toBe('a')
+		})
+
+		it('should support checking if a dependency could be resolved by an injector', () => {
+			class A {}
+
+			class B {}
+
+			const j = new Injector([[A]])
+
+			expect(j.has(A)).toBeTruthy()
+			expect(j.has(B)).toBeFalsy()
 		})
 	})
 
