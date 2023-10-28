@@ -8,7 +8,8 @@ import { RediError } from './error'
 export type DependencyPair<T> = [DependencyIdentifier<T>, DependencyItem<T>]
 export type DependencyClass<T> = [Ctor<T>]
 export type Dependency<T = any> = DependencyPair<T> | DependencyClass<T>
-export type DependencyOrInstance<T = any> = Dependency<T> | [Ctor<T> | DependencyIdentifier<T>, T]
+export type DependencyWithInstance<T = any> = [Ctor<T> | DependencyIdentifier<T>, T]
+export type DependencyOrInstance<T = any> = Dependency<T> | DependencyWithInstance<T>
 
 export function isBareClassDependency<T>(thing: Dependency<T>): thing is DependencyClass<T> {
 	return thing.length === 1
@@ -23,7 +24,7 @@ export class DependencyNotFoundError extends RediError {
 }
 
 /**
- * store unresolved dependencies in an injector
+ * Store unresolved dependencies in an injector.
  *
  * @internal
  */
@@ -103,7 +104,7 @@ export class DependencyCollection implements IDisposable {
 }
 
 /**
- * store resolved dependencies
+ * Store resolved dependencies.
  *
  * @internal
  */

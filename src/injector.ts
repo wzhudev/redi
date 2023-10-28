@@ -73,35 +73,52 @@ export interface IAccessor {
 	get: Injector['get']
 }
 
+/**
+ *
+ */
 export class Injector {
 	private readonly dependencyCollection: DependencyCollection
 	private readonly resolvedDependencyCollection: ResolvedDependencyCollection
 
-	private readonly parent: Injector | null
 	private readonly children: Injector[] = []
 
 	private resolutionOngoing = 0
 
-	/** If the injector is diposed */
 	private disposed = false
 
-	constructor(collectionOrDependencies?: Dependency[], parent?: Injector) {
-		this.dependencyCollection = new DependencyCollection(collectionOrDependencies || [])
+	/**
+	 * Create a new `Injector` instance
+	 * @param dependencies Dependencies that should be resolved by this injector instance.
+	 * @param parent Optional parent injector.
+	 */
+	constructor(dependencies?: Dependency[], private readonly parent: Injector | null = null) {
+		this.dependencyCollection = new DependencyCollection(dependencies || [])
 		this.resolvedDependencyCollection = new ResolvedDependencyCollection()
 
-		this.parent = parent || null
 		if (parent) {
 			parent.children.push(this)
 		}
 	}
 
+	/**
+	 * Create a child inject with a set of dependencies.
+	 * @param dependencies Dependencies that should be resolved by the newly created child injector.
+	 * @returns The child injector.
+	 */
 	public createChild(dependencies?: Dependency[]): Injector {
 		this.ensureInjectorNotDisposed()
-
 		return new Injector(dependencies, this)
 	}
 
+	/**
+	 * Dispose the injector and all dependencies held by this injector. Note that its child injectors will dispose first.
+	 */
 	public dispose(): void {
+		// Dispose child injectors first.
+		this.children.forEach((c) => c.dispose())
+		this.children.length = 0
+
+		// Call `dispose` method on each instantiated dependencies if they are `IDisposable` and clear collections.
 		this.dependencyCollection.dispose()
 		this.resolvedDependencyCollection.dispose()
 
@@ -110,7 +127,21 @@ export class Injector {
 		this.disposed = true
 	}
 
-	/** Add a dependency or its instance into injector. */
+	private deleteSelfFromParent(): void {
+		if (this.parent) {
+			const index = this.parent.children.indexOf(this)
+			if (index > -1) {
+				this.parent.children.splice(index, 1)
+			}
+		}
+	}
+
+	/**
+	 * Add a dependency or its instance into injector. It would throw an error if the dependency
+	 * has already been instantiated.
+	 *
+	 * @param dependency The dependency or an instance that would be add in the injector.
+	 */
 	public add<T>(dependency: DependencyOrInstance<T>): void {
 		this.ensureInjectorNotDisposed()
 		const identifierOrCtor = dependency[0]
@@ -137,7 +168,12 @@ export class Injector {
 		}
 	}
 
-	/** Replace an injection mapping for interface-based injection. */
+	/**
+	 * Replace an injection mapping for interface-based injection. It would throw an error if the dependency
+	 * has already been instantiated.
+	 *
+	 * @param dependency The dependency that will replace the already existed dependency.
+	 */
 	public replace<T>(dependency: Dependency<T>): void {
 		this.ensureInjectorNotDisposed()
 
@@ -155,7 +191,10 @@ export class Injector {
 	}
 
 	/**
-	 * Delete a dependency from an injector.
+	 * Delete a dependency from an injector. It would throw an error when the deleted dependency
+	 * has already been instantiated.
+	 *
+	 * @param identifier The identifier of the dependency that is supposed to be deleted.
 	 */
 	public delete<T>(identifier: DependencyIdentifier<T>): void {
 		this.ensureInjectorNotDisposed()
@@ -168,7 +207,9 @@ export class Injector {
 	}
 
 	/**
-	 * Invoke a function with dependencies injected. The function could only get dependency from the injector and other methods are not accessible for the function.
+	 * Invoke a function with dependencies injected. The function could only get dependency from the injector
+	 * and other methods are not accessible for the function.
+	 *
 	 * @param cb the function to be executed
 	 * @param args arguments to be passed into the function
 	 * @returns the return value of the function
@@ -198,6 +239,13 @@ export class Injector {
 	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED, lookUp?: LookUp): T
 	public get<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): T[] | T | null
 	public get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null
+	/**
+	 * Get dependency instance(s).
+	 *
+	 * @param id Identifier of the dependency
+	 * @param quantityOrLookup @link{Quantity} or @link{LookUp}
+	 * @param lookUp @link{LookUp}
+	 */
 	public get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null {
 		const newResult = this._get(id, quantityOrLookup, lookUp)
 
@@ -208,7 +256,7 @@ export class Injector {
 		return newResult as T | T[] | null
 	}
 
-	public _get<T>(
+	private _get<T>(
 		id: DependencyIdentifier<T>,
 		quantityOrLookup?: Quantity | LookUp,
 		lookUp?: LookUp,
@@ -240,7 +288,7 @@ export class Injector {
 	}
 
 	/**
-	 * Get a dependency, but in async way.
+	 * Get a dependency in the async way.
 	 */
 	public getAsync<T>(id: DependencyIdentifier<T>): Promise<T> {
 		this.ensureInjectorNotDisposed()
@@ -259,7 +307,7 @@ export class Injector {
 	}
 
 	/**
-	 * to instantiate a class withing the current injector
+	 * Instantiate a class. The created instance would not be held by the injector.
 	 */
 	public createInstance<T extends unknown[], U extends unknown[], C>(
 		ctor: new (...args: [...T, ...U]) => C,
@@ -267,12 +315,9 @@ export class Injector {
 	): C {
 		this.ensureInjectorNotDisposed()
 
-		return this.resolveClass_(ctor as Ctor<C>, ...customArgs)
+		return this._resolveClass(ctor as Ctor<C>, ...customArgs)
 	}
 
-	/**
-	 * resolve different types of dependencies
-	 */
 	private resolveDependency<T>(
 		id: DependencyIdentifier<T>,
 		item: DependencyItem<T>,
@@ -300,7 +345,7 @@ export class Injector {
 		let thing: T
 
 		if (item.lazy) {
-			const idle = new IdleValue<T>(() => this.resolveClass_(ctor))
+			const idle = new IdleValue<T>(() => this._resolveClass(ctor))
 			thing = new Proxy(Object.create(null), {
 				get(target: any, key: string | number | symbol): any {
 					if (key in target) {
@@ -334,7 +379,7 @@ export class Injector {
 				},
 			})
 		} else {
-			thing = this.resolveClass_(ctor)
+			thing = this._resolveClass(ctor)
 		}
 
 		if (id && shouldCache) {
@@ -344,7 +389,7 @@ export class Injector {
 		return thing
 	}
 
-	private resolveClass_<T>(ctor: Ctor<T>, ...extraParams: any[]) {
+	private _resolveClass<T>(ctor: Ctor<T>, ...extraParams: any[]) {
 		this.markNewResolution(ctor)
 
 		const declaredDependencies = getDependencies(ctor)
@@ -414,12 +459,12 @@ export class Injector {
 
 	private resolveAsync<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): AsyncHook<T> {
 		const asyncLoader: AsyncHook<T> = {
-			whenReady: () => this.resolveAsync_(id, item),
+			whenReady: () => this._resolveAsync(id, item),
 		}
 		return asyncLoader
 	}
 
-	private resolveAsync_<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): Promise<T> {
+	private _resolveAsync<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): Promise<T> {
 		return item.useAsync().then((thing) => {
 			// check if another promise has been resolved,
 			// do not resolve the async item twice
@@ -437,7 +482,7 @@ export class Injector {
 					ret = this.resolveDependency(id, item) as T
 				}
 			} else if (isCtor(thing)) {
-				ret = this.resolveClass_(thing)
+				ret = this._resolveClass(thing)
 			} else {
 				ret = thing
 			}
@@ -448,9 +493,6 @@ export class Injector {
 		})
 	}
 
-	/**
-	 * recursively get a dependency value
-	 */
 	private getValue<T>(
 		id: DependencyIdentifier<T>,
 		quantity: Quantity = Quantity.REQUIRED,
@@ -487,9 +529,6 @@ export class Injector {
 		return onParent()
 	}
 
-	/**
-	 * create instance on the correct injector
-	 */
 	private createDependency<T>(
 		id: DependencyIdentifier<T>,
 		quantity: Quantity = Quantity.REQUIRED,
@@ -551,13 +590,6 @@ export class Injector {
 	private ensureInjectorNotDisposed(): void {
 		if (this.disposed) {
 			throw new InjectorAlreadyDisposedError()
-		}
-	}
-
-	private deleteSelfFromParent(): void {
-		if (this.parent) {
-			const index = this.parent.children.indexOf(this)
-			this.parent.children.splice(index, 1)
 		}
 	}
 }

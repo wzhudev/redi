@@ -106,7 +106,7 @@ describe('core', () => {
 			expect(cii.key).toBe('a')
 		})
 
-		it('should throw error when adding a dependency after it get resovled', () => {
+		it('should throw error when adding a dependency after it get resolved', () => {
 			const j = new Injector()
 
 			interface IA {
@@ -287,6 +287,41 @@ describe('core', () => {
 	describe('different types of dependency items', () => {
 		describe('class item', () => {
 			afterEach(() => cleanupTest())
+
+			it('should dispose idle callback when dependency immediately resolved', async () => {
+				interface A {
+					key: string
+				}
+
+				let count = 0
+
+				const aI = createIdentifier<A>('aI')
+
+				class A1 implements A {
+					key = 'a'
+
+					constructor() {
+						count += 1
+					}
+				}
+
+				class B {
+					key: string
+
+					constructor(@aI private readonly _a: A) {
+						this.key = this._a.key + 'b'
+					}
+				}
+
+				const j = new Injector([[B], [aI, { useClass: A1, lazy: true }]])
+
+				j.get(B)
+				expect(count).toBe(1)
+
+				await new Promise((resolve) => setTimeout(resolve, 200))
+
+				expect(count).toBe(1)
+			})
 
 			it('should initialize when lazy class instance is actually accessed', () => {
 				interface A {
