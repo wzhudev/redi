@@ -30,16 +30,16 @@ export class IdentifierUndefinedError extends RediError {
 }
 
 /**
- * get dependencies declared on a class
- *
- * @param registerTarget the class
- * @returns dependencies
+ * @internal
  */
 export function getDependencies<T>(registerTarget: Ctor<T>): DependencyDescriptor<any>[] {
 	const target = registerTarget as any
 	return target[DEPENDENCIES] || []
 }
 
+/**
+ * @internal
+ */
 export function getDependencyByIndex<T>(registerTarget: Ctor<T>, index: number): DependencyDescriptor<any> {
 	const allDependencies = getDependencies(registerTarget)
 	const dep = allDependencies.find((descriptor) => descriptor.paramIndex === index)
@@ -52,17 +52,7 @@ export function getDependencyByIndex<T>(registerTarget: Ctor<T>, index: number):
 }
 
 /**
- * declare dependency relationship on a class
- *
- * if the IDependencyDescriptor already exists, just modify it without creating
- * a new descriptor since differently decorators could be applied on a same
- * constructor property
- *
- * @param registerTarget the class to be registered
- * @param identifier dependency item identifier
- * @param paramIndex index of the decorator constructor parameter
- * @param quantity quantity of the dependency
- * @param lookUp optional lookup
+ * @internal
  */
 export function setDependency<T, U>(
 	registerTarget: Ctor<U>,
@@ -96,6 +86,13 @@ export function setDependency<T, U>(
 }
 
 const knownIdentifiers = new Set<string>()
+
+/**
+ * Create a dependency identifier
+ *
+ * @param id name of the identifier
+ * @returns Identifier that could also be used as a decorator
+ */
 export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
 	if (knownIdentifiers.has(id)) {
 		throw new RediError(`Identifier "${id}" already exists.`)
@@ -113,6 +110,9 @@ export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
 	return decorator
 }
 
+/**
+ * @internal
+ */
 /* istanbul ignore next */
 export function TEST_ONLY_clearKnownIdentifiers(): void {
 	knownIdentifiers.clear()
