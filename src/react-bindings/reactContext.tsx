@@ -17,7 +17,11 @@ if (!window.RediContextCreated) {
 	)
 }
 
-export const RediContext = React.createContext<{ injector: Injector | null }>({
+export interface IRediContext {
+	injector: Injector | null
+}
+
+export const RediContext = React.createContext<IRediContext>({
 	injector: null,
 })
 RediContext.displayName = 'RediContext'

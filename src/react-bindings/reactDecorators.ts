@@ -1,4 +1,5 @@
-import { DependencyIdentifier, Quantity, LookUp, Injector, RediError } from '@wendellhu/redi'
+import { DependencyIdentifier, Quantity, LookUp, RediError } from '@wendellhu/redi'
+import { IRediContext } from './reactContext'
 
 class ClassComponentNotInRediContextError<T> extends RediError {
 	constructor(component: React.Component<T>) {
@@ -16,11 +17,12 @@ export function WithDependency<T>(id: DependencyIdentifier<T>, quantity?: Quanti
 			get(): T | T[] | null {
 				const thisComponent: React.Component<T> = this as any
 
-				if (!thisComponent.context || !thisComponent.context.injector) {
+				const context = thisComponent.context as IRediContext | null
+				if (!context || !context.injector) {
 					throw new ClassComponentNotInRediContextError(thisComponent)
 				}
 
-				const injector: Injector = thisComponent.context.injector
+				const injector = context.injector
 				const thing = injector.get(id, quantity || Quantity.REQUIRED, lookUp)
 
 				return thing
