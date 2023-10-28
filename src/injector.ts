@@ -412,11 +412,15 @@ export class Injector {
 			declaredDependencies.length > 0 ? declaredDependencies[0].paramIndex : args.length
 
 		if (args.length !== firstDependencyArgIndex) {
+<<<<<<< HEAD
 			console.warn(
 				`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${
 					args.length
 				}.`
 			)
+=======
+			console.warn(`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${args.length}.`)
+>>>>>>> 80fed9e (chore: update error info)
 
 			const delta = firstDependencyArgIndex - args.length
 			if (delta > 0) {
@@ -459,12 +463,12 @@ export class Injector {
 
 	private resolveAsync<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): AsyncHook<T> {
 		const asyncLoader: AsyncHook<T> = {
-			whenReady: () => this.resolveAsync_(id, item),
+			whenReady: () => this._resolveAsync(id, item),
 		}
 		return asyncLoader
 	}
 
-	private resolveAsync_<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): Promise<T> {
+	private _resolveAsync<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): Promise<T> {
 		return item.useAsync().then((thing) => {
 			// check if another promise has been resolved,
 			// do not resolve the async item twice

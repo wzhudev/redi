@@ -104,6 +104,8 @@ export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
 		setDependency(registerTarget, decorator, index)
 	}) as IdentifierDecorator<T> // decorator as an identifier
 
+	// TODO: @wzhudev should assign a name to the function so it would be easy to debug in inspect tools
+	// decorator.name = `[redi]: ${id}`;
 	decorator.toString = () => id
 	decorator[IdentifierDecoratorSymbol] = true
 
