@@ -4,17 +4,17 @@ import { ForwardRef } from './dependencyForwardRef'
 export const IdentifierDecoratorSymbol = Symbol('$$IDENTIFIER_DECORATOR')
 
 export type IdentifierDecorator<T> = {
-    [IdentifierDecoratorSymbol]: true
+	[IdentifierDecoratorSymbol]: true
 
-    // call signature of an decorator
-    (...args: any[]): void
+	// call signature of an decorator
+	(...args: any[]): void
 
-    /**
-     * beautify console
-     */
-    toString(): string
+	/**
+	 * beautify console
+	 */
+	toString(): string
 
-    type: T
+	type: T
 }
 
 export type DependencyIdentifier<T> = string | Ctor<T> | ForwardRef<T> | IdentifierDecorator<T>
