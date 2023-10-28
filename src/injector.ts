@@ -412,15 +412,11 @@ export class Injector {
 			declaredDependencies.length > 0 ? declaredDependencies[0].paramIndex : args.length
 
 		if (args.length !== firstDependencyArgIndex) {
-<<<<<<< HEAD
 			console.warn(
 				`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${
 					args.length
 				}.`
 			)
-=======
-			console.warn(`[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${args.length}.`)
->>>>>>> 80fed9e (chore: update error info)
 
 			const delta = firstDependencyArgIndex - args.length
 			if (delta > 0) {
