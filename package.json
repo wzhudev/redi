@@ -4,7 +4,7 @@
     "version": "0.12.9",
     "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
     "scripts": {
-        "test": "vitest --coverage",
+        "test": "vitest run --coverage",
         "lint": "eslint --fix 'src/**/*.ts'",
         "lint:prettier": "prettier --write '{src,test}/**/*.{ts,tsx}'",
         "build": "squirrel",
