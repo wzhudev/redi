@@ -36,27 +36,24 @@ function RediInjector(props: React.PropsWithChildren<{ dependencies: Dependency[
  * @param injector
  * @returns
  */
-export function connectInjector<P extends JSX.IntrinsicAttributes>(
-	Comp: React.ComponentType<P>,
-	injector: Injector
-): React.ComponentType<P> {
+export function connectInjector<P>(Comp: React.ComponentType<P>, injector: Injector): React.ComponentType<P> {
 	return function ComponentWithInjector(props: P) {
 		return (
 			<RediProvider value={{ injector }}>
-				<Comp {...props} />
+				<Comp {...(props as P & React.JSX.IntrinsicAttributes)} />
 			</RediProvider>
 		)
 	}
 }
 
-export function connectDependencies<T extends JSX.IntrinsicAttributes>(
-	Comp: React.ComponentType<T>,
+export function connectDependencies<P>(
+	Comp: React.ComponentType<P>,
 	dependencies: Dependency[]
-): React.ComponentType<T> {
-	return function ComponentWithInjector(props: T) {
+): React.ComponentType<P> {
+	return function ComponentWithInjector(props: P) {
 		return (
 			<RediInjector dependencies={dependencies}>
-				<Comp {...props} />
+				<Comp {...(props as P & React.JSX.IntrinsicAttributes)} />
 			</RediInjector>
 		)
 	}
