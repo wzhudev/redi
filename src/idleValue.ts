@@ -29,7 +29,7 @@ declare function cancelIdleCallback(handle: number): void
 					return
 				}
 				disposed = true
-				clearTimeout(handle)
+				cancelIdleCallback(handle)
 			}
 		}
 	} else {
@@ -76,7 +76,6 @@ export class IdleValue<T> implements IDisposable {
 				this.error = err
 			} finally {
 				this.didRun = true
-				this.disposeCallback()
 			}
 		}
 

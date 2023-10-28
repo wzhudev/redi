@@ -318,10 +318,10 @@ describe('core', () => {
 				j.get(B)
 				expect(count).toBe(1)
 
-				await new Promise(resolve => setTimeout(resolve, 200))
+				await new Promise((resolve) => setTimeout(resolve, 200))
 
 				expect(count).toBe(1)
-			});
+			})
 
 			it('should initialize when lazy class instance is actually accessed', () => {
 				interface A {
