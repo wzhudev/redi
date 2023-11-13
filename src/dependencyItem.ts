@@ -67,11 +67,14 @@ export function isAsyncDependencyItem<T>(thing: unknown): thing is AsyncDependen
 	return false
 }
 
+export const AsyncHookSymbol = Symbol('AsyncHook')
 export interface AsyncHook<T> {
+	__symbol: typeof AsyncHookSymbol
 	whenReady(): Promise<T>
 }
 export function isAsyncHook<T>(thing: unknown): thing is AsyncHook<T> {
-	if (thing && typeof (thing as any).whenReady !== 'undefined') {
+	if (thing && (thing as any)['__symbol'] === AsyncHookSymbol) {
+		// FIXME@wzhudev: should not be undefined but a symbol here
 		return true
 	}
 

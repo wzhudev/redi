@@ -24,6 +24,7 @@ import {
 	isFactoryDependencyItem,
 	isValueDependencyItem,
 	prettyPrintIdentifier,
+	AsyncHookSymbol,
 } from './dependencyItem'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
@@ -459,6 +460,7 @@ export class Injector {
 
 	private resolveAsync<T>(id: DependencyIdentifier<T>, item: AsyncDependencyItem<T>): AsyncHook<T> {
 		const asyncLoader: AsyncHook<T> = {
+			__symbol: AsyncHookSymbol,
 			whenReady: () => this._resolveAsync(id, item),
 		}
 		return asyncLoader
