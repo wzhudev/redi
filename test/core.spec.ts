@@ -415,6 +415,19 @@ describe('core', () => {
 					key = 'b'
 				}
 			})
+
+			it('should throw error when a dependency cannot be resolved', () => {
+				class A {}
+
+				class B {
+					constructor(_param: string, @Inject(A) private readonly _a: A) {}
+				}
+
+				const j = new Injector([[B]])
+				expectToThrow(() => {
+					j.get(B)
+				}, '[redi]: Cannot find "A" registered by any injector. It is the 1th dependency of "B".')
+			})
 		})
 
 		describe('instance item', () => {

@@ -3,6 +3,7 @@ import {
 	Dependency,
 	DependencyCollection,
 	DependencyNotFoundError,
+	DependencyNotFoundForModuleError,
 	DependencyOrInstance,
 	ResolvedDependencyCollection,
 } from './dependencyCollection'
@@ -404,8 +405,17 @@ export class Injector {
 
 		for (const dep of declaredDependencies) {
 			// recursive happens here
-			const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
-			resolvedArgs.push(thing)
+			try {
+				const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
+				resolvedArgs.push(thing)
+			} catch (err: unknown) {
+				if (err instanceof DependencyNotFoundError) {
+					throw new DependencyNotFoundForModuleError(ctor, dep.identifier, dep.paramIndex);
+				}
+
+				throw err;
+			}
+
 		}
 
 		let args = [...extraParams]
