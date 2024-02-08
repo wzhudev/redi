@@ -376,7 +376,7 @@ export class Injector {
 					return property
 				},
 				set(_target: any, key: string | number | symbol, value: any): boolean {
-					;(idle.getValue() as any)[key] = value
+					(idle.getValue() as any)[key] = value
 					return true
 				},
 			})
