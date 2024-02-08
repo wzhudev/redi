@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, expect } from 'vitest'
 
 /**
  * Helps prevent error logs blowing up as a result of expecting an error to be thrown,

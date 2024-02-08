@@ -5,6 +5,7 @@
     "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
     "scripts": {
         "test": "vitest run --coverage",
+        "watch": "vitest",
         "lint": "eslint --fix 'src/**/*.ts'",
         "lint:prettier": "prettier --write '{src,test}/**/*.{ts,tsx}'",
         "build": "squirrel",
@@ -21,19 +22,19 @@
     "devDependencies": {
         "@testing-library/dom": "^8.5.0",
         "@testing-library/react": "^14.0.0",
-        "@types/node": "^16.0.0",
-        "@types/react": "^18.0.0",
+        "@types/node": "^20.11.7",
+        "@types/react": "^18.2.48",
         "@typescript-eslint/eslint-plugin": "^4.30.0",
         "@typescript-eslint/parser": "^4.30.0",
         "@wendellhu/squirrel": "^0.1.7",
-        "c8": "^7.11.2",
         "eslint": "^7.32.0",
         "jsdom": "^19.0.0",
         "prettier": "^2.3.2",
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
         "rxjs": "^6.2.1",
-        "typescript": "^4.5.0",
-        "vitest": "^0.10.0"
+        "typescript": "^5.3.3",
+        "vitest": "^1.2.1",
+        "@vitest/coverage-istanbul": "^1.2.2"
     }
 }
