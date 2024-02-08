@@ -416,7 +416,7 @@ describe('core', () => {
 				}
 			})
 
-			it('should throw error when a dependency cannot be resolved', () => {
+			it('[class item] should throw error when a dependency cannot be resolved', () => {
 				class A {}
 
 				class B {
@@ -472,6 +472,21 @@ describe('core', () => {
 				])
 
 				expect(j.get(aI).key).toBe('a')
+			})
+
+			it('[factory item] should throw error when a dependency cannot be resolved', () => {
+				class A {}
+
+				interface IB {
+					name: string;
+				}
+
+				const b = createIdentifier<IB>('b');
+
+				const j = new Injector([[b, { useFactory: (_a: A) => ({ name: b }), deps: [A] }]])
+				expectToThrow(() => {
+					j.get(b)
+				}, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b".')
 			})
 		})
 

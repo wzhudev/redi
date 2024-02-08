@@ -457,7 +457,7 @@ export class Injector {
 			resolvedArgs.push(thing)
 			} catch (error: unknown) {
 				if (error instanceof DependencyNotFoundError) {
-					throw new DependencyNotFoundForModuleError(item, dep.identifier, dep.paramIndex);
+					throw new DependencyNotFoundForModuleError(id, dep.identifier, dep.paramIndex);
 				}
 
 				throw error;

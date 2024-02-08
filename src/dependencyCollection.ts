@@ -1,5 +1,5 @@
-import { DependencyIdentifier } from './dependencyIdentifier'
-import { Ctor, DependencyItem, FactoryDependencyItem, prettyPrintIdentifier } from './dependencyItem'
+import { DependencyIdentifier, isIdentifierDecorator } from './dependencyIdentifier'
+import { Ctor, DependencyItem, prettyPrintIdentifier } from './dependencyItem'
 import { checkQuantity, retrieveQuantity } from './dependencyQuantity'
 import { IDisposable, isDisposable } from './dispose'
 import { Quantity } from './types'
@@ -16,9 +16,9 @@ export function isBareClassDependency<T>(thing: Dependency<T>): thing is Depende
 }
 
 export class DependencyNotFoundForModuleError extends RediError {
-	constructor(toInstantiate: Ctor<any> | FactoryDependencyItem<any>, id: DependencyIdentifier<any>, index: number) {
+	constructor(toInstantiate: Ctor<any> | DependencyIdentifier<any>, id: DependencyIdentifier<any>, index: number) {
 		const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th param of "${
-			toInstantiate instanceof Function ? toInstantiate.name : toInstantiate
+			isIdentifierDecorator(toInstantiate) ? prettyPrintIdentifier(toInstantiate): (toInstantiate as Ctor<any>).name
 		}".`
 
 		super(msg)
