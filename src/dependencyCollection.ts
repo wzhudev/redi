@@ -17,7 +17,7 @@ export function isBareClassDependency<T>(thing: Dependency<T>): thing is Depende
 
 export class DependencyNotFoundForModuleError extends RediError {
 	constructor(toInstantiate: Ctor<any> | FactoryDependencyItem<any>, id: DependencyIdentifier<any>, index: number) {
-		const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th dependency of "${
+		const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th param of "${
 			toInstantiate instanceof Function ? toInstantiate.name : toInstantiate
 		}".`
 

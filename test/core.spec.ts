@@ -426,7 +426,7 @@ describe('core', () => {
 				const j = new Injector([[B]])
 				expectToThrow(() => {
 					j.get(B)
-				}, '[redi]: Cannot find "A" registered by any injector. It is the 1th dependency of "B".')
+				}, '[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".')
 			})
 		})
 

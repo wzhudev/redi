@@ -408,12 +408,12 @@ export class Injector {
 			try {
 				const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
 				resolvedArgs.push(thing)
-			} catch (err: unknown) {
-				if (err instanceof DependencyNotFoundError) {
+			} catch (error: unknown) {
+				if (error instanceof DependencyNotFoundError) {
 					throw new DependencyNotFoundForModuleError(ctor, dep.identifier, dep.paramIndex);
 				}
 
-				throw err;
+				throw error;
 			}
 
 		}
@@ -451,8 +451,17 @@ export class Injector {
 
 		const resolvedArgs: any[] = []
 		for (const dep of declaredDependencies) {
+			try {
+
 			const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
 			resolvedArgs.push(thing)
+			} catch (error: unknown) {
+				if (error instanceof DependencyNotFoundError) {
+					throw new DependencyNotFoundForModuleError(item, dep.identifier, dep.paramIndex);
+				}
+
+				throw error;
+			}
 		}
 
 		const thing = item.useFactory.apply(null, resolvedArgs)
