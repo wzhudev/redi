@@ -3,6 +3,7 @@ import {
 	Dependency,
 	DependencyCollection,
 	DependencyNotFoundError,
+	DependencyNotFoundForModuleError,
 	DependencyOrInstance,
 	ResolvedDependencyCollection,
 } from './dependencyCollection'
@@ -375,7 +376,7 @@ export class Injector {
 					return property
 				},
 				set(_target: any, key: string | number | symbol, value: any): boolean {
-					;(idle.getValue() as any)[key] = value
+					(idle.getValue() as any)[key] = value
 					return true
 				},
 			})
@@ -404,8 +405,17 @@ export class Injector {
 
 		for (const dep of declaredDependencies) {
 			// recursive happens here
-			const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
-			resolvedArgs.push(thing)
+			try {
+				const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
+				resolvedArgs.push(thing)
+			} catch (error: unknown) {
+				if (error instanceof DependencyNotFoundError) {
+					throw new DependencyNotFoundForModuleError(ctor, dep.identifier, dep.paramIndex);
+				}
+
+				throw error;
+			}
+
 		}
 
 		let args = [...extraParams]
@@ -441,8 +451,17 @@ export class Injector {
 
 		const resolvedArgs: any[] = []
 		for (const dep of declaredDependencies) {
+			try {
+
 			const thing = this._get(dep.identifier, dep.quantity, dep.lookUp, dep.withNew)
 			resolvedArgs.push(thing)
+			} catch (error: unknown) {
+				if (error instanceof DependencyNotFoundError) {
+					throw new DependencyNotFoundForModuleError(id, dep.identifier, dep.paramIndex);
+				}
+
+				throw error;
+			}
 		}
 
 		const thing = item.useFactory.apply(null, resolvedArgs)
