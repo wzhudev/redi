@@ -1,4 +1,7 @@
-import { DependencyIdentifier, NormalizedDependencyIdentifier } from './dependencyIdentifier'
+import {
+	DependencyIdentifier,
+	NormalizedDependencyIdentifier,
+} from './dependencyIdentifier'
 import { Ctor } from './dependencyItem'
 
 export interface ForwardRef<T> {
@@ -15,7 +18,9 @@ export function isForwardRef<T = any>(thing: unknown): thing is ForwardRef<T> {
 	return !!thing && typeof (thing as any).unwrap === 'function'
 }
 
-export function normalizeForwardRef<T>(id: DependencyIdentifier<T>): NormalizedDependencyIdentifier<T> {
+export function normalizeForwardRef<T>(
+	id: DependencyIdentifier<T>
+): NormalizedDependencyIdentifier<T> {
 	if (isForwardRef(id)) {
 		return id.unwrap()
 	}

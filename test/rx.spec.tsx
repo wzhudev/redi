@@ -53,7 +53,9 @@ describe('rx', () => {
 		const { container } = render(<App />)
 		expect(container.firstChild!.textContent).toBe('0')
 
-		await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)))
+		await act(
+			() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360))
+		)
 		expect(container.firstChild!.textContent).toBe('3')
 	})
 
@@ -94,7 +96,9 @@ describe('rx', () => {
 		const { container } = render(<App />)
 		expect(container.firstChild!.textContent).toBe('5')
 
-		await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 320)))
+		await act(
+			() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 320))
+		)
 		expect(container.firstChild!.textContent).toBe('8')
 	})
 
@@ -131,7 +135,9 @@ describe('rx', () => {
 		expect(container.firstChild!.textContent).toBe('0')
 		expect(childRenderCount).toBe(1)
 
-		await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)))
+		await act(
+			() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360))
+		)
 		expect(container.firstChild!.textContent).toBe('3')
 		expect(childRenderCount).toBe(2)
 	})
@@ -181,7 +187,9 @@ describe('rx', () => {
 		expect(container.firstChild!.textContent).toBe('0')
 		expect(childRenderCount).toBe(1)
 
-		await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)))
+		await act(
+			() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360))
+		)
 		expect(childRenderCount).toBe(2)
 	})
 
@@ -258,7 +266,9 @@ describe('rx', () => {
 		const { container } = render(<App />)
 		expect(container.firstChild!.textContent).toBe('0')
 
-		await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 310)))
+		await act(
+			() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 310))
+		)
 		expect(container.firstChild!.textContent).toBe('3')
 	})
 })

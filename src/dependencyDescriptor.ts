@@ -21,7 +21,9 @@ export interface Dependencies {
 	dependencies: DependencyDescriptor<any>[]
 }
 
-export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescriptor<any>[] {
+export function normalizeFactoryDeps(
+	deps?: FactoryDep<any>[]
+): DependencyDescriptor<any>[] {
 	if (!deps) {
 		return []
 	}
@@ -43,21 +45,23 @@ export function normalizeFactoryDeps(deps?: FactoryDep<any>[]): DependencyDescri
 		let quantity = Quantity.REQUIRED
 		let withNew = false
 
-		;(modifiers as FactoryDepModifier[]).forEach((modifier: FactoryDepModifier) => {
-			if (modifier instanceof Self) {
-				lookUp = LookUp.SELF
-			} else if (modifier instanceof SkipSelf) {
-				lookUp = LookUp.SKIP_SELF
-			} else if (modifier instanceof Optional) {
-				quantity = Quantity.OPTIONAL
-			} else if (modifier instanceof Many) {
-				quantity = Quantity.MANY
-			} else if (modifier instanceof WithNew) {
-				withNew = true
-			} else {
-				throw new RediError(`unknown dep modifier ${modifier}.`)
+		;(modifiers as FactoryDepModifier[]).forEach(
+			(modifier: FactoryDepModifier) => {
+				if (modifier instanceof Self) {
+					lookUp = LookUp.SELF
+				} else if (modifier instanceof SkipSelf) {
+					lookUp = LookUp.SKIP_SELF
+				} else if (modifier instanceof Optional) {
+					quantity = Quantity.OPTIONAL
+				} else if (modifier instanceof Many) {
+					quantity = Quantity.MANY
+				} else if (modifier instanceof WithNew) {
+					withNew = true
+				} else {
+					throw new RediError(`unknown dep modifier ${modifier}.`)
+				}
 			}
-		})
+		)
 
 		return {
 			paramIndex: index,

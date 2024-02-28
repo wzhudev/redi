@@ -27,7 +27,9 @@ interface SkipSelfDecorator {
 /**
  * when resolving this dependency, skip the current injector
  */
-export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(LookUp.SKIP_SELF)
+export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(
+	LookUp.SKIP_SELF
+)
 
 interface SelfDecorator {
 	(): any

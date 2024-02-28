@@ -25,7 +25,10 @@ import { RediError } from '@wendellhu/redi'
  * If you have to do that, consider using `useDependencyContext` and
  * `useDependencyContextValue` instead.
  */
-export function useDependencyValue<T>(depValue$: Observable<T>, defaultValue?: T): T | undefined {
+export function useDependencyValue<T>(
+	depValue$: Observable<T>,
+	defaultValue?: T
+): T | undefined {
 	const firstValue: T | undefined =
 		depValue$ instanceof BehaviorSubject && typeof defaultValue === 'undefined'
 			? depValue$.getValue()
@@ -94,11 +97,15 @@ export function useDependencyContext<T>(
 	}
 }
 
-export function useDependencyContextValue<T>(depValue$: Observable<T>): T | undefined {
+export function useDependencyContextValue<T>(
+	depValue$: Observable<T>
+): T | undefined {
 	const context = DepValueMapProvider.get(depValue$)
 
 	if (!context) {
-		throw new RediError(`try to read context value but no ancestor component subscribed it.`)
+		throw new RediError(
+			`try to read context value but no ancestor component subscribed it.`
+		)
 	}
 
 	return useContext(context)

@@ -8,7 +8,10 @@ import { Ctor, FactoryDep } from './dependencyItem'
  * @param registerTarget The target constructor
  * @param deps Dependencies
  */
-export function setDependencies<U>(registerTarget: Ctor<U>, deps: FactoryDep<any>[]): void {
+export function setDependencies<U>(
+	registerTarget: Ctor<U>,
+	deps: FactoryDep<any>[]
+): void {
 	const normalizedDescriptors = normalizeFactoryDeps(deps)
 	normalizedDescriptors.forEach((descriptor) => {
 		setDependency(

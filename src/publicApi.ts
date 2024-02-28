@@ -5,7 +5,10 @@ export { forwardRef } from './dependencyForwardRef'
 export { Injector, IAccessor } from './injector'
 export { SkipSelf, Self } from './dependencyLookUp'
 export { DependencyPair, Dependency } from './dependencyCollection'
-export { DependencyIdentifier, IdentifierDecorator } from './dependencyIdentifier'
+export {
+	DependencyIdentifier,
+	IdentifierDecorator,
+} from './dependencyIdentifier'
 export { IDisposable } from './dispose'
 export { setDependencies } from './dependencyDeclare'
 export { WithNew } from './dependencyWithNew'

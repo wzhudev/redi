@@ -1,5 +1,9 @@
 import { DependencyDescriptor } from './dependencyDescriptor'
-import { DependencyIdentifier, IdentifierDecorator, IdentifierDecoratorSymbol } from './dependencyIdentifier'
+import {
+	DependencyIdentifier,
+	IdentifierDecorator,
+	IdentifierDecoratorSymbol,
+} from './dependencyIdentifier'
 import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { LookUp, Quantity } from './types'
 import { RediError } from './error'
@@ -32,7 +36,9 @@ export class IdentifierUndefinedError extends RediError {
 /**
  * @internal
  */
-export function getDependencies<T>(registerTarget: Ctor<T>): DependencyDescriptor<any>[] {
+export function getDependencies<T>(
+	registerTarget: Ctor<T>
+): DependencyDescriptor<any>[] {
 	const target = registerTarget as any
 	return target[DEPENDENCIES] || []
 }
@@ -40,9 +46,14 @@ export function getDependencies<T>(registerTarget: Ctor<T>): DependencyDescripto
 /**
  * @internal
  */
-export function getDependencyByIndex<T>(registerTarget: Ctor<T>, index: number): DependencyDescriptor<any> {
+export function getDependencyByIndex<T>(
+	registerTarget: Ctor<T>,
+	index: number
+): DependencyDescriptor<any> {
 	const allDependencies = getDependencies(registerTarget)
-	const dep = allDependencies.find((descriptor) => descriptor.paramIndex === index)
+	const dep = allDependencies.find(
+		(descriptor) => descriptor.paramIndex === index
+	)
 
 	if (!dep) {
 		throw new DependencyDescriptorNotFoundError(index, registerTarget)
@@ -100,9 +111,11 @@ export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
 		knownIdentifiers.add(id)
 	}
 
-	const decorator = (<any>function (registerTarget: Ctor<T>, _key: string, index: number): void {
-		setDependency(registerTarget, decorator, index)
-	}) as IdentifierDecorator<T> // decorator as an identifier
+	const decorator = (<any>(
+		function (registerTarget: Ctor<T>, _key: string, index: number): void {
+			setDependency(registerTarget, decorator, index)
+		}
+	)) as IdentifierDecorator<T> // decorator as an identifier
 
 	// TODO: @wzhudev should assign a name to the function so it would be easy to debug in inspect tools
 	// decorator.name = `[redi]: ${id}`;

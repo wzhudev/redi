@@ -18,10 +18,19 @@ export type IdentifierDecorator<T> = {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function isIdentifierDecorator<T>(thing: any): thing is IdentifierDecorator<T> {
+export function isIdentifierDecorator<T>(
+	thing: any
+): thing is IdentifierDecorator<T> {
 	return thing && thing[IdentifierDecoratorSymbol] === true
 }
 
-export type DependencyIdentifier<T> = string | Ctor<T> | ForwardRef<T> | IdentifierDecorator<T>
+export type DependencyIdentifier<T> =
+	| string
+	| Ctor<T>
+	| ForwardRef<T>
+	| IdentifierDecorator<T>
 
-export type NormalizedDependencyIdentifier<T> = Exclude<DependencyIdentifier<T>, ForwardRef<T>>
+export type NormalizedDependencyIdentifier<T> = Exclude<
+	DependencyIdentifier<T>,
+	ForwardRef<T>
+>

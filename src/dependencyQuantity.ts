@@ -1,19 +1,36 @@
-import { getDependencyByIndex, IdentifierUndefinedError, setDependency } from './decorators'
+import {
+	getDependencyByIndex,
+	IdentifierUndefinedError,
+	setDependency,
+} from './decorators'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
 import { Quantity } from './types'
 
 class QuantityCheckError extends RediError {
-	constructor(id: DependencyIdentifier<any>, quantity: Quantity, actual: number) {
-		const msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(id)}" but get ${actual}.`
+	constructor(
+		id: DependencyIdentifier<any>,
+		quantity: Quantity,
+		actual: number
+	) {
+		const msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
+			id
+		)}" but get ${actual}.`
 
 		super(msg)
 	}
 }
 
-export function checkQuantity(id: DependencyIdentifier<any>, quantity: Quantity, length: number): void {
-	if ((quantity === Quantity.OPTIONAL && length > 1) || (quantity === Quantity.REQUIRED && length !== 1)) {
+export function checkQuantity(
+	id: DependencyIdentifier<any>,
+	quantity: Quantity,
+	length: number
+): void {
+	if (
+		(quantity === Quantity.OPTIONAL && length > 1) ||
+		(quantity === Quantity.REQUIRED && length !== 1)
+	) {
 		throw new QuantityCheckError(id, quantity, length)
 	}
 }
@@ -61,18 +78,24 @@ interface ManyDecorator {
 	// eslint-disable-next-line @typescript-eslint/no-misused-new
 	new (): ManyDecorator
 }
-export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(Quantity.MANY)
+export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
+	Quantity.MANY
+)
 
 interface OptionalDecorator {
 	(id?: DependencyIdentifier<any>): any
 	// eslint-disable-next-line @typescript-eslint/no-misused-new
 	new (): OptionalDecorator
 }
-export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(Quantity.OPTIONAL)
+export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
+	Quantity.OPTIONAL
+)
 
 interface InjectDecorator {
 	(id: DependencyIdentifier<any>): any
 	// eslint-disable-next-line @typescript-eslint/no-misused-new
 	new (): InjectDecorator
 }
-export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(Quantity.REQUIRED)
+export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(
+	Quantity.REQUIRED
+)

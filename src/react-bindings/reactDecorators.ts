@@ -1,4 +1,9 @@
-import { DependencyIdentifier, Quantity, LookUp, RediError } from '@wendellhu/redi'
+import {
+	DependencyIdentifier,
+	Quantity,
+	LookUp,
+	RediError,
+} from '@wendellhu/redi'
 import { IRediContext } from './reactContext'
 
 class ClassComponentNotInRediContextError<T> extends RediError {
@@ -11,7 +16,11 @@ class ClassComponentNotInRediContextError<T> extends RediError {
 	}
 }
 
-export function WithDependency<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): any {
+export function WithDependency<T>(
+	id: DependencyIdentifier<T>,
+	quantity?: Quantity,
+	lookUp?: LookUp
+): any {
 	return function () {
 		return {
 			get(): T | T[] | null {

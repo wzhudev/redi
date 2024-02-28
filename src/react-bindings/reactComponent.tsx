@@ -3,7 +3,9 @@ import { Injector, Dependency } from '@wendellhu/redi'
 
 import { RediProvider, RediConsumer } from './reactContext'
 
-function RediInjector(props: React.PropsWithChildren<{ dependencies: Dependency[] }>) {
+function RediInjector(
+	props: React.PropsWithChildren<{ dependencies: Dependency[] }>
+) {
 	const { children, dependencies } = props
 	const childInjectorRef = React.useRef<Injector | null>(null)
 
@@ -25,7 +27,11 @@ function RediInjector(props: React.PropsWithChildren<{ dependencies: Dependency[
 					childInjectorRef.current = childInjector
 				}
 
-				return <RediProvider value={{ injector: childInjector }}>{children}</RediProvider>
+				return (
+					<RediProvider value={{ injector: childInjector }}>
+						{children}
+					</RediProvider>
+				)
 			}}
 		</RediConsumer>
 	)
@@ -36,7 +42,10 @@ function RediInjector(props: React.PropsWithChildren<{ dependencies: Dependency[
  * @param injector
  * @returns
  */
-export function connectInjector<P>(Comp: React.ComponentType<P>, injector: Injector): React.ComponentType<P> {
+export function connectInjector<P>(
+	Comp: React.ComponentType<P>,
+	injector: Injector
+): React.ComponentType<P> {
 	return function ComponentWithInjector(props: P) {
 		return (
 			<RediProvider value={{ injector }}>

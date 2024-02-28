@@ -1,4 +1,7 @@
-import { DependencyIdentifier, isIdentifierDecorator } from './dependencyIdentifier'
+import {
+	DependencyIdentifier,
+	isIdentifierDecorator,
+} from './dependencyIdentifier'
 import { Ctor, DependencyItem, prettyPrintIdentifier } from './dependencyItem'
 import { checkQuantity, retrieveQuantity } from './dependencyQuantity'
 import { IDisposable, isDisposable } from './dispose'
@@ -8,17 +11,32 @@ import { RediError } from './error'
 export type DependencyPair<T> = [DependencyIdentifier<T>, DependencyItem<T>]
 export type DependencyClass<T> = [Ctor<T>]
 export type Dependency<T = any> = DependencyPair<T> | DependencyClass<T>
-export type DependencyWithInstance<T = any> = [Ctor<T> | DependencyIdentifier<T>, T]
-export type DependencyOrInstance<T = any> = Dependency<T> | DependencyWithInstance<T>
+export type DependencyWithInstance<T = any> = [
+	Ctor<T> | DependencyIdentifier<T>,
+	T
+]
+export type DependencyOrInstance<T = any> =
+	| Dependency<T>
+	| DependencyWithInstance<T>
 
-export function isBareClassDependency<T>(thing: Dependency<T>): thing is DependencyClass<T> {
+export function isBareClassDependency<T>(
+	thing: Dependency<T>
+): thing is DependencyClass<T> {
 	return thing.length === 1
 }
 
 export class DependencyNotFoundForModuleError extends RediError {
-	constructor(toInstantiate: Ctor<any> | DependencyIdentifier<any>, id: DependencyIdentifier<any>, index: number) {
-		const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th param of "${
-			isIdentifierDecorator(toInstantiate) ? prettyPrintIdentifier(toInstantiate): (toInstantiate as Ctor<any>).name
+	constructor(
+		toInstantiate: Ctor<any> | DependencyIdentifier<any>,
+		id: DependencyIdentifier<any>,
+		index: number
+	) {
+		const msg = `Cannot find "${prettyPrintIdentifier(
+			id
+		)}" registered by any injector. It is the ${index}th param of "${
+			isIdentifierDecorator(toInstantiate)
+				? prettyPrintIdentifier(toInstantiate)
+				: (toInstantiate as Ctor<any>).name
 		}".`
 
 		super(msg)
@@ -27,7 +45,9 @@ export class DependencyNotFoundForModuleError extends RediError {
 
 export class DependencyNotFoundError extends RediError {
 	constructor(id: DependencyIdentifier<any>) {
-		const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector.`
+		const msg = `Cannot find "${prettyPrintIdentifier(
+			id
+		)}" registered by any injector.`
 
 		super(msg)
 	}
@@ -39,15 +59,23 @@ export class DependencyNotFoundError extends RediError {
  * @internal
  */
 export class DependencyCollection implements IDisposable {
-	private readonly dependencyMap = new Map<DependencyIdentifier<any>, DependencyItem<any>[]>()
+	private readonly dependencyMap = new Map<
+		DependencyIdentifier<any>,
+		DependencyItem<any>[]
+	>()
 
 	constructor(dependencies: Dependency[]) {
-		this.normalizeDependencies(dependencies).map((pair) => this.add(pair[0], pair[1]))
+		this.normalizeDependencies(dependencies).map((pair) =>
+			this.add(pair[0], pair[1])
+		)
 	}
 
 	public add<T>(ctor: Ctor<T>): void
 	public add<T>(id: DependencyIdentifier<T>, val: DependencyItem<T>): void
-	public add<T>(ctorOrId: Ctor<T> | DependencyIdentifier<T>, val?: DependencyItem<T>): void {
+	public add<T>(
+		ctorOrId: Ctor<T> | DependencyIdentifier<T>,
+		val?: DependencyItem<T>
+	): void {
 		if (typeof val === 'undefined') {
 			val = { useClass: ctorOrId as Ctor<T>, lazy: false }
 		}
@@ -65,10 +93,22 @@ export class DependencyCollection implements IDisposable {
 	}
 
 	public get<T>(id: DependencyIdentifier<T>): DependencyItem<T>
-	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED): DependencyItem<T>
-	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY): DependencyItem<T>[]
-	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL): DependencyItem<T> | null
-	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity): DependencyItem<T> | DependencyItem<T>[] | null
+	public get<T>(
+		id: DependencyIdentifier<T>,
+		quantity: Quantity.REQUIRED
+	): DependencyItem<T>
+	public get<T>(
+		id: DependencyIdentifier<T>,
+		quantity: Quantity.MANY
+	): DependencyItem<T>[]
+	public get<T>(
+		id: DependencyIdentifier<T>,
+		quantity: Quantity.OPTIONAL
+	): DependencyItem<T> | null
+	public get<T>(
+		id: DependencyIdentifier<T>,
+		quantity: Quantity
+	): DependencyItem<T> | DependencyItem<T>[] | null
 	public get<T>(
 		id: DependencyIdentifier<T>,
 		quantity: Quantity = Quantity.REQUIRED
@@ -85,7 +125,9 @@ export class DependencyCollection implements IDisposable {
 	}
 
 	public append(dependencies: Dependency<any>[]): void {
-		this.normalizeDependencies(dependencies).forEach((pair) => this.add(pair[0], pair[1]))
+		this.normalizeDependencies(dependencies).forEach((pair) =>
+			this.add(pair[0], pair[1])
+		)
 	}
 
 	public dispose(): void {
@@ -95,7 +137,9 @@ export class DependencyCollection implements IDisposable {
 	/**
 	 * normalize dependencies to `DependencyItem`
 	 */
-	private normalizeDependencies(dependencies: Dependency[]): DependencyPair<any>[] {
+	private normalizeDependencies(
+		dependencies: Dependency[]
+	): DependencyPair<any>[] {
 		return dependencies.map((dependency) => {
 			const id = dependency[0]
 			let val: DependencyItem<any>
@@ -119,7 +163,10 @@ export class DependencyCollection implements IDisposable {
  * @internal
  */
 export class ResolvedDependencyCollection implements IDisposable {
-	private readonly resolvedDependencies = new Map<DependencyIdentifier<any>, any[]>()
+	private readonly resolvedDependencies = new Map<
+		DependencyIdentifier<any>,
+		any[]
+	>()
 
 	public add<T>(id: DependencyIdentifier<T>, val: T | null): void {
 		let arr = this.resolvedDependencies.get(id)
@@ -144,11 +191,17 @@ export class ResolvedDependencyCollection implements IDisposable {
 	}
 
 	public get<T>(id: DependencyIdentifier<T>): T
-	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL): T | null
+	public get<T>(
+		id: DependencyIdentifier<T>,
+		quantity: Quantity.OPTIONAL
+	): T | null
 	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED): T
 	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY): T[]
 	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity): T[] | T | null
-	public get<T>(id: DependencyIdentifier<T>, quantity: Quantity = Quantity.REQUIRED): T | T[] | null {
+	public get<T>(
+		id: DependencyIdentifier<T>,
+		quantity: Quantity = Quantity.REQUIRED
+	): T | T[] | null {
 		const ret = this.resolvedDependencies.get(id)
 
 		if (!ret) {
