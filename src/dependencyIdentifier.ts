@@ -4,33 +4,33 @@ import { ForwardRef } from './dependencyForwardRef'
 export const IdentifierDecoratorSymbol = Symbol('$$IDENTIFIER_DECORATOR')
 
 export type IdentifierDecorator<T> = {
-	[IdentifierDecoratorSymbol]: true
+  [IdentifierDecoratorSymbol]: true
 
-	// call signature of an decorator
-	(...args: any[]): void
+  // call signature of an decorator
+  (...args: any[]): void
 
-	/**
-	 * beautify console
-	 */
-	toString(): string
+  /**
+   * beautify console
+   */
+  toString(): string
 
-	type: T
+  type: T
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function isIdentifierDecorator<T>(
-	thing: any
+  thing: any
 ): thing is IdentifierDecorator<T> {
-	return thing && thing[IdentifierDecoratorSymbol] === true
+  return thing && thing[IdentifierDecoratorSymbol] === true
 }
 
 export type DependencyIdentifier<T> =
-	| string
-	| Ctor<T>
-	| ForwardRef<T>
-	| IdentifierDecorator<T>
+  | string
+  | Ctor<T>
+  | ForwardRef<T>
+  | IdentifierDecorator<T>
 
 export type NormalizedDependencyIdentifier<T> = Exclude<
-	DependencyIdentifier<T>,
-	ForwardRef<T>
+  DependencyIdentifier<T>,
+  ForwardRef<T>
 >

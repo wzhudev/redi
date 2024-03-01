@@ -1,13 +1,13 @@
 import React, {
-	useEffect,
-	useState,
-	createContext,
-	useMemo,
-	useContext,
-	useCallback,
-	ReactNode,
-	Context,
-	useRef,
+  useEffect,
+  useState,
+  createContext,
+  useMemo,
+  useContext,
+  useCallback,
+  ReactNode,
+  Context,
+  useRef,
 } from 'react'
 import { BehaviorSubject, Observable } from 'rxjs'
 
@@ -26,21 +26,21 @@ import { RediError } from '@wendellhu/redi'
  * `useDependencyContextValue` instead.
  */
 export function useDependencyValue<T>(
-	depValue$: Observable<T>,
-	defaultValue?: T
+  depValue$: Observable<T>,
+  defaultValue?: T
 ): T | undefined {
-	const firstValue: T | undefined =
-		depValue$ instanceof BehaviorSubject && typeof defaultValue === 'undefined'
-			? depValue$.getValue()
-			: defaultValue
-	const [value, setValue] = useState(firstValue)
+  const firstValue: T | undefined =
+    depValue$ instanceof BehaviorSubject && typeof defaultValue === 'undefined'
+      ? depValue$.getValue()
+      : defaultValue
+  const [value, setValue] = useState(firstValue)
 
-	useEffect(() => {
-		const subscription = depValue$.subscribe((val: T) => setValue(val))
-		return () => subscription.unsubscribe()
-	}, [depValue$])
+  useEffect(() => {
+    const subscription = depValue$.subscribe((val: T) => setValue(val))
+    return () => subscription.unsubscribe()
+  }, [depValue$])
 
-	return value
+  return value
 }
 
 /**
@@ -49,12 +49,12 @@ export function useDependencyValue<T>(
  * @param update$ a signal that the data the functional component depends has updated
  */
 export function useUpdateBinder(update$: Observable<void>): void {
-	const [, dumpSet] = useState(0)
+  const [, dumpSet] = useState(0)
 
-	useEffect(() => {
-		const subscription = update$.subscribe(() => dumpSet((prev) => prev + 1))
-		return () => subscription.unsubscribe()
-	}, [])
+  useEffect(() => {
+    const subscription = update$.subscribe(() => dumpSet((prev) => prev + 1))
+    return () => subscription.unsubscribe()
+  }, [])
 }
 
 const DepValueMapProvider = new WeakMap<Observable<any>, Context<any>>()
@@ -64,49 +64,49 @@ const DepValueMapProvider = new WeakMap<Observable<any>, Context<any>>()
  * it child component won't have to subscribe again and cause unnecessary
  */
 export function useDependencyContext<T>(
-	depValue$: Observable<T>,
-	defaultValue?: T
+  depValue$: Observable<T>,
+  defaultValue?: T
 ): {
-	Provider: (props: { initialState?: T; children: ReactNode }) => JSX.Element
-	value: T | undefined
+  Provider: (props: { initialState?: T; children: ReactNode }) => JSX.Element
+  value: T | undefined
 } {
-	const depRef = useRef<Observable<T> | undefined>(undefined)
-	const value = useDependencyValue(depValue$, defaultValue)
-	const Context = useMemo(() => {
-		return createContext<T | undefined>(value)
-	}, [depValue$])
-	const Provider = useCallback(
-		(props: { initialState?: T; children: ReactNode }) => {
-			return <Context.Provider value={value}>{props.children}</Context.Provider>
-		},
-		[depValue$, value]
-	)
+  const depRef = useRef<Observable<T> | undefined>(undefined)
+  const value = useDependencyValue(depValue$, defaultValue)
+  const Context = useMemo(() => {
+    return createContext<T | undefined>(value)
+  }, [depValue$])
+  const Provider = useCallback(
+    (props: { initialState?: T; children: ReactNode }) => {
+      return <Context.Provider value={value}>{props.children}</Context.Provider>
+    },
+    [depValue$, value]
+  )
 
-	if (depRef.current !== depValue$) {
-		if (depRef.current) {
-			DepValueMapProvider.delete(depRef.current)
-		}
+  if (depRef.current !== depValue$) {
+    if (depRef.current) {
+      DepValueMapProvider.delete(depRef.current)
+    }
 
-		depRef.current = depValue$
-		DepValueMapProvider.set(depValue$, Context)
-	}
+    depRef.current = depValue$
+    DepValueMapProvider.set(depValue$, Context)
+  }
 
-	return {
-		Provider,
-		value,
-	}
+  return {
+    Provider,
+    value,
+  }
 }
 
 export function useDependencyContextValue<T>(
-	depValue$: Observable<T>
+  depValue$: Observable<T>
 ): T | undefined {
-	const context = DepValueMapProvider.get(depValue$)
+  const context = DepValueMapProvider.get(depValue$)
 
-	if (!context) {
-		throw new RediError(
-			`try to read context value but no ancestor component subscribed it.`
-		)
-	}
+  if (!context) {
+    throw new RediError(
+      `try to read context value but no ancestor component subscribed it.`
+    )
+  }
 
-	return useContext(context)
+  return useContext(context)
 }

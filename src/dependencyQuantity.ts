@@ -1,7 +1,7 @@
 import {
-	getDependencyByIndex,
-	IdentifierUndefinedError,
-	setDependency,
+  getDependencyByIndex,
+  IdentifierUndefinedError,
+  setDependency,
 } from './decorators'
 import { DependencyIdentifier } from './dependencyIdentifier'
 import { Ctor, prettyPrintIdentifier } from './dependencyItem'
@@ -9,93 +9,93 @@ import { RediError } from './error'
 import { Quantity } from './types'
 
 class QuantityCheckError extends RediError {
-	constructor(
-		id: DependencyIdentifier<any>,
-		quantity: Quantity,
-		actual: number
-	) {
-		const msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
-			id
-		)}" but get ${actual}.`
+  constructor(
+    id: DependencyIdentifier<any>,
+    quantity: Quantity,
+    actual: number
+  ) {
+    const msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
+      id
+    )}" but get ${actual}.`
 
-		super(msg)
-	}
+    super(msg)
+  }
 }
 
 export function checkQuantity(
-	id: DependencyIdentifier<any>,
-	quantity: Quantity,
-	length: number
+  id: DependencyIdentifier<any>,
+  quantity: Quantity,
+  length: number
 ): void {
-	if (
-		(quantity === Quantity.OPTIONAL && length > 1) ||
-		(quantity === Quantity.REQUIRED && length !== 1)
-	) {
-		throw new QuantityCheckError(id, quantity, length)
-	}
+  if (
+    (quantity === Quantity.OPTIONAL && length > 1) ||
+    (quantity === Quantity.REQUIRED && length !== 1)
+  ) {
+    throw new QuantityCheckError(id, quantity, length)
+  }
 }
 
 export function retrieveQuantity<T>(quantity: Quantity, arr: T[]): T[] | T {
-	if (quantity === Quantity.MANY) {
-		return arr
-	} else {
-		return arr[0]
-	}
+  if (quantity === Quantity.MANY) {
+    return arr
+  } else {
+    return arr[0]
+  }
 }
 
 function changeQuantity(target: Ctor<any>, index: number, quantity: Quantity) {
-	const descriptor = getDependencyByIndex(target, index)
-	descriptor.quantity = quantity
+  const descriptor = getDependencyByIndex(target, index)
+  descriptor.quantity = quantity
 }
 
 function quantifyDecoratorFactoryProducer(quantity: Quantity) {
-	return function decoratorFactory<T>(
-		// typescript would remove `this` after transpilation
-		// this line just declare the type of `this`
-		this: any,
-		id?: DependencyIdentifier<T>
-	) {
-		if (this instanceof decoratorFactory) {
-			return this
-		}
+  return function decoratorFactory<T>(
+    // typescript would remove `this` after transpilation
+    // this line just declare the type of `this`
+    this: any,
+    id?: DependencyIdentifier<T>
+  ) {
+    if (this instanceof decoratorFactory) {
+      return this
+    }
 
-		return function (registerTarget: Ctor<T>, _key: string, index: number) {
-			if (id) {
-				setDependency(registerTarget, id, index, quantity)
-			} else {
-				if (quantity === Quantity.REQUIRED) {
-					throw new IdentifierUndefinedError(registerTarget, index)
-				}
+    return function (registerTarget: Ctor<T>, _key: string, index: number) {
+      if (id) {
+        setDependency(registerTarget, id, index, quantity)
+      } else {
+        if (quantity === Quantity.REQUIRED) {
+          throw new IdentifierUndefinedError(registerTarget, index)
+        }
 
-				changeQuantity(registerTarget, index, quantity)
-			}
-		}
-	} as any
+        changeQuantity(registerTarget, index, quantity)
+      }
+    }
+  } as any
 }
 
 interface ManyDecorator {
-	(id?: DependencyIdentifier<any>): any
-	// eslint-disable-next-line @typescript-eslint/no-misused-new
-	new (): ManyDecorator
+  (id?: DependencyIdentifier<any>): any
+  // eslint-disable-next-line @typescript-eslint/no-misused-new
+  new (): ManyDecorator
 }
 export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
-	Quantity.MANY
+  Quantity.MANY
 )
 
 interface OptionalDecorator {
-	(id?: DependencyIdentifier<any>): any
-	// eslint-disable-next-line @typescript-eslint/no-misused-new
-	new (): OptionalDecorator
+  (id?: DependencyIdentifier<any>): any
+  // eslint-disable-next-line @typescript-eslint/no-misused-new
+  new (): OptionalDecorator
 }
 export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
-	Quantity.OPTIONAL
+  Quantity.OPTIONAL
 )
 
 interface InjectDecorator {
-	(id: DependencyIdentifier<any>): any
-	// eslint-disable-next-line @typescript-eslint/no-misused-new
-	new (): InjectDecorator
+  (id: DependencyIdentifier<any>): any
+  // eslint-disable-next-line @typescript-eslint/no-misused-new
+  new (): InjectDecorator
 }
 export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(
-	Quantity.REQUIRED
+  Quantity.REQUIRED
 )

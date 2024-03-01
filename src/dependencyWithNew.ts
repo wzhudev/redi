@@ -2,26 +2,26 @@ import { getDependencyByIndex } from './decorators'
 import { Ctor } from './dependencyItem'
 
 function changeToSelf(target: Ctor<any>, index: number, withNew: boolean) {
-	const descriptor = getDependencyByIndex(target, index)
-	descriptor.withNew = withNew
+  const descriptor = getDependencyByIndex(target, index)
+  descriptor.withNew = withNew
 }
 
 function withNewDecoratorFactoryProducer(withNew: boolean) {
-	return function DecoratorFactory<T>(this: any) {
-		if (this instanceof DecoratorFactory) {
-			return this
-		}
+  return function DecoratorFactory<T>(this: any) {
+    if (this instanceof DecoratorFactory) {
+      return this
+    }
 
-		return function (target: Ctor<T>, _key: string, index: number) {
-			changeToSelf(target, index, withNew)
-		}
-	} as any
+    return function (target: Ctor<T>, _key: string, index: number) {
+      changeToSelf(target, index, withNew)
+    }
+  } as any
 }
 
 interface ToSelfDecorator {
-	(): any
-	// eslint-disable-next-line @typescript-eslint/no-misused-new
-	new (): ToSelfDecorator
+  (): any
+  // eslint-disable-next-line @typescript-eslint/no-misused-new
+  new (): ToSelfDecorator
 }
 
 /**

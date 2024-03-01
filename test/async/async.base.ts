@@ -1,12 +1,12 @@
 import { createIdentifier } from '@wendellhu/redi'
 
 export class AA {
-	key = 'aa'
+  key = 'aa'
 }
 
 export interface BB {
-	key: string
-	getConstructedTime?(): number
+  key: string
+  getConstructedTime?(): number
 }
 
 export const bbI = createIdentifier<BB>('bb')
