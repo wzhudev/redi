@@ -9,8 +9,14 @@ declare global {
 
 const RediContextCreated = '__RediContextCreated__'
 
-if (!window.RediContextCreated) {
-  window.RediContextCreated = RediContextCreated
+const globalObject: any =
+  (typeof globalThis !== 'undefined' && globalThis) ||
+  (typeof window !== 'undefined' && window) ||
+  // @ts-ignore
+  (typeof global !== 'undefined' && global)
+
+if (!globalObject.RediContextCreated) {
+  globalObject.RediContextCreated = RediContextCreated
 } else {
   throw new RediError(
     '"RediContext" is already created. You may import "RediContext" from different paths. Use "import { RediContext } from \'@wendellhu/redi/react-bindings\'; instead."'
