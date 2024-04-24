@@ -1,3 +1,4 @@
+import { findIndex } from 'rxjs/operators'
 import { getDependencies } from './decorators'
 import {
   Dependency,
@@ -6,6 +7,9 @@ import {
   DependencyNotFoundForModuleError,
   DependencyOrInstance,
   ResolvedDependencyCollection,
+  clearResolvingStack,
+  popupResolvingStack,
+  pushResolvingStack,
 } from './dependencyCollection'
 import { normalizeFactoryDeps } from './dependencyDescriptor'
 import { normalizeForwardRef } from './dependencyForwardRef'
@@ -297,16 +301,20 @@ export class Injector {
     quantityOrLookup?: Quantity | LookUp,
     lookUp?: LookUp
   ): T[] | T | null {
-    const newResult = this._get(id, quantityOrLookup, lookUp)
+    try {
+      const newResult = this._get(id, quantityOrLookup, lookUp)
+      if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
+        throw new GetAsyncItemFromSyncApiError(id)
+      }
 
-    if (
-      (Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) ||
-      isAsyncHook(newResult)
-    ) {
-      throw new GetAsyncItemFromSyncApiError(id)
+      return newResult as T | T[] | null
+    } catch (e: unknown) {
+      if (e instanceof DependencyNotFoundError) {
+        clearResolvingStack();
+      }
+
+      throw e;
     }
-
-    return newResult as T | T[] | null
   }
 
   private _get<T>(
@@ -380,22 +388,39 @@ export class Injector {
     item: DependencyItem<T>,
     shouldCache = true
   ): T | AsyncHook<T> {
-    if (isValueDependencyItem(item)) {
-      return this.resolveValueDependency(id, item as ValueDependencyItem<T>)
-    } else if (isFactoryDependencyItem(item)) {
-      return this.resolveFactory(
-        id,
-        item as FactoryDependencyItem<T>,
-        shouldCache
-      )
-    } else if (isClassDependencyItem(item)) {
-      return this.resolveClass(id, item as ClassDependencyItem<T>, shouldCache)
-    } else {
-      return this.resolveAsync(id, item as AsyncDependencyItem<T>)
+    let result: T | AsyncHook<T>
+
+    pushResolvingStack(id)
+
+    try {
+      if (isValueDependencyItem(item)) {
+        result = this._resolveValueDependency(id, item as ValueDependencyItem<T>)
+      } else if (isFactoryDependencyItem(item)) {
+        result = this.resolveFactory(
+          id,
+          item as FactoryDependencyItem<T>,
+          shouldCache
+        )
+      } else if (isClassDependencyItem(item)) {
+        result = this.resolveClass(
+          id,
+          item as ClassDependencyItem<T>,
+          shouldCache
+        )
+      } else {
+        result = this.resolveAsync(id, item as AsyncDependencyItem<T>)
+      }
+
+      popupResolvingStack()
+    } catch (e: unknown) {
+      popupResolvingStack()
+      throw e;
     }
+
+    return result
   }
 
-  private resolveValueDependency<T>(
+  private _resolveValueDependency<T>(
     id: DependencyIdentifier<T>,
     item: ValueDependencyItem<T>
   ): T {
@@ -442,7 +467,7 @@ export class Injector {
           return property
         },
         set(_target: any, key: string | number | symbol, value: any): boolean {
-          ;(idle.getValue() as any)[key] = value
+          ; (idle.getValue() as any)[key] = value
           return true
         },
       })
@@ -484,7 +509,7 @@ export class Injector {
           throw new DependencyNotFoundForModuleError(
             ctor,
             dep.identifier,
-            dep.paramIndex
+            dep.paramIndex,
           )
         }
 
@@ -500,8 +525,7 @@ export class Injector {
 
     if (args.length !== firstDependencyArgIndex) {
       console.warn(
-        `[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${
-          args.length
+        `[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${args.length
         }.`
       )
 
@@ -544,7 +568,7 @@ export class Injector {
           throw new DependencyNotFoundForModuleError(
             id,
             dep.identifier,
-            dep.paramIndex
+            dep.paramIndex,
           )
         }
 
@@ -661,9 +685,7 @@ export class Injector {
 
       let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null
       if (Array.isArray(registrations)) {
-        ret = registrations.map((dependencyItem) =>
-          this.resolveDependency(id, dependencyItem, shouldCache)
-        )
+        ret = registrations.map((dependencyItem) => this.resolveDependency(id, dependencyItem, shouldCache))
       } else if (registrations) {
         ret = this.resolveDependency(id, registrations, shouldCache)
       }
@@ -684,6 +706,7 @@ export class Injector {
           return null
         }
 
+        pushResolvingStack(id)
         throw new DependencyNotFoundError(id)
       }
     }

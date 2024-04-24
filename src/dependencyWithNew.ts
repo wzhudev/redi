@@ -20,8 +20,7 @@ function withNewDecoratorFactoryProducer(withNew: boolean) {
 
 interface ToSelfDecorator {
   (): any
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (): ToSelfDecorator
+  new(): ToSelfDecorator
 }
 
 /**

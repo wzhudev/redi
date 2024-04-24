@@ -1,45 +1,45 @@
 {
-	"compilerOptions": {
-		"baseUrl": "./",
-		"jsx": "react",
-		"lib": [
-			"esnext",
-			"dom"
-		],
-		"sourceMap": true,
-		"target": "es5",
-		"outDir": "esm",
-		"module": "esnext",
-		"moduleResolution": "node",
-		"skipLibCheck": true,
-		"allowSyntheticDefaultImports": true,
-		"declaration": true,
-		"noImplicitAny": true,
-		"noImplicitOverride": true,
-		"noImplicitReturns": true,
-		"noImplicitThis": true,
-		"noUnusedParameters": true,
-		"strict": true,
-		"strictNullChecks": true,
-		"strictPropertyInitialization": true,
-		"experimentalDecorators": true,
-		"esModuleInterop": true,
-		"types": [
-			"node",
-		],
-		"typeRoots": [
-			"./node_modules/@types"
-		],
-		"paths": {
-			"@wendellhu/redi": [
-				"./src/index.ts"
-			],
-			"@wendellhu/redi/react-bindings": [
-				"./src/react-bindings/index.ts"
-			]
-		}
-	},
-	"include": [
-		"src/**/*"
-	]
+  "compilerOptions": {
+    "baseUrl": "./",
+    "jsx": "react",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "sourceMap": true,
+    "target": "es5",
+    "outDir": "esm",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "types": [
+      "node",
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "paths": {
+      "@wendellhu/redi": [
+        "./src/index.ts"
+      ],
+      "@wendellhu/redi/react-bindings": [
+        "./src/react-bindings/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+  ]
 }

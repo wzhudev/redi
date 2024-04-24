@@ -25,29 +25,41 @@ export function isBareClassDependency<T>(
   return thing.length === 1
 }
 
+const ResolvingStack: DependencyIdentifier<any>[] = []
+
+export function pushResolvingStack(id: DependencyIdentifier<unknown>) {
+  ResolvingStack.push(id)
+}
+
+export function popupResolvingStack() {
+  ResolvingStack.pop()
+}
+
+export function clearResolvingStack() {
+  ResolvingStack.length = 0
+}
+
 export class DependencyNotFoundForModuleError extends RediError {
   constructor(
     toInstantiate: Ctor<any> | DependencyIdentifier<any>,
     id: DependencyIdentifier<any>,
-    index: number
+    index: number,
   ) {
-    const msg = `Cannot find "${prettyPrintIdentifier(
-      id
-    )}" registered by any injector. It is the ${index}th param of "${
-      isIdentifierDecorator(toInstantiate)
-        ? prettyPrintIdentifier(toInstantiate)
-        : (toInstantiate as Ctor<any>).name
-    }".`
-
+    const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th param of "${isIdentifierDecorator(toInstantiate)
+      ? prettyPrintIdentifier(toInstantiate)
+      : (toInstantiate as Ctor<any>).name
+      }". The stack of dependencies is: "${ResolvingStack.map((id) => prettyPrintIdentifier(id)).join(' -> ')}".`
     super(msg)
+
+    clearResolvingStack();
   }
 }
 
 export class DependencyNotFoundError extends RediError {
-  constructor(id: DependencyIdentifier<any>) {
-    const msg = `Cannot find "${prettyPrintIdentifier(
-      id
-    )}" registered by any injector.`
+  constructor(
+    id: DependencyIdentifier<any>,
+  ) {
+    const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector.`
 
     super(msg)
   }
@@ -113,7 +125,6 @@ export class DependencyCollection implements IDisposable {
     id: DependencyIdentifier<T>,
     quantity: Quantity = Quantity.REQUIRED
   ): DependencyItem<T> | DependencyItem<T>[] | null {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const ret = this.dependencyMap.get(id)!
 
     checkQuantity(id, quantity, ret.length)

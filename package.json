@@ -1,15 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/wzhudev/squirrel/master/src/schema/package.schema.json",
   "name": "@wendellhu/redi",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "scripts": {
-    "test": "vitest run --coverage",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "watch": "vitest",
-    "lint": "eslint --fix 'src/**/*.ts'",
-    "lint:prettier": "prettier --write '{src,test}/**/*.{ts,tsx}'",
-    "build": "squirrel",
-    "typeCheck": "tsc -p tsconfig.check.json --noEmit"
+    "build": "squirrel"
   },
   "squirrel": {
     "copyFiles": [
@@ -24,17 +22,13 @@
     "@testing-library/react": "^14.0.0",
     "@types/node": "^20.11.7",
     "@types/react": "^18.2.48",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
+    "@vitest/coverage-istanbul": "^1.5.0",
     "@wendellhu/squirrel": "^0.1.7",
-    "eslint": "^7.32.0",
     "jsdom": "^19.0.0",
-    "prettier": "^2.3.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "rxjs": "^6.2.1",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.1",
-    "@vitest/coverage-istanbul": "^1.2.2"
+    "vitest": "^1.5.0"
   }
 }
