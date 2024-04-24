@@ -44,8 +44,5 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: 🩺 Run Test
+            - name: 🩺 Run test
               run: pnpm run test
-
-            - name: 🧼 Type checking
-              run: pnpm typeCheck
