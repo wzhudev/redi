@@ -75,8 +75,7 @@ function quantifyDecoratorFactoryProducer(quantity: Quantity) {
 
 interface ManyDecorator {
   (id?: DependencyIdentifier<any>): any
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (): ManyDecorator
+  new(): ManyDecorator
 }
 export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
   Quantity.MANY
@@ -84,8 +83,7 @@ export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
 
 interface OptionalDecorator {
   (id?: DependencyIdentifier<any>): any
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (): OptionalDecorator
+  new(): OptionalDecorator
 }
 export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
   Quantity.OPTIONAL
@@ -93,8 +91,7 @@ export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
 
 interface InjectDecorator {
   (id: DependencyIdentifier<any>): any
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (): InjectDecorator
+  new(): InjectDecorator
 }
 export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(
   Quantity.REQUIRED

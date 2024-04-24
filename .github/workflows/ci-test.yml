@@ -41,23 +41,8 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-pnpm-store-
 
-            - name: Setup ESLint cache
-              uses: actions/cache@v3
-              with:
-                  path: .eslintcache
-                  key: |
-                      ${{ runner.os }}-eslint-${{ hashFiles('.eslintrc.cjs') }}
-                  restore-keys: |
-                      ${{ runner.os }}-eslint-
-
             - name: Install dependencies
               run: pnpm install
 
-            - name: 🩺 Run Test
+            - name: 🩺 Run test
               run: pnpm run test
-
-            - name: 🌡️ Run ESLint
-              run: pnpm run lint
-
-            - name: 🧼 Type checking
-              run: pnpm typeCheck

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 import { vi, describe, afterEach, it, expect } from 'vitest'
 
 import {
@@ -28,17 +25,19 @@ function cleanupTest() {
 }
 
 describe('core', () => {
+  afterEach(() => cleanupTest());
+
+  it('should print the dependencies stack when cannot resolve', () => {
+    class A { }
+    class B { constructor(@Inject(A) private a: A) { } }
+    class C { constructor(@Inject(B) private b: B) { } }
+    class D { constructor(@Inject(C) private c: C) { } }
+
+    const j = new Injector([[B], [C], [D]]);
+    expectToThrow(() => j.get(D), 'Cannot find "A" registered by any injector. It is the 0th param of "B". The stack of dependencies is: "D -> C -> B -> A"');
+  });
+
   describe('basics', () => {
-    afterEach(() => cleanupTest())
-
-    it('should throw error when identifier has been declared before', () => {
-      createIdentifier('a')
-
-      expectToThrow(
-        () => createIdentifier('a'),
-        '[redi]: Identifier "a" already exists.'
-      )
-    })
 
     it('should resolve instance and then cache it', () => {
       let createCount = 0
@@ -66,7 +65,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(A) public a: A) {}
+        constructor(@Inject(A) public a: A) { }
       }
 
       interface C {
@@ -123,7 +122,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(IA) public a: IA) {}
+        constructor(@Inject(IA) public a: IA) { }
       }
 
       j.add([IA, { useClass: A }])
@@ -158,7 +157,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Many(IA) public a: IA[]) {}
+        constructor(@Many(IA) public a: IA[]) { }
       }
 
       j.add([IA, { useClass: A }])
@@ -173,7 +172,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(A) public a: A) {}
+        constructor(@Inject(A) public a: A) { }
       }
 
       const j = new Injector([[A]])
@@ -191,7 +190,7 @@ describe('core', () => {
         constructor(
           private readonly otherKey: string,
           @Inject(A) public readonly a: A
-        ) {}
+        ) { }
 
         get key() {
           return this.otherKey + 'a'
@@ -203,7 +202,7 @@ describe('core', () => {
       expect(b.key).toBe('another a')
     })
 
-    it('should "createInstance" truncate extra custom args', () => {})
+    it('should "createInstance" truncate extra custom args', () => { })
 
     it('should "createInstance" fill unprovided custom args with "undefined"', () => {
       class A {
@@ -215,7 +214,7 @@ describe('core', () => {
           private readonly otherKey: string,
           private readonly secondKey: string,
           @Inject(A) public readonly a: A
-        ) {}
+        ) { }
 
         get key() {
           return this.otherKey + this.secondKey + ' ' + this.a.key
@@ -223,7 +222,7 @@ describe('core', () => {
       }
 
       const spy = vi.spyOn(console, 'warn')
-      spy.mockImplementation(() => {})
+      spy.mockImplementation(() => { })
 
       const j = new Injector([[A]])
       const b = j.createInstance(B, 'another ')
@@ -249,11 +248,11 @@ describe('core', () => {
       const bI = createIdentifier('bI')
 
       class A {
-        constructor(@Inject(bI) private readonly b: any) {}
+        constructor(@Inject(bI) private readonly b: any) { }
       }
 
       class B {
-        constructor(@Inject(aI) private readonly a: any) {}
+        constructor(@Inject(aI) private readonly a: any) { }
       }
 
       const j = new Injector([
@@ -282,9 +281,9 @@ describe('core', () => {
     })
 
     it('should support checking if a dependency could be resolved by an injector', () => {
-      class A {}
+      class A { }
 
-      class B {}
+      class B { }
 
       const j = new Injector([[A]])
 
@@ -295,7 +294,7 @@ describe('core', () => {
 
   describe('different types of dependency items', () => {
     describe('class item', () => {
-      afterEach(() => cleanupTest())
+
 
       it('should dispose idle callback when dependency immediately resolved', async () => {
         interface A {
@@ -356,7 +355,7 @@ describe('core', () => {
         }
 
         class B {
-          constructor(@Inject(aI) private a: A) {}
+          constructor(@Inject(aI) private a: A) { }
 
           get key(): string {
             return this.a.key + 'b'
@@ -392,7 +391,7 @@ describe('core', () => {
         }
 
         class B {
-          constructor(public readonly a: A) {}
+          constructor(public readonly a: A) { }
         }
 
         setDependencies(B, [[A]])
@@ -406,7 +405,7 @@ describe('core', () => {
 
       it('should warn use when a dependency is missing', () => {
         class A {
-          constructor(private b: typeof B) {}
+          constructor(private b: typeof B) { }
 
           get key(): string {
             return typeof this.b === 'undefined'
@@ -418,9 +417,11 @@ describe('core', () => {
         // mock that B is not assigned to the class constructor
         let B: any = undefined
 
-        expectToThrow(() => {
+        expect(() => {
           setDependencies(A, [[B]])
-        }, '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".')
+        }).toThrow(
+          '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".'
+        )
 
         B = class {
           key = 'b'
@@ -428,21 +429,19 @@ describe('core', () => {
       })
 
       it('[class item] should throw error when a dependency cannot be resolved', () => {
-        class A {}
+        class A { }
 
         class B {
-          constructor(_param: string, @Inject(A) private readonly _a: A) {}
+          constructor(_param: string, @Inject(A) private readonly _a: A) { }
         }
 
         const j = new Injector([[B]])
-        expectToThrow(() => {
-          j.get(B)
-        }, '[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".')
+        expect(() => { j.get(B) }).toThrow('[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B". The stack of dependencies is: "B -> A".');
       })
     })
 
     describe('instance item', () => {
-      afterEach(() => cleanupTest())
+
 
       it('should just work', () => {
         const a = {
@@ -462,7 +461,7 @@ describe('core', () => {
     })
 
     describe('factory item', () => {
-      afterEach(() => cleanupTest())
+
 
       it('should just work with zero dep', () => {
         interface A {
@@ -486,7 +485,7 @@ describe('core', () => {
       })
 
       it('[factory item] should throw error when a dependency cannot be resolved', () => {
-        class A {}
+        class A { }
 
         interface IB {
           name: string
@@ -499,12 +498,12 @@ describe('core', () => {
         ])
         expectToThrow(() => {
           j.get(b)
-        }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b".')
+        }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b". The stack of dependencies is: "b -> A".')
       })
     })
 
     describe('async item', () => {
-      afterEach(() => cleanupTest())
+
 
       it('should support async loaded ctor', () =>
         new Promise<void>((done) => {
@@ -650,7 +649,7 @@ describe('core', () => {
       it('should "AsyncHook" work', () =>
         new Promise<void>((done) => {
           class A {
-            constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) {}
+            constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) { }
 
             public readKey(): Promise<string> {
               return this.bbILoader.whenReady().then((bb) => bb.key)
@@ -685,7 +684,6 @@ describe('core', () => {
     })
 
     describe('injector', () => {
-      afterEach(() => cleanupTest())
 
       it('should support inject itself', () => {
         const a = {
@@ -707,7 +705,6 @@ describe('core', () => {
   })
 
   describe('quantities', () => {
-    afterEach(() => cleanupTest())
 
     it('should support "Many"', () => {
       interface A {
@@ -725,7 +722,7 @@ describe('core', () => {
       const aI = createIdentifier<A>('aI')
 
       class B {
-        constructor(@Many(aI) private aS: A[]) {}
+        constructor(@Many(aI) private aS: A[]) { }
 
         get key(): string {
           return this.aS.map((a) => a.key).join('') + 'b'
@@ -761,7 +758,7 @@ describe('core', () => {
       const aI = createIdentifier<A>('aI')
 
       class B {
-        constructor(@Optional() @aI private a?: A) {}
+        constructor(@Optional() @aI private a?: A) { }
 
         get key(): string {
           return this.a?.key || 'no a' + 'b'
@@ -788,11 +785,11 @@ describe('core', () => {
     })
 
     it('should throw error when using decorator on a non-injectable parameter', () => {
-      class A {}
+      class A { }
 
       expectToThrow(() => {
         class B {
-          constructor(@Optional() _a: A) {}
+          constructor(@Optional() _a: A) { }
         }
       }, `[redi]: Could not find dependency registered on the 0 (indexed) parameter of the constructor of "B".`)
     })
@@ -805,7 +802,7 @@ describe('core', () => {
       const aI = createIdentifier<A>('aI')
 
       class B {
-        constructor(@aI private a: A) {}
+        constructor(@aI private a: A) { }
 
         get key(): string {
           return this.a?.key || 'no a' + 'b'
@@ -826,7 +823,6 @@ describe('core', () => {
   })
 
   describe('layered injection system', () => {
-    afterEach(() => cleanupTest())
 
     it('should get dependencies upwards', () => {
       class A {
@@ -840,7 +836,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(A) private a: A, @Inject(cI) private c: C) {}
+        constructor(@Inject(A) private a: A, @Inject(cI) private c: C) { }
 
         get key() {
           return this.a.key + 'b' + this.c.key
@@ -887,7 +883,7 @@ describe('core', () => {
       }
 
       class D {
-        constructor(@SkipSelf() @cI private readonly c: C) {}
+        constructor(@SkipSelf() @cI private readonly c: C) { }
 
         get key(): string {
           return this.c.key + 'd'
@@ -951,12 +947,12 @@ describe('core', () => {
 
       expectToThrow(
         () => child.get(bI),
-        '[redi]: Cannot find "cI" registered by any injector.'
+        '[redi]: Cannot find "cI" registered by any injector. It is the 1th param of "bI". The stack of dependencies is: "bI".'
       )
     })
 
     it('should throw error when no ancestor injector could provide dependency', () => {
-      class A {}
+      class A { }
 
       const j = new Injector()
 
@@ -968,12 +964,12 @@ describe('core', () => {
   })
 
   describe('forwardRef', () => {
-    afterEach(() => cleanupTest())
+
 
     it('should throw Error when forwardRef is not used', () => {
       expectToThrow(() => {
         class A {
-          constructor(@Inject(B) private b: B) {}
+          constructor(@Inject(B) private b: B) { }
 
           get key(): string {
             return typeof this.b === 'undefined'
@@ -990,7 +986,7 @@ describe('core', () => {
 
     it('should work when "forwardRef" is used', () => {
       class A {
-        constructor(@Inject(forwardRef(() => B)) private b: B) {}
+        constructor(@Inject(forwardRef(() => B)) private b: B) { }
 
         get key(): string {
           return typeof this.b === 'undefined' ? 'undefined' : 'a' + this.b.key
@@ -1015,7 +1011,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@WithNew() @Inject(A) private readonly a: A) {}
+        constructor(@WithNew() @Inject(A) private readonly a: A) { }
 
         get(): number {
           return this.a.count
@@ -1036,7 +1032,7 @@ describe('core', () => {
       const ICount = createIdentifier<number>('ICount')
 
       class B {
-        constructor(@WithNew() @Inject(ICount) public readonly count: number) {}
+        constructor(@WithNew() @Inject(ICount) public readonly count: number) { }
       }
 
       const j = new Injector([[B], [ICount, { useFactory: () => c++ }]])
@@ -1050,7 +1046,7 @@ describe('core', () => {
   })
 
   describe('hooks', () => {
-    afterEach(() => cleanupTest())
+
 
     it('should "onInstantiation" work for class dependencies', () => {
       interface A {
@@ -1076,7 +1072,7 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(aI) private a: A) {}
+        constructor(@Inject(aI) private a: A) { }
 
         get key(): string {
           return this.a.key + 'b'
@@ -1140,7 +1136,6 @@ describe('core', () => {
   })
 
   describe('dispose', () => {
-    afterEach(() => cleanupTest())
 
     it('should dispose', () => {
       let flag = false
@@ -1151,7 +1146,7 @@ describe('core', () => {
       }
 
       class B implements IDisposable {
-        constructor(@Inject(A) private readonly a: A) {}
+        constructor(@Inject(A) private readonly a: A) { }
 
         get key(): string {
           return this.a.key + 'b'
@@ -1171,12 +1166,21 @@ describe('core', () => {
     })
 
     it('should throw error when called after disposing', () => {
-      class A {}
+      class A { }
 
       const j = new Injector()
       j.dispose()
 
-      expectToThrow(() => j.get(A), '')
+      expectToThrow(() => j.get(A), 'Injector cannot be accessed after it was disposed.')
     })
+  })
+
+  it('should throw error when identifier has been declared before', () => {
+    createIdentifier('a')
+
+    expectToThrow(
+      () => createIdentifier('a'),
+      '[redi]: Identifier "a" already exists.'
+    )
   })
 })

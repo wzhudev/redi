@@ -17,7 +17,6 @@ export type IdentifierDecorator<T> = {
   type: T
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function isIdentifierDecorator<T>(
   thing: any
 ): thing is IdentifierDecorator<T> {

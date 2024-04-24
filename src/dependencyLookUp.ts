@@ -21,8 +21,7 @@ function lookupDecoratorFactoryProducer(lookUp: LookUp) {
 
 interface SkipSelfDecorator {
   (): any
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (): SkipSelfDecorator
+  new(): SkipSelfDecorator
 }
 /**
  * when resolving this dependency, skip the current injector
@@ -33,8 +32,7 @@ export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(
 
 interface SelfDecorator {
   (): any
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (): SelfDecorator
+  new(): SelfDecorator
 }
 /**
  * when resolving this dependency, only search the current injector
