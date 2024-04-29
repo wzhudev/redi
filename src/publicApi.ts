@@ -9,7 +9,7 @@ export {
   DependencyIdentifier,
   IdentifierDecorator,
 } from './dependencyIdentifier'
-export { IDisposable } from './dispose'
+export { IDisposable, isDisposable } from './dispose'
 export { setDependencies } from './dependencyDeclare'
 export { WithNew } from './dependencyWithNew'
 export {
