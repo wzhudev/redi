@@ -72,7 +72,13 @@ export function isValueDependencyItem<T>(
   return false
 }
 
+/**
+ * Reuse an existing dependency. You can consider it as an alias to another dependency.
+ */
 export interface ExistingDependencyItem<T> extends DependencyItemHooks<T> {
+  /**
+   * The identifier of the existing dependency.
+   */
   useExisting: DependencyIdentifier<T>
 }
 export function isExistingDependencyItem<T>(
