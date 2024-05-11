@@ -30,6 +30,8 @@ import {
   isValueDependencyItem,
   prettyPrintIdentifier,
   AsyncHookSymbol,
+  isExistingDependencyItem,
+  ExistingDependencyItem,
 } from './dependencyItem'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
@@ -380,7 +382,7 @@ export class Injector {
   ): C {
     this.ensureInjectorNotDisposed()
 
-    return this._resolveClass(ctor as Ctor<C>, ...customArgs)
+    return this._resolveClassImpl(ctor as Ctor<C>, ...customArgs)
   }
 
   private resolveDependency<T>(
@@ -396,19 +398,21 @@ export class Injector {
       if (isValueDependencyItem(item)) {
         result = this._resolveValueDependency(id, item as ValueDependencyItem<T>)
       } else if (isFactoryDependencyItem(item)) {
-        result = this.resolveFactory(
+        result = this._resolveFactory(
           id,
           item as FactoryDependencyItem<T>,
           shouldCache
         )
       } else if (isClassDependencyItem(item)) {
-        result = this.resolveClass(
+        result = this._resolveClass(
           id,
           item as ClassDependencyItem<T>,
           shouldCache
         )
+      } else if (isExistingDependencyItem(item)) {
+        result = this._resolveExisting(id, item as ExistingDependencyItem<T>)
       } else {
-        result = this.resolveAsync(id, item as AsyncDependencyItem<T>)
+        result = this._resolveAsync(id, item as AsyncDependencyItem<T>)
       }
 
       popupResolvingStack()
@@ -420,6 +424,15 @@ export class Injector {
     return result
   }
 
+  private _resolveExisting<T>(
+    id: DependencyIdentifier<T>,
+    item: ExistingDependencyItem<T>
+  ): T {
+    const thing = this.get(item.useExisting)
+    this.resolvedDependencyCollection.add(id, thing)
+    return thing;
+  }
+
   private _resolveValueDependency<T>(
     id: DependencyIdentifier<T>,
     item: ValueDependencyItem<T>
@@ -429,7 +442,7 @@ export class Injector {
     return thing
   }
 
-  private resolveClass<T>(
+  private _resolveClass<T>(
     id: DependencyIdentifier<T> | null,
     item: ClassDependencyItem<T>,
     shouldCache = true
@@ -438,7 +451,7 @@ export class Injector {
     let thing: T
 
     if (item.lazy) {
-      const idle = new IdleValue<T>(() => this._resolveClass(ctor))
+      const idle = new IdleValue<T>(() => this._resolveClassImpl(ctor))
       thing = new Proxy(Object.create(null), {
         get(target: any, key: string | number | symbol): any {
           if (key in target) {
@@ -472,7 +485,7 @@ export class Injector {
         },
       })
     } else {
-      thing = this._resolveClass(ctor)
+      thing = this._resolveClassImpl(ctor)
     }
 
     if (id && shouldCache) {
@@ -482,7 +495,7 @@ export class Injector {
     return thing
   }
 
-  private _resolveClass<T>(ctor: Ctor<T>, ...extraParams: any[]) {
+  private _resolveClassImpl<T>(ctor: Ctor<T>, ...extraParams: any[]) {
     this.markNewResolution(ctor)
 
     const declaredDependencies = getDependencies(ctor)
@@ -544,7 +557,7 @@ export class Injector {
     return thing
   }
 
-  private resolveFactory<T>(
+  private _resolveFactory<T>(
     id: DependencyIdentifier<T>,
     item: FactoryDependencyItem<T>,
     shouldCache: boolean
@@ -589,18 +602,18 @@ export class Injector {
     return thing
   }
 
-  private resolveAsync<T>(
+  private _resolveAsync<T>(
     id: DependencyIdentifier<T>,
     item: AsyncDependencyItem<T>
   ): AsyncHook<T> {
     const asyncLoader: AsyncHook<T> = {
       __symbol: AsyncHookSymbol,
-      whenReady: () => this._resolveAsync(id, item),
+      whenReady: () => this._resolveAsyncImpl(id, item),
     }
     return asyncLoader
   }
 
-  private _resolveAsync<T>(
+  private _resolveAsyncImpl<T>(
     id: DependencyIdentifier<T>,
     item: AsyncDependencyItem<T>
   ): Promise<T> {
@@ -621,7 +634,7 @@ export class Injector {
           ret = this.resolveDependency(id, item) as T
         }
       } else if (isCtor(thing)) {
-        ret = this._resolveClass(thing)
+        ret = this._resolveClassImpl(thing)
       } else {
         ret = thing
       }
