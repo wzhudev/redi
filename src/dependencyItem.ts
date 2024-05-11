@@ -7,7 +7,7 @@ import { Many, Optional } from './dependencyQuantity'
 import { WithNew } from './dependencyWithNew'
 
 export interface Ctor<T> {
-  new (...args: any[]): T
+  new(...args: any[]): T
 
   name: string
 }
@@ -72,6 +72,25 @@ export function isValueDependencyItem<T>(
   return false
 }
 
+/**
+ * Reuse an existing dependency. You can consider it as an alias to another dependency.
+ */
+export interface ExistingDependencyItem<T> extends DependencyItemHooks<T> {
+  /**
+   * The identifier of the existing dependency.
+   */
+  useExisting: DependencyIdentifier<T>
+}
+export function isExistingDependencyItem<T>(
+  thing: unknown
+): thing is ExistingDependencyItem<T> {
+  if (thing && typeof (thing as any).useExisting !== 'undefined') {
+    return true
+  }
+
+  return false
+}
+
 export interface AsyncDependencyItem<T> extends DependencyItemHooks<T> {
   useAsync: () => Promise<
     T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]
@@ -104,6 +123,7 @@ export function isAsyncHook<T>(thing: unknown): thing is AsyncHook<T> {
 export type SyncDependencyItem<T> =
   | ClassDependencyItem<T>
   | FactoryDependencyItem<T>
+  | ExistingDependencyItem<T>
   | ValueDependencyItem<T>
 
 export type DependencyItem<T> = SyncDependencyItem<T> | AsyncDependencyItem<T>

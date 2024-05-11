@@ -294,8 +294,6 @@ describe('core', () => {
 
   describe('different types of dependency items', () => {
     describe('class item', () => {
-
-
       it('should dispose idle callback when dependency immediately resolved', async () => {
         interface A {
           key: string
@@ -441,8 +439,6 @@ describe('core', () => {
     })
 
     describe('instance item', () => {
-
-
       it('should just work', () => {
         const a = {
           key: 'a',
@@ -461,8 +457,6 @@ describe('core', () => {
     })
 
     describe('factory item', () => {
-
-
       it('should just work with zero dep', () => {
         interface A {
           key: string
@@ -484,7 +478,7 @@ describe('core', () => {
         expect(j.get(aI).key).toBe('a')
       })
 
-      it('[factory item] should throw error when a dependency cannot be resolved', () => {
+      it('should throw error when a dependency cannot be resolved', () => {
         class A { }
 
         interface IB {
@@ -500,6 +494,28 @@ describe('core', () => {
           j.get(b)
         }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b". The stack of dependencies is: "b -> A".')
       })
+    })
+
+    describe('existing item', () => {
+      it('should reuse existing instance', () => {
+        let initCount = 0
+
+        class A {
+          constructor() {
+            initCount += 1
+          }
+        }
+
+        const b = createIdentifier<A>('b')
+
+        const j = new Injector([
+          [A],
+          [b, { useExisting: A }],
+        ])
+
+        expect(j.get(b)).toBe(j.get(A))
+        expect(initCount).toBe(1)
+      });
     })
 
     describe('async item', () => {
