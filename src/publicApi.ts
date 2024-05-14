@@ -33,15 +33,17 @@ export { RediError } from './error'
 const globalObject: any =
   (typeof globalThis !== 'undefined' && globalThis) ||
   (typeof window !== 'undefined' && window) ||
-  // @ts-ignore
   (typeof global !== 'undefined' && global)
 
 const __REDI_GLOBAL_LOCK__ = 'REDI_GLOBAL_LOCK'
+const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null
 
 if (globalObject[__REDI_GLOBAL_LOCK__]) {
-  console.error(`[redi]: You are loading scripts of redi more than once! This may cause undesired behavior in your application.
+  if (!isNode) {
+    console.error(`[redi]: You are loading scripts of redi more than once! This may cause undesired behavior in your application.
 Maybe your dependencies added redi as its dependency and bundled redi to its dist files. Or you import different versions of redi.
 For more info please visit our website: https://redi.wendell.fun/en-US/docs/debug#import-scripts-of-redi-more-than-once`)
+  }
 } else {
   globalObject[__REDI_GLOBAL_LOCK__] = true
 }

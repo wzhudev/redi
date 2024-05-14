@@ -1,26 +1,18 @@
 import * as React from 'react'
-import { Injector, RediError } from '@wendellhu/redi'
+import { Injector } from '@wendellhu/redi'
 
-declare global {
-  interface Window {
-    RediContextCreated: string | null
-  }
-}
-
-const RediContextCreated = '__RediContextCreated__'
+const __REDI_CONTEXT_LOCK__ = 'REDI_CONTEXT_LOCK'
+const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null
 
 const globalObject: any =
   (typeof globalThis !== 'undefined' && globalThis) ||
   (typeof window !== 'undefined' && window) ||
-  // @ts-ignore
   (typeof global !== 'undefined' && global)
 
-if (!globalObject.RediContextCreated) {
-  globalObject.RediContextCreated = RediContextCreated
-} else {
-  throw new RediError(
-    '"RediContext" is already created. You may import "RediContext" from different paths. Use "import { RediContext } from \'@wendellhu/redi/react-bindings\'; instead."'
-  )
+if (!globalObject[__REDI_CONTEXT_LOCK__]) {
+  globalObject[__REDI_CONTEXT_LOCK__] = true
+} else if (!isNode) {
+  console.error('[redi]: "RediContext" is already created. You may import "RediContext" from different paths. Use "import { RediContext } from \'@wendellhu/redi/react-bindings\'; instead."')
 }
 
 export interface IRediContext {
