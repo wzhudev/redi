@@ -110,7 +110,7 @@ export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaul
   }, [destObservable]);
 
   if (shouldHaveSyncValue && !initializedRef.current) {
-    throw new Error('[useObservable]: expect shouldHaveSyncValue but not getting a sync value!');
+    throw new Error('Expect `shouldHaveSyncValue` but not getting a sync value!');
   }
 
   return valueRef.current;
