@@ -131,7 +131,8 @@ export class Injector {
    * @returns The child injector.
    */
   public createChild(dependencies?: Dependency[]): Injector {
-    this.ensureInjectorNotDisposed()
+    this._ensureInjectorNotDisposed()
+
     return new Injector(dependencies, this)
   }
 
@@ -168,7 +169,8 @@ export class Injector {
    * @param dependency The dependency or an instance that would be add in the injector.
    */
   public add<T>(dependency: DependencyOrInstance<T>): void {
-    this.ensureInjectorNotDisposed()
+    this._ensureInjectorNotDisposed()
+
     const identifierOrCtor = dependency[0]
     const item = dependency[1]
 
@@ -200,7 +202,7 @@ export class Injector {
    * @param dependency The dependency that will replace the already existed dependency.
    */
   public replace<T>(dependency: Dependency<T>): void {
-    this.ensureInjectorNotDisposed()
+    this._ensureInjectorNotDisposed()
 
     const identifier = dependency[0]
     if (this.resolvedDependencyCollection.has(identifier)) {
@@ -222,7 +224,7 @@ export class Injector {
    * @param identifier The identifier of the dependency that is supposed to be deleted.
    */
   public delete<T>(identifier: DependencyIdentifier<T>): void {
-    this.ensureInjectorNotDisposed()
+    this._ensureInjectorNotDisposed()
 
     if (this.resolvedDependencyCollection.has(identifier)) {
       throw new DeleteDependencyAfterResolutionError(identifier)
@@ -243,6 +245,8 @@ export class Injector {
     cb: (accessor: IAccessor, ...args: P) => T,
     ...args: P
   ): T {
+    this._ensureInjectorNotDisposed()
+
     const accessor: IAccessor = {
       get: <D>(
         id: DependencyIdentifier<D>,
@@ -303,6 +307,8 @@ export class Injector {
     quantityOrLookup?: Quantity | LookUp,
     lookUp?: LookUp
   ): T[] | T | null {
+    this._ensureInjectorNotDisposed();
+
     try {
       const newResult = this._get(id, quantityOrLookup, lookUp)
       if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
@@ -325,8 +331,6 @@ export class Injector {
     lookUp?: LookUp,
     toSelf?: boolean
   ): T[] | T | AsyncHook<T> | null {
-    this.ensureInjectorNotDisposed()
-
     let quantity: Quantity = Quantity.REQUIRED
     if (
       quantityOrLookup === Quantity.REQUIRED ||
@@ -358,7 +362,7 @@ export class Injector {
    * Get a dependency in the async way.
    */
   public getAsync<T>(id: DependencyIdentifier<T>): Promise<T> {
-    this.ensureInjectorNotDisposed()
+    this._ensureInjectorNotDisposed()
 
     const cachedResult = this.getValue(id, Quantity.REQUIRED)
     if (cachedResult !== NotInstantiatedSymbol) {
@@ -380,12 +384,12 @@ export class Injector {
     ctor: new (...args: [...T, ...U]) => C,
     ...customArgs: T
   ): C {
-    this.ensureInjectorNotDisposed()
+    this._ensureInjectorNotDisposed()
 
     return this._resolveClassImpl(ctor as Ctor<C>, ...customArgs)
   }
 
-  private resolveDependency<T>(
+  private _resolveDependency<T>(
     id: DependencyIdentifier<T>,
     item: DependencyItem<T>,
     shouldCache = true
@@ -451,7 +455,11 @@ export class Injector {
     let thing: T
 
     if (item.lazy) {
-      const idle = new IdleValue<T>(() => this._resolveClassImpl(ctor))
+      const idle = new IdleValue<T>(() => {
+        this._ensureInjectorNotDisposed()
+        return this._resolveClassImpl(ctor)
+      })
+
       thing = new Proxy(Object.create(null), {
         get(target: any, key: string | number | symbol): any {
           if (key in target) {
@@ -631,7 +639,7 @@ export class Injector {
         if (isAsyncDependencyItem(item)) {
           throw new AsyncItemReturnAsyncItemError(id)
         } else {
-          ret = this.resolveDependency(id, item) as T
+          ret = this._resolveDependency(id, item) as T
         }
       } else if (isCtor(thing)) {
         ret = this._resolveClassImpl(thing)
@@ -698,9 +706,9 @@ export class Injector {
 
       let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null
       if (Array.isArray(registrations)) {
-        ret = registrations.map((dependencyItem) => this.resolveDependency(id, dependencyItem, shouldCache))
+        ret = registrations.map((dependencyItem) => this._resolveDependency(id, dependencyItem, shouldCache))
       } else if (registrations) {
-        ret = this.resolveDependency(id, registrations, shouldCache)
+        ret = this._resolveDependency(id, registrations, shouldCache)
       }
 
       return ret
@@ -751,7 +759,7 @@ export class Injector {
     this.resolutionOngoing -= 1
   }
 
-  private ensureInjectorNotDisposed(): void {
+  private _ensureInjectorNotDisposed(): void {
     if (this.disposed) {
       throw new InjectorAlreadyDisposedError()
     }
