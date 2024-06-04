@@ -34,7 +34,7 @@ describe('core', () => {
     class D { constructor(@Inject(C) private c: C) { } }
 
     const j = new Injector([[B], [C], [D]]);
-    expectToThrow(() => j.get(D), 'Cannot find "A" registered by any injector. It is the 0th param of "B". The stack of dependencies is: "D -> C -> B -> A"');
+    expectToThrow(() => j.get(D), 'Cannot find "A" registered by any injector. It is the 0th param of "B".');
   });
 
   describe('basics', () => {
@@ -434,7 +434,7 @@ describe('core', () => {
         }
 
         const j = new Injector([[B]])
-        expect(() => { j.get(B) }).toThrow('[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B". The stack of dependencies is: "B -> A".');
+        expect(() => { j.get(B) }).toThrow('[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".');
       })
     })
 
@@ -492,7 +492,7 @@ describe('core', () => {
         ])
         expectToThrow(() => {
           j.get(b)
-        }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b". The stack of dependencies is: "b -> A".')
+        }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b".')
       })
     })
 
@@ -963,7 +963,7 @@ describe('core', () => {
 
       expectToThrow(
         () => child.get(bI),
-        '[redi]: Cannot find "cI" registered by any injector. It is the 1th param of "bI". The stack of dependencies is: "bI".'
+        '[redi]: Cannot find "cI" registered by any injector. It is the 1th param of "bI".'
       )
     })
 

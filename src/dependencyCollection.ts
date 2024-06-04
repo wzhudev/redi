@@ -48,11 +48,9 @@ export class DependencyNotFoundForModuleError extends RediError {
     const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th param of "${isIdentifierDecorator(toInstantiate)
       ? prettyPrintIdentifier(toInstantiate)
       : (toInstantiate as Ctor<any>).name
-      }". The stack of dependencies is: "${ResolvingStack.map((id) => prettyPrintIdentifier(id)).join(' -> ')}".`
+      }".`
 
     super(msg)
-
-    clearResolvingStack();
   }
 }
 
@@ -63,6 +61,8 @@ export class DependencyNotFoundError extends RediError {
     const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. The stack of dependencies is: "${ResolvingStack.map((id) => prettyPrintIdentifier(id)).join(' -> ')}".`
 
     super(msg)
+
+    clearResolvingStack();
   }
 }
 

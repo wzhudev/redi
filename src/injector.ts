@@ -309,20 +309,12 @@ export class Injector {
   ): T[] | T | null {
     this._ensureInjectorNotDisposed();
 
-    try {
-      const newResult = this._get(id, quantityOrLookup, lookUp)
-      if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
-        throw new GetAsyncItemFromSyncApiError(id)
-      }
-
-      return newResult as T | T[] | null
-    } catch (e: unknown) {
-      if (e instanceof DependencyNotFoundError) {
-        clearResolvingStack();
-      }
-
-      throw e;
+    const newResult = this._get(id, quantityOrLookup, lookUp)
+    if ((Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) || isAsyncHook(newResult)) {
+      throw new GetAsyncItemFromSyncApiError(id)
     }
+
+    return newResult as T | T[] | null
   }
 
   private _get<T>(
