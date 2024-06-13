@@ -980,8 +980,6 @@ describe('core', () => {
   })
 
   describe('forwardRef', () => {
-
-
     it('should throw Error when forwardRef is not used', () => {
       expectToThrow(() => {
         class A {

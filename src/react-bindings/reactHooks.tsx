@@ -59,5 +59,5 @@ export function useDependency<T>(
   lookUp?: LookUp
 ): T | T[] | null {
   const injector = useInjector()
-  return injector.get<T>(id, quantityOrLookUp, lookUp)
+  return React.useMemo(() => injector.get<T>(id, quantityOrLookUp, lookUp), [id, quantityOrLookUp, lookUp]);
 }
