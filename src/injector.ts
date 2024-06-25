@@ -1,4 +1,3 @@
-import { findIndex } from 'rxjs/operators'
 import { getDependencies } from './decorators'
 import {
   Dependency,
@@ -7,7 +6,6 @@ import {
   DependencyNotFoundForModuleError,
   DependencyOrInstance,
   ResolvedDependencyCollection,
-  clearResolvingStack,
   popupResolvingStack,
   pushResolvingStack,
 } from './dependencyCollection'
@@ -538,7 +536,7 @@ export class Injector {
 
     if (args.length !== firstDependencyArgIndex) {
       console.warn(
-        `[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${ctor.toString()} but get ${args.length
+        `[redi]: Expect ${firstDependencyArgIndex} custom parameter(s) of ${prettyPrintIdentifier(ctor)} but get ${args.length
         }.`
       )
 
