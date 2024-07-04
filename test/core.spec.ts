@@ -229,16 +229,6 @@ describe('core', () => {
 
       expect(b.key).toBe('another undefined a')
       expect(spy).toHaveReturnedTimes(1)
-      // expect(spy).toHaveBeenCalledWith(`[redi]: Expect 2 custom parameter(s) of class {
-      //     constructor(otherKey, secondKey, a) {
-      //         this.otherKey = otherKey;
-      //         this.secondKey = secondKey;
-      //     	   this.a = a;
-      // 	   }
-      // 	   get key() {
-      //     	    return this.otherKey + this.secondKey + \" \" + this.a.key;
-      // 	   }
-      // } but get 1.`)
 
       spy.mockRestore()
     })
@@ -1061,7 +1051,6 @@ describe('core', () => {
 
   describe('hooks', () => {
 
-
     it('should "onInstantiation" work for class dependencies', () => {
       interface A {
         key: string
@@ -1124,6 +1113,73 @@ describe('core', () => {
       b.setKey()
 
       expect(b.getAnotherKey()).toBe('another changed b')
+    })
+
+    it('should "onInstantiation" work for lazy class during', () => {
+      vi.useFakeTimers();
+
+      interface A {
+        key: string
+
+        getAnotherKey(): string
+      }
+
+      let flag = false
+
+      const aI = createIdentifier<A>('aI')
+
+      class A1 implements A {
+        key = 'a'
+
+        constructor() {
+          flag = true
+        }
+
+        getAnotherKey(): string {
+          return 'another ' + this.key
+        }
+      }
+
+      class B {
+        constructor(@Inject(aI) private a: A) { }
+
+        get key(): string {
+          return this.a.key + 'b'
+        }
+
+        getAnotherKey(): string {
+          return this.a.getAnotherKey() + 'b'
+        }
+
+        setKey(): void {
+          this.a.key = 'changed '
+        }
+      }
+
+      const j = new Injector([
+        [B],
+        [
+          aI,
+          {
+            useClass: A1,
+            lazy: true,
+            onInstantiation: (i: A) => (i.key = 'a++'),
+          },
+        ],
+      ])
+
+      const _b = j.get(B)
+      expect(flag).toBeFalsy()
+
+      // after a period of time
+      vi.runAllTimers()
+      vi.runAllTicks()
+
+      const a = j.get(aI)
+      expect(flag).toBeTruthy()
+      expect(a.key).toBe('a++')
+
+      vi.useRealTimers()
     })
 
     it('should "onInstantiation" work for factory dependencies', () => {
