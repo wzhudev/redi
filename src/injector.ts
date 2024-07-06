@@ -30,6 +30,7 @@ import {
   AsyncHookSymbol,
   isExistingDependencyItem,
   ExistingDependencyItem,
+  DependencyItemHooks,
 } from './dependencyItem'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
@@ -376,7 +377,12 @@ export class Injector {
   ): C {
     this._ensureInjectorNotDisposed()
 
-    return this._resolveClassImpl(ctor as Ctor<C>, ...customArgs)
+    return this._resolveClassImpl(
+      {
+        useClass: ctor as Ctor<C>
+      },
+      ...customArgs
+    )
   }
 
   private _resolveDependency<T>(
@@ -447,7 +453,7 @@ export class Injector {
     if (item.lazy) {
       const idle = new IdleValue<T>(() => {
         this._ensureInjectorNotDisposed()
-        return this._resolveClassImpl(ctor)
+        return this._resolveClassImpl(item)
       })
 
       thing = new Proxy(Object.create(null), {
@@ -461,11 +467,7 @@ export class Injector {
             return undefined
           }
 
-          const hasInstantiated = idle.hasRun()
           const thing = idle.getValue()
-          if (!hasInstantiated) {
-            item.onInstantiation?.(thing)
-          }
 
           let property = (thing as any)[key]
           if (typeof property !== 'function') {
@@ -483,7 +485,7 @@ export class Injector {
         },
       })
     } else {
-      thing = this._resolveClassImpl(ctor)
+      thing = this._resolveClassImpl(item)
     }
 
     if (id && shouldCache) {
@@ -493,7 +495,8 @@ export class Injector {
     return thing
   }
 
-  private _resolveClassImpl<T>(ctor: Ctor<T>, ...extraParams: any[]) {
+  private _resolveClassImpl<T>(item: ClassDependencyItem<T>, ...extraParams: any[]) {
+    const ctor = item.useClass
     this.markNewResolution(ctor)
 
     const declaredDependencies = getDependencies(ctor)
@@ -549,6 +552,8 @@ export class Injector {
     }
 
     const thing = new ctor(...args, ...resolvedArgs)
+
+    item?.onInstantiation?.(thing)
 
     this.markResolutionCompleted()
 
@@ -632,7 +637,10 @@ export class Injector {
           ret = this._resolveDependency(id, item) as T
         }
       } else if (isCtor(thing)) {
-        ret = this._resolveClassImpl(thing)
+        ret = this._resolveClassImpl({
+          useClass: thing,
+          onInstantiation: item.onInstantiation
+        })
       } else {
         ret = thing
       }
