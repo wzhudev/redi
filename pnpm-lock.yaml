@@ -30,8 +30,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(vitest@1.5.0(@types/node@20.11.16)(jsdom@19.0.0))
       '@wendellhu/squirrel':
-        specifier: ^0.1.7
-        version: 0.1.7
+        specifier: ^0.1.8
+        version: 0.1.8
       jsdom:
         specifier: ^19.0.0
         version: 19.0.0
@@ -576,8 +576,8 @@ packages:
   '@vitest/utils@1.5.0':
     resolution: {integrity: sha512-BDU0GNL8MWkRkSRdNFvCUCAVOeHaUlVJ9Tx0TYBZyXaaOTmGtUFObzchCivIBrIwKzvZA7A9sCejVhXM2aY98A==}
 
-  '@wendellhu/squirrel@0.1.7':
-    resolution: {integrity: sha512-C/0GEXgMeEq21zw7j4nVVfHmgd4HUGyBqybPMkj4ZcSpmCspVrXFm5GVZ2vFRCeeyHzYyKFbvI5ZvP0r3YSGKg==}
+  '@wendellhu/squirrel@0.1.8':
+    resolution: {integrity: sha512-igfnk1yv8fW7Z7IiPAVpOE2ZhjJA9T5gH1dlPNAiH7L1Elu30VNIKeB6+U72KBE1hUSVRYNEOs/v5Qn5ANupBw==}
     hasBin: true
 
   JSONStream@1.3.5:
@@ -3118,7 +3118,7 @@ snapshots:
       loupe: 2.3.7
       pretty-format: 29.7.0
 
-  '@wendellhu/squirrel@0.1.7':
+  '@wendellhu/squirrel@0.1.8':
     dependencies:
       commander: 8.3.0
       glob: 7.2.3

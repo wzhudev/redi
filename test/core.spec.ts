@@ -406,7 +406,7 @@ describe('core', () => {
         let B: any = undefined
 
         expect(() => {
-          setDependencies(A, [[B]])
+          setDependencies(A, [B])
         }).toThrow(
           '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".'
         )
