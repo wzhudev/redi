@@ -1,5 +1,12 @@
 
 
+## [0.16.1](https://github.com/wzhudev/redi/compare/v0.16.0...v0.16.1) (2024-07-31)
+
+
+### Features
+
+* support has API on accessor ([#29](https://github.com/wzhudev/redi/issues/29)) ([4cb5c21](https://github.com/wzhudev/redi/commit/4cb5c21d40aae66f199d3c06ee17e6e7f81fd097))
+
 # [0.16.0](https://github.com/hullis/redi/compare/0.15.2...v0.16.0) (2024-07-10)
 
 
