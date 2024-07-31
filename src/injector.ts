@@ -30,7 +30,6 @@ import {
   AsyncHookSymbol,
   isExistingDependencyItem,
   ExistingDependencyItem,
-  DependencyItemHooks,
 } from './dependencyItem'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
@@ -92,6 +91,7 @@ class DeleteDependencyAfterResolutionError<T> extends RediError {
 
 export interface IAccessor {
   get: Injector['get']
+  has: Injector['has']
 }
 
 /**
@@ -254,6 +254,13 @@ export class Injector {
       ) => {
         return this._get(id, quantityOrLookup, lookUp)
       },
+
+      has: <D>(
+        id: DependencyIdentifier<D>
+      ): boolean => {
+        return this.has(id)
+      }
+
     }
 
     return cb(accessor, ...args)
@@ -447,7 +454,6 @@ export class Injector {
     item: ClassDependencyItem<T>,
     shouldCache = true
   ): T {
-    const ctor = item.useClass
     let thing: T
 
     if (item.lazy) {
