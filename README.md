@@ -29,12 +29,11 @@ const injector = new Injector([[AuthService], [FileListService]])
 injector.get(AuthService)
 ```
 
-**View full documentation on [redi.wendell.fun](https://redi.wendell.fun/).**
+**View full documentation on [redi.wzhu.dev](https://redi.wzhu.dev/).**
 
 ## Links
 
 -   [Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/) | [source](https://github.com/wzhudev/redi-todomvc)
--   [Doc site](https://redi.wendell.fun) | [source](https://github.com/wzhudev/redi-site)
 -   [Scaffold](https://github.com/wzhudev/redi-starter)
 
 ## Users
@@ -45,4 +44,3 @@ injector.get(AuthService)
 ## License
 
 MIT. Copyright 2021-present Wenzhao Hu.
-
