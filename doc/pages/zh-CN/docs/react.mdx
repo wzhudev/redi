@@ -1,0 +1,56 @@
+# 在 React 中使用
+
+redi 提供了一组 API，方便在 React 中使用依赖注入模式。redi 借助 React Context，在组件间传递注入器。
+
+## 组件提供依赖项
+
+组件可以和一组依赖项绑定，`connectDependencies` 实际上会返回一个 HOC，该 HOC 内部会提供了一个 `RediContext`，`RediContext` 内的注入器含有这组依赖：
+
+```ts
+const App = connectDependencies(
+  function AppImpl() {
+    //...
+  },
+  [[PlatformService]],
+);
+```
+
+也可以通过 `connectInjector` 直接和某个注入器绑定：
+
+```ts
+const injector = new Injector([[PlatformService]]);
+
+const App = connectInjector(function AppImpl() {
+  //...
+}, injector);
+```
+
+`connectDependencies` 和 `connectInjector` 的区别在于：前者所绑定的组件每次创建时，都会创建一个注入器，各个注入器之间相互独立；后者所绑定的组件并不创建注入器，共享同一个注入器。另外，当绑定过的组件构成父子关系时，`connectDependencies` 会自动将两个注入器也构建父子关系。所以在大部分情况下 `connectDependencies` 可能会更适用。
+
+## 组件使用依赖项
+
+在函数式组件中使用依赖项，可以使用如下的 Hooks：
+
+```ts highlight=2,3
+function Dashboard() {
+  const injector = useInjector();
+  const platformService = useDependency(PlatformService);
+}
+```
+
+在类组件中使用依赖项，可以使用 `WithDependency` 装饰器。
+
+```tsx highlight=2
+class Dashboard extends React.Component {
+  static contextType = RediContext;
+
+  @WithDependency(PlatformService)
+  private readonly platformSrv!: PlatformService;
+}
+```
+
+`useDependency` 和 `WithDependency` 支持传递参数来控制注入依赖的数量和向上查找。
+
+```ts
+@WithDependency(IStateService, Quantity.Optional, LookUp.SkipSelf);
+```

@@ -1,0 +1,54 @@
+import { Callout } from "nextra/components";
+
+# 排查问题
+
+## Import scripts of redi more than once
+
+<Callout>
+  [redi]: You are loading scripts of redi more than once! This may cause
+  undesired behavior in your application. Maybe your dependencies added redi as
+  its dependency and bundled redi to its dist files. Or you import different
+  versions of redi.
+</Callout>
+
+这个错误的含义是你加载了多次 redi 的代码。这个错误的原因可能是以下其中一种：
+
+1. 你引入的包也依赖了 `@wendellhu/redi`，但是它们没有将 redi 设置为外部依赖，而是将 redi 打包到了它们的 dist 文件中
+2. 你引入的包依赖的 `@wendellhu/redi` 和你自己安装的 `redi` 版本不一致
+3. 你在一个 monorepo 中工作，repo 使用了不同版本的 redi
+
+redi 在内部使用了 `Symbol` 和 `instanceof`。所以当你加载了多次 redi 的代码时，redi 会无法正常运行。
+
+为了解决这个问题，你可以采取以下办法：
+
+1. 联系这些包的维护者，让他们将 `@wendellhu/redi` 设置为外部依赖
+2. 这些包的维护者可能重新导出了 redi 的 API，这种情况下请使用这些 API 而不要直接使用 redi
+3. 在你的 monorepo 中使用相同的 redi 版本
+
+## Could not find dependency registered on
+
+<Callout>
+  [redi]: It seems that you register "undefined" as dependency on the X
+  parameter of "XXX". Please make sure that there is not cyclic dependency among
+  your TypeScript files, or consider using "forwardRef".
+</Callout>
+
+当 redi 试图弄清楚某个类 `XXX` 依赖于哪些依赖项时，发现某个依赖项被解析为 `undefined`，就会抛出这个错误。发生这个错误的原因大致如下：
+
+我们假设这个依赖项是 `YYY`，
+
+1. `YYY` 一定是一个类
+2. tsc 编译 TypeScript 到 JavaScript 时，`YYY` 标识符先被声明，稍后才会被赋值上 `YYY` 的构造函数
+3. 在 TypeScript 文件之间存在循环依赖，导致当 `Inject` 装饰器视图在 `XXX` 上记录依赖关系时，`YYY` 还没有被赋值
+
+为了解决这个问题，你可以使用 `forwardRef`，这会导致对 `YYY` 的取值过程延后到构建 `XXX` 的实例时，从而避免这个问题：
+
+```ts
+import { Inject, forwardRef } from "@wendellhu/redi";
+
+class XXX {
+  constructor(@Inject(forwardRef(() => YYY)) private readonly _yyy: YYY) {}
+}
+```
+
+更加推荐的做法是解除文件之间的循环依赖。推荐使用 [dpdm](https://www.npmjs.com/package/dpdm) 来查找文件直接的依赖关系。你可以从 `XXX` 所在文件开始遍历依赖关系，然后把包含这个文件的循环依赖打破。

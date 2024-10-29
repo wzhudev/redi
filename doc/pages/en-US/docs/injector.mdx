@@ -1,0 +1,19 @@
+import { Callout } from "nextra/components";
+
+# Injector
+
+<Callout>
+  I apologize for any outdated information in the document. We are currently in
+  the process of building a separate and dedicated API website.
+</Callout>
+
+Injector plays an important role in dependency injection. It holds a set of bindings and resolve identifiers.
+
+It has the following API:
+
+- `constructor(collectionOrDependencies?: Dependency[], parent?: Injector)`. The first parameter is an array of dependencies that you want this injector to hold. And the second parameter is optional. It provided, it would be the injector's parent.
+- `createChild(dependencies?: Dependency[]): Injector`. Create a child injector.
+- `add<T>(dependency: Ctor<T> | DependencyPair<T> | DependencyIdentifier<T>, item?: DependencyItem<T> | T): void`. Add a dependency into the injector.
+- `get<T>(id: DependencyIdentifier<T>, quantityOrLookup?: Quantity | LookUp, lookUp?: LookUp): T[] | T | null`. Get a sync dependency.
+- `getAsync<T>(id: DependencyIdentifier<T>): Promise<T>`. Get a dependency in an async way.
+- `createInstance<T extends unknown[], U extends unknown[], C>(ctor: new (...args: [...T, ...U]) => C, ...customArgs: T)`. To instantiate a class. Please note that: all constructor parameters those will be injected should be put after those will not be injected. And objects created in this way would **not** be cached in injector. Injector will not call `dispose` method of these objects when injector itself is disposed.

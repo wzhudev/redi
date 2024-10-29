@@ -1,0 +1,98 @@
+import { Callout } from "nextra/components";
+
+# Dependency relationship
+
+After creating identifiers and dependency items, you need to declare dependency relationship among dependencies. There are two types of dependency items that could dependent on others: class items and factory function items.
+
+## On a class
+
+To declare dependencies of a class, you could use the `Injector` decorator:
+
+```ts highlight=3
+class MapService {
+  constructor(
+    @Inject(SatelliteService) private readonly satellite: SatelliteService,
+  ) {}
+}
+```
+
+or an `IdentifierDecorator`:
+
+```ts highlight=7
+interface IPlatformService {}
+
+const IPlatformService = createIdentifier<IPlatformService>("platform");
+
+class DialogService {
+  constructor(
+    @IPlatformService private readonly platformSrc: IPlatformService,
+  ) {}
+}
+```
+
+## On a factory
+
+You should list all its dependencies in the `deps` property:
+
+```ts highlight=9
+const item = [
+  I18NNumberTranspiler,
+  {
+    useFactory: (i18nService: I18NService) => {
+      return i18nService.isChinese()
+        ? new ChineseNumberTranspiler()
+        : new EnglishNumberTranspiler();
+    },
+    deps: [I18NService],
+  },
+];
+```
+
+## Optional
+
+When a dependency is not held by an injector, the injector would throw an error when you want to get that dependency.
+
+```ts highlight=3,8
+class MapService {
+  constructor(
+    @Inject(SatelliteService) private readonly satellite: SatelliteService,
+  ) {}
+}
+
+const injector = new Injector([[MapService]]);
+injector.get(MapService); // ERROR!
+```
+
+You could use `Optional` instead `Inject`, to mark `SatelliteService` as an optional dependency not a required one.
+
+```ts highlight=3,8
+class MapService {
+  constructor(
+    @Optional(SatelliteService) private readonly satellite?: SatelliteService,
+  ) {}
+}
+
+const injector = new Injector([MapService]);
+injector.get(MapService);
+```
+
+In this case, `MapService` could construct, but its property `satellite` would be undefined.
+
+## Multiple
+
+Similarly, you could use `Many` to mark the dependency could be injected with multiple instances:
+
+```ts highlight=3,9-10
+class MapService {
+  constructor(
+    @Many(ISatelliteService) private readonly satellites: ISatelliteService[],
+  ) {}
+}
+
+const injector = new Injector([
+  [MapService],
+  [ISatelliteService, { useClass: GPSSatellite }],
+  [ISatelliteService, { useClass: BeidouSatellite }],
+]);
+injector.get(MapService);
+```

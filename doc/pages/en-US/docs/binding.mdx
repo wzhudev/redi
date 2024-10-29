@@ -1,0 +1,32 @@
+# Binding
+
+After declaring identifiers and dependencies, it is necessary to establish a binding relationship between the identifiers and dependencies, and register these bindings in the injector. The injector can only return dependencies based on identifiers when it knows a set of bindings.
+
+There are two ways to register bindings on the injector:
+
+- As parameters of the injector constructor
+- By calling the `add` method of the injector
+
+## As parameters of the injector constructor
+
+The first parameter of the `Injector` constructor is a set of bindings. You have seen a lot of code like this in the previous section:
+
+```ts
+const injector = new Injector([
+  [SomeClass],
+  [IdentifierA, { useClass: SomeClass }],
+  [IdentifierB, { useValue: SomeValue }],
+  [IdentifierC, { useFactory: SomeFactory }],
+  [IdentifierD, { useAsync: SomeAsyncFunction }],
+]);
+```
+
+## By calling the `add` method of the injector
+
+```ts
+injector.add([SomeClass]);
+injector.add([IdentifierA, { useClass: SomeClass }]);
+injector.add([IdentifierB, { useValue: SomeValue }]);
+```
+
+This approach is more flexible because it does not restrict when you can register bindings. However, this type of binding can be a double-edged sword as it may not have been registered by the time you retrieve dependencies through the injector. Therefore, we recommend using the first method as a priority unless you can ensure the correct order of registration and retrieval.

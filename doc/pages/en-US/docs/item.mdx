@@ -1,0 +1,232 @@
+import { Callout } from "nextra/components";
+
+# Dependency Item
+
+## Class Item
+
+Class could be a dependency item directly and registered in an injector. In this case, the class is the identifier as well.
+
+```ts
+class AuthService {}
+
+const injector = new Injector([[AuthService]]);
+```
+
+You could also use an `IdentifierDecorator` as identifier. In this case, the dependency item is an object that implements `ClassDependencyItem`:
+
+```ts
+export interface ClassDependencyItem<T> {
+  useClass: Ctor<T>;
+  lazy?: boolean;
+}
+```
+
+An example:
+
+```ts
+interface IAuthService {}
+
+const IAuthService = createIdentifier<IAuthService>("auth");
+
+class AuthService implements IAuthService {}
+
+const injector = new Injector([
+  [IAuthService, { useClass: AuthService, lazy: true }],
+]);
+```
+
+### Lazy instantiation
+
+You could set `true` to indicate the inject not to instantiate the dependency item when it is required but when its property or method is actually accessed or CPU is idle:
+
+```ts highlight=21
+interface IHttpInterceptor {
+  intercept(): void;
+}
+
+class AuthHttpInterceptor implements IHttpInterceptor {
+  intercept(): void {}
+}
+
+class FileListService {
+  constructor(
+    @Inject(IHttpInterceptor) private readonly httpI: IHttpInterceptor,
+  ) {}
+
+  request() {
+    this.httIp.intercept();
+  }
+}
+
+const injector = new Injector([
+  [FileListService],
+  [IHttpInterceptor, { useClass: AuthHttpInterceptor, lazy: true }],
+]);
+```
+
+In this case, `FileListService` depends on `AuthHttpInterceptor`. When you get `FileListService` it would be constructed but nor `AuthHttpInterceptor`.
+
+```ts
+const fileListService = injector.get(FileListService);
+```
+
+When you access `intercept` of `AuthHttpInterceptor` it would be constructed:
+
+```ts
+fileListService.request();
+```
+
+By postponing instantiation of some dependencies, start-up performance could get optimized.
+
+<Callout>
+  Please be careful to check if there is any side effect in constructors. The
+  application may not work as you expect in that case.
+</Callout>
+
+## Value item
+
+You could provide an object that implements `ValueDependencyItem` as a value item:
+
+```ts
+export interface ValueDependencyItem<T> {
+  useValue: T;
+}
+```
+
+The value would directly injected into its dependents.
+
+## Factory item
+
+The factory item give back the control of instantiation back to you, and it could declare its dependencies like a class item.
+
+It should implements te following interface:
+
+```ts
+export interface FactoryDependencyItem<T> {
+  useFactory: (...deps: any[]) => T;
+  deps?: FactoryDep<any>[];
+}
+```
+
+An example:
+
+```ts
+interface I18NNumberTranspiler {
+  transpile(num: number): string
+}
+const I18NNumberTranspiler = createIdentifier<I18NNumberTranspiler>(
+  'i18n-number'
+)
+
+class ChineseNumberTranspiler implements I18NNumberTranspiler {}
+class EnglishNumberTranspiler implements I18NNumberTranspiler {}
+
+class I18NService {
+  isChinese(): boolean
+}
+
+const injector = new Injector([
+  [I18NService],
+  [
+    I18NNumberTranspiler,
+    {
+      useFactory: (i18nService: I18NService) => {
+        return i18nService.isChinese()
+          ? new ChineseNumberTranspiler()
+          : new EnglishNumberTranspiler()
+      },
+      deps: [I18NService]
+    },
+  ],
+]
+```
+
+## Existing item
+
+You could use an existing dependency item as a dependency item. In another word, you can give an existing dependency item an alias. In this case, the dependency item is an object that implements `ExistingDependencyItem`:
+
+```ts
+export interface ExistingDependencyItem<T> {
+  useExisting: DependencyIdentifier<T>;
+}
+```
+
+An example:
+
+```ts
+interface IHttpInterceptor {
+  intercept(): void;
+}
+const IHttpInterceptor = createIdentifier<IHttpInterceptor>("http-interceptor");
+
+class AuthHttpInterceptor implements IHttpInterceptor {
+  intercept(): void {}
+}
+
+const INetworkInterceptor = createIdentifier<IHttpInterceptor>(
+  "network-interceptor",
+);
+
+const injector = new Injector([
+  [IHttpInterceptor, { useClass: AuthHttpInterceptor, lazy: true }],
+  [INetworkInterceptor, { useExisting: IHttpInterceptor }],
+]);
+
+console.log(
+  injector.get(IHttpInterceptor) === injector.get(INetworkInterceptor),
+); // true
+```
+
+## Async item
+
+Sometimes it is not necessary to get a dependency in a synchronous way. You could use Async Item and `import` function of webpack to lazy load a dependency. To do that, you should provide an object that implements the following interface:
+
+```ts
+export interface AsyncDependencyItem<T> {
+  useAsync: () => Promise<
+    T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]
+  >;
+}
+```
+
+`useAsync` function must return an dependency item except for async item.
+
+An example:
+
+```ts highlight=10-11,16,25
+// index.ts
+
+interface IReportService {
+  report(msg: string): void
+}
+const IReportService = createIdentifier<IReportService>('report')
+
+class OrderService {
+  constructor(
+    @Inject(IReportService)
+    private readonly reportSrvLoader: AsyncHook<IReportService>
+  )
+
+  public order(): void {
+    // ...
+    this.reportSrvLoader.whenReady().then((reportSrv) => reportSrv.report(''))
+  }
+}
+
+const injector = new Injector([
+  [OrderService],
+  [
+    IReportService,
+    {
+      useAsync: () => import('./reportService'),
+    },
+  ],
+])
+```
+
+```ts
+// reportService.ts
+export default class ReportService {
+  report(msg: string): void;
+}
+```

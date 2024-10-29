@@ -1,0 +1,66 @@
+import { Callout } from "nextra/components";
+
+# redi
+
+<p className="flex h-6">
+  <img
+    alt="stars"
+    src="https://badgen.net/github/stars/wzhudev/redi"
+    style={{ display: "inline-block", marginRight: "0.5rem" }}
+  />
+  <img
+    alt="downloads"
+    src="https://badgen.net/npm/dt/@wendellhu/redi"
+    style={{ display: "inline-block", marginRight: "0.5rem" }}
+  />
+  <img
+    alt="license"
+    src="https://badgen.net/github/license/wzhudev/redi"
+    style={{ display: "inline-block" }}
+  />
+</p>
+
+**redi** (pronounced 'ready') is a dependency injection library for TypeScript (and JavaScript), along with a set of bindings for React.
+
+<Callout>
+  Write code that is less coupling, more convenient to modify and easier to
+  maintain with help of dependency injection. Read our [blog](/blogs/di).
+</Callout>
+
+## Overview
+
+```typescript
+import { Inject } from "@wendellhu/redi";
+
+class AuthService {
+  public getCurrentUserInfo(): UserInfo {
+    // your implementation here...
+  }
+}
+
+class FileListService {
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+
+  public getUserFiles(): Promise<Files> {
+    const currentUser = this.authService.getCurrentUserInfo();
+    // ...
+  }
+}
+
+const injector = new Injector([[AuthService], [FileListService]]);
+injector.get(AuthService);
+```
+
+[Getting Started](/docs/introduction)
+
+## Features
+
+- **Completely opt-in**. Unlike Angular, redi does not force you to use dependency injection in your whole applocation. You can use wherever you like.
+- **Supports multi kinds of dependency items**, including classes, JavaScript primitive values and objects, factory functions and async items.
+- **Supports n-ary dependency injection.**
+- **Supports hierarchy dependency injection system**.
+- **Supports lazy instantiation.**
+
+## Links
+
+[Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/) | [Demo Repos](https://github.com/wzhudev/redi-todomvc)

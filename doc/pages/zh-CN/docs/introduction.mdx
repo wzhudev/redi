@@ -1,0 +1,101 @@
+import { Callout } from "nextra/components";
+
+# 快速上手
+
+## 安装
+
+在项目目录执行如下的命令：
+
+```shell
+yarn add @wendellhu/redi
+```
+
+或者使用 npm 等其他包管理器：
+
+```shell
+npm install @wendellhu/redi
+```
+
+安装之后，你需要在 tsconfig.json 文件中启用 `experimentalDecorators` 。
+
+```json highlight=3
+{
+  "compilerOptions": {
+    "experimentalDecorators": true
+  }
+}
+```
+
+<Callout>
+  为了让大家能够方便地使用依赖注入模式开始一个新项目，我们准备了脚手架工具。阅读[设置开发环境](/docs/env)一节了解更多。
+</Callout>
+
+## 基本使用
+
+这里介绍 redi 的基本使用方法。我们来看这样的一个例子，在获取文件列表之前，我们需要先获取权限信息：
+
+```tsx
+class AuthService {
+  public static getCurrentUserInfo(): UserInfo {
+    // your implementation here...
+  }
+}
+
+class FileListService {
+  constructor() {}
+
+  public getUserFiles(): Promise<Files> {
+    const currentUser = AuthService.getCurrentUserInfo();
+    // ...
+  }
+}
+```
+
+显然，`FileListService` 依赖于 `AuthService`，让我们一起来看看如何使用依赖注入模式改造这段代码。
+
+**第一步：声明依赖关系**
+
+```typescript highlight=1,4,10,13
+import { Inject } from "@wendellhu/redi";
+
+class AuthService {
+  public getCurrentUserInfo(): UserInfo {
+    // your implementation here...
+  }
+}
+
+class FileListService {
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+
+  public getUserFiles(): Promise<Files> {
+    const currentUser = this.authService.getCurrentUserInfo();
+    // ...
+  }
+}
+```
+
+使用 `Inject` 装饰器，在 `FileListService` 的构造函数上，将 `AuthService` 声明为它的一个依赖。
+
+**第二步：提供绑定**
+
+```typescript
+import { Injector } from "@wendellhu/redi";
+
+const injector = new Injector([[FileListService], [AuthService]]);
+```
+
+只需要将依赖项添加到 `Injector` 对象中。
+
+**第三步：从注入器获取依赖**
+
+```typescript
+const fileListService = injector.get(FileListService);
+```
+
+这样你就获得了 `FileListService` 的一个实例！而且它的依赖 `AuthService` 已经被创建好了，缓存在 `Injector` 当中。
+
+```typescript
+const authService = injector.get(FileListService);
+```
+
+阅读下一章节以了解依赖注入模式中的基本概念。

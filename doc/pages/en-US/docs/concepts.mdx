@@ -1,0 +1,17 @@
+# Conecpts
+
+A **binding** maps an **identifier** to a **dependency item**.
+
+An identifier distinguish a dependency item from others. It could be:
+
+- a value returned from `createIdentifier`
+- a class
+
+A dependency item is an implementation matching an identifier. It could be:
+
+- a class
+- a class dependency item
+- a js primitive type value or object
+- a factory function
+
+An **injector** holds a set of bindings and resolve an identifier by constructing a dependency item.

@@ -1,0 +1,40 @@
+# Hierarchical injectors
+
+## Creating hierarchical injectors
+
+There are two ways to create parenting relationship between two injectors. The first approach is to call`createChild` method on the parent injector:
+
+```ts highlight=2
+const parentInjector = new Injector([[PlatformService]]);
+const childInjector = parentInjector.createChild([[OrderService]]);
+```
+
+The second is to pass the parent injector as the second parameter when constructing an new injector:
+
+```ts highlight=2
+const parentInjector = new Injector([[PlatformService]]);
+const childInjector = new Injector([[OrderService]], parentInjector);
+```
+
+## Single way lookup
+
+When the child injector could not resolve an identifier, it would delegate the request to its parent if possible. And that is called dependency lookup. In the example below, `PlatformService` is actually constructed by `parentInjector`.
+
+```ts highlight=2
+childInjector.get(PlatformService);
+```
+
+## Interfere lookup
+
+You could tell redi how to perform the lookup process using specific decorators. You could use `SkipSelf` to skip the current injector, or `Self` to disable lookup:
+
+```ts highlight=3,4
+class ChartComponent {
+  constructor(
+    @Self() @Inject(Container) private readonly selfContainer: Container,
+    @SkipSelf()
+    @Optional(Container)
+    private readonly parentContainer?: Container,
+  ) {}
+}
+```

@@ -1,0 +1,517 @@
+import { Callout } from "nextra/components";
+
+# Dependency Injection in Frontend
+
+Software development's most challenging yet interesting task is how to simplify complexity.
+
+While ensuring that business requirements are met, we (software engineers) need to ensure the software's usability, scalability, performance, consistency, fault tolerance, stability, reusability, and other non-functional characteristics. These determine that software is inherently complex. However, human thinking abilities are limited, and we cannot consider so many aspects at once. Therefore, we use the concept of "abstraction" to help us design the software architecture and conquer its complexity.
+
+Abstraction provides developers with tools like "layering," "functions, classes, modules," and "client-server" thinking tools. Developers abstract software into different parts, determine their internal workings and how they interact, allowing us to solve small problems one at a time to eventually solve a larger problem. Furthermore, to further divide software into its components, the industry has proposed various design principles and methods: responsibility-driven design, SOLID principles, GRASP principles, high cohesion, low coupling, etc. However, these principles and design methods may not be specific enough, leading to the introduction of design patterns, with the most famous being the Gang of Four's (GoF) 23 design patterns. This way, when we write code, we can follow these patterns.
+
+Dependency injection is a design pattern that has been increasingly used in the frontend field in recent years. The purpose of this article is to introduce how this pattern embodies the concept of abstraction and reflects object-oriented design principles. It will also discuss the characteristics of the dependency injection pattern itself and how to apply it in projects.
+
+Let's start with an example and explore common dependency management issues in large projects, then introduce the **Dependency Injection (DI)** pattern, and finally discuss how to use DI in large applications and React projects.
+
+## Starting with Constructing a Class
+
+Before using a class, we need to call its constructor. Assuming `FindReplaceController` depends on `ShortcutService`, the code could look like this:
+
+```ts
+export class FindReplaceController extends RxDisposable {
+  constructor() {
+    this._shortcutService = new ShortcutService(
+      commandService,
+      platformService,
+      contextService,
+      layoutService,
+    );
+  }
+}
+```
+
+This code may seem simple but has a hidden puzzle:
+
+**How to get the parameters needed for `ShortcutService`, such as `commandService`?**
+
+These parameters are probably not variables held by the constructor (in this case, `FindReplaceService`), so the constructor needs to find a way to obtain these parameters. In other words, the details of how `ShortcutService` is constructed are exposed to `FindReplaceController`.
+
+A common solution is to pass these construction parameters through the caller's constructor:
+
+```ts
+export class FindReplaceController extends RxDisposable {
+  constructor(
+    commandService: ICommandService,
+    platformService: IPlatformService,
+    contextService: IContextService,
+    layoutService: ILayoutService,
+  ) {
+    this._shortcutService = new ShortcutService(
+      commandService,
+      platformService,
+      contextService,
+      layoutService,
+    );
+  }
+}
+```
+
+This leads to a new problem: if we need to modify the construction parameters of `ShortcutService`, we must also modify `FindReplaceController`.
+
+If we don't construct `ShortcutService` within `FindReplaceController` but instead pass it directly as a parameter, can the problem be solved?
+
+```ts
+export class FindReplaceController extends RxDisposable {
+  constructor(
+    // ...
+    private readonly _shortcutService: IShortcutService, // ...
+  ) {}
+}
+```
+
+The answer is no. This just shifts the coupling from `FindReplaceController` and `ShortcutService` to `ShortcutService` and another module (e.g., the following `SomeModule`). There will always be a module responsible for building `ShortcutService`. What's worse is that `FindReplaceController` also depends on other modules. If `SomeModule` has to build other dependencies, its constructor parameters will become more complex, making the code harder to maintain.
+
+```typescript
+export class SomeModule {
+  constructor(
+    commandService: ICommandService,
+    platformService: IPlatformService,
+    contextService: IContextService,
+    layoutService: ILayoutService,
+  ) {
+    this._findReplaceController = new FindReplaceController(
+      new ShortcutService(commandService, platformService, contextService, layoutService);
+    );
+  }
+}
+```
+
+However, for `FindReplaceController`, it no longer concerns itself with how `ShortcutService` is constructed. In other words, for `FindReplaceController`, the **construction** and **use** of `ShortcutService` are decoupled. This decoupling is crucial and is the core of dependency injection: **the consumer only needs to declare which dependencies it requires, without worrying about how these dependencies are built**.
+
+## Dependency Issues in Large Projects
+
+### Scenario One
+
+This problem is an extension of the previous one in a large project. When instantiating the entire application, the usual practice is to create a class as the entry point of the application, recursively constructing the dependencies of the entire application. For example:
+
+```tsx highlight=3,4,5,6,16
+class App {
+  constructor() {
+    this.model = new Model()
+    this.controller = new Controller(this.model)
+    this.state = new State(this.model)
+    this.httpService = new HttpService(new AuthInterceptor(this.state))
+  }
+}
+
+class Controller() {
+  constructor(model: Model) {
+    this.model = model
+  }
+}
+
+const app = new App()
+```
+
+The issues of this approach have been mentioned above, and there are additional problems such as:
+
+1. It is difficult to understand the dependencies between modules. The more modules there are, the more effort is needed to manage their initialization order, manually pass the required parameters to constructors, and so on.
+2. This approach violates the principle of least knowledge, increasing the coupling between modules. In this example, `App` needs to know how `AuthInterceptor` is constructed in order to call `HttpService`. If a new parameter is added to the constructor of `AuthInterceptor`, then `App`'s code must also be modified accordingly. In fact, all modules' constructor parameter information is exposed to `App`.
+3. This approach also makes it difficult to isolate a module for independent testing. If you want to test `HttpService` from the example above, you would need to construct all dependencies like `AuthInterceptor`, `State`, `Model`, etc., and also write test cases based on the behavior of these dependencies.
+
+### Scenario Two
+
+In a large application, a feature may behave differently on different platforms. For example, for the "pop-up dialog box" feature, the code might look like this:
+
+```tsx
+import pcDialog from "pcDialog";
+import mobileDialog from "mobileDialog";
+
+class OrderService {
+  public askUser() {
+    const title = "Hello";
+    if (platformUtil.isDesktop()) {
+      pcDialog.show({
+        title,
+      });
+    } else {
+      mobileDialog.prompt({
+        text: title,
+      });
+    }
+  }
+}
+```
+
+It seems fine, but one day the product manager says:
+
+> To make the dialog boxes on iOS and Android look as close to the native style as possible, let's use the platform's native dialogs! Oh, and we also need to support mini-programs!
+
+Uh-oh, now you have to modify how many places you wrote `mobileDialog.prompt` to accommodate more `if else` statements, and you need to change the mobile implementation to make calls to the JS bridge like this:
+
+```tsx highlight=6-17
+const title = "Hello";
+if (platformUtil.isDesktop()) {
+  pcDialog.show({
+    title,
+  });
+} else if (platformUtil.isIOS()) {
+  iOSDialogBridge.prompt({
+    text: title,
+  });
+} else if (platformUtil.isMiniProgram()) {
+  miniProgramDialogBridge.dialog({
+    title,
+  });
+} else {
+  androidDialogBridge.prompt({
+    text: title,
+  });
+}
+```
+
+Experienced developers can immediately point out: just encapsulate the dialog calls in an npm package and let that package handle cross-platform concerns. Indeed, that is one solution, but the hassle of modifying code is just one relatively small aspect of this problem. Another aspect is: if every platform difference has to be handled with `if else`, your build output will contain many different implementations that may not actually run on the user's device.
+
+One possible solution is: switch the actual npm package `mobileDialog` is referencing using webpack alias during build time, and build separately for different platforms, but this approach significantly increases CI time.
+
+Although we know that product managers changing requirements frequently are often blamed for lowering code quality (just a joke), let's think back: was there a problem in the initial design here? Yes, the root of the problem lies in `OrderService` (and other classes with similar code) not being cohesive enough; it couples the logic of "which dialog to show" internally. How can we make this class more cohesive? This task should be delegated to a dedicated module to handle "show dialog" and then depend on it. While packaging the dialog calls into an npm package is indeed one solution, we will see later that the dependency injection pattern provides a more flexible solution.
+
+### Scenario Three
+
+As the number of modules in an application increases, the dependencies between modules become more complex and harder to manage.
+
+Firstly, establishing dependencies will gradually become uncontrollable. Typically, there are several approaches to establishing dependencies between modules:
+
+1. Passing dependencies through constructors
+2. Obtaining instances through static methods or members of a class, like `AuthService.INSTANCE`
+3. Accessing instances through globally accessible objects, like `window.authService`
+
+The first method is relatively controllable because the class dependencies are declared in the constructor, making it easy to know what dependencies a class has. The second and third methods are more flexible; you can establish dependencies anywhere in the class using these methods, but the flexibility comes at the cost of reduced code maintainability. We would need to browse through all the code of a class to understand what it depends on, causing dependency relationships to become chaotic. Misusing the second and third methods can easily lead to unintentional circular references:
+
+```tsx
+export class AuthService {
+  static get INSTANCE() {
+    // ...
+  }
+
+  public changeAuth(auth) {
+    FileService.INSTANCE.changePermission(auth);
+  }
+}
+
+export class FileService {
+  static get INSTANCE() {
+    if (!init) {
+      return new FileService();
+    }
+  }
+
+  public changeFile(file) {
+    if (file.locked) {
+      AuthService.INSTANCE.changeAuth({ editable: false });
+    }
+  }
+}
+```
+
+### Summary
+
+These three scenarios actually demonstrate three issues of dependency management.
+
+**Dependency construction issue.**
+
+When manually constructing classes, you need to:
+
+1. Determine the construction order
+2. Determine the construction parameters
+3. Determine who will do the construction
+
+In the examples above, the construction order and parameters are specified by the developer through coding, and the class constructor is a huge entry class that knows how to build other classes, and we also see the problems with this approach. For the construction issue, we need to answer: **How to determine the construction order, parameters, and automate construction?**
+
+**Abstract dependency issue.**
+
+Should a module B's dependency on another module A be an abstract interface or a concrete implementation?
+
+The SOLID principle's D (Dependency Inversion Principle) tells us:
+
+> High-level modules should not depend on low-level modules, both should depend on abstractions.
+
+So, **how can different underlying implementations be passed to high-level modules?**
+
+**Dependency relationship issue.**
+
+Complex dependency relationships can easily lead to circular dependencies, and circular dependencies are a major risk factor that causes software behavior to become uncontrollable. Therefore, for relationship issues, we need to answer: **How can we avoid forming circular dependencies in the code?**
+
+DI provides a systematic solution to these three issues.
+
+## Basic Concepts of DI
+
+<Callout>
+  This section involves the API of redi, please refer to the [documentation
+  here](/docs/concepts)
+</Callout>
+
+Using DI generally involves the following three steps:
+
+**Step One, declaring dependency relationships**. Assuming class B depends on class A, you can declare it using the `Inject` decorator:
+
+```tsx
+import { Inject } from "@wendellhu/redi";
+
+class A {}
+
+class B {
+  constructor(@Inject(A) private readonly a: A) {}
+}
+```
+
+**Step Two, adding dependencies to the injector**.
+
+```tsx
+import { Injector } from "@wendellhu/redi";
+
+const injector = new Injector([[A], [B]]);
+```
+
+**Step Three, getting the dependency.** The injector resolves B and finds that it depends on A, so it first resolves A, constructs an instance of A and then passes it to the constructor of B, ultimately returning an instance of B.
+
+```tsx
+const b = injector.get(B);
+```
+
+It's that simple! Now you have understood the basic operation of DI, let's see how DI solves the three issues raised above.
+
+## Problem Resolution
+
+**Resolution of Construction Issue**
+
+When obtaining dependencies from DI, there is no need to manually call constructors, so the construction issue no longer exists.
+
+Let's rewrite the example above using DI:
+
+```tsx highlight=3-6,11,20
+class App {
+  constructor(
+    @Inject(Model) private readonly Model,
+    @Inject(Controller) private readonly Controller,
+    @Inject(State) private readonly State,
+    @Inject(HttpService) private readonly HttpService
+  ) {}
+}
+
+class Controller() {
+  constructor(@Inject(Model) private readonly Model) {}
+}
+
+const injector = new Injector([
+  [Model],
+  [Controller],
+  // ...
+])
+
+const app = injector.createInstance(App)
+```
+
+When obtaining an instance of `App` through the injector, the injector will automatically analyze the dependencies, build the classes in order, and determine the constructor parameters. As seen in the rewritten code, it becomes much more concise, and the responsibility of `App` is significantly reduced. It no longer needs to understand how `HttpInterceptor` is constructed in order to use `HttpService`.
+
+**Resolution of Abstract Issue**
+
+DI achieves decoupling of interfaces and implementations through identifier-dependency pairs. Going back to the dialog example, it can be written using DI as follows:
+
+```tsx highlight=1-3,9,12,18,25,29
+interface IDialogService {
+    prompt({ title: string; okText: string; }): DialogRef
+}
+
+interface DialogRef {
+  close(): void
+}
+
+const IDialogService = createIdentifier<IDialogService>('dialogService')
+
+class OrderService {
+  constructor(@Inject(IDialogService) private readonly dialogService: IDialogService ) {}
+}
+
+// pc.ts
+const injector = new Injector([
+  [IDialogService, {
+    useClass: PcDialogAdapter
+  }]
+])
+
+// mobile.ts
+const injector = new Injector([
+  [IDialogService, {
+    useClass: MobileDialogAdapter
+  }]
+])
+
+const orderService = injector.createInstance(OrderService)
+```
+
+Through DI, the abstract `IDialogService` is injected into `OrderService`. When constructing an instance of `OrderService` using the `createInstance` method, it will instantiate either `PcDialogAdapter` or `MobileDialogAdapter` based on which type of implementation was registered in the `Injector`.
+
+By providing different implementations at different entry points, you can achieve:
+
+1. Business code depends on the abstract `IDialogService` interface rather than concrete implementations.
+2. No unnecessary code shipping.
+
+<Callout>
+  Bundlers like webpack support setting multiple entry points, so you can easily
+  bundle for different platforms with only one build.
+</Callout>
+
+Regardless of future changes in dialog requirements, you only need to maintain the entry points and adapter implementations without modifying the business code. For instance, if you need to split the mobile platform into native iOS and Android implementations, you can do it like this:
+
+```tsx
+// android.ts
+const injector = new Injector([
+  [
+    IDialogService,
+    {
+      useClass: AndroidDialogAdapter,
+    },
+  ],
+]);
+
+// ios.ts
+const injector = new Injector([
+  [
+    IDialogService,
+    {
+      useClass: IOSDialogAdapter,
+    },
+  ],
+]);
+```
+
+**Resolution of Relationship Issue**
+
+When obtaining dependencies from DI, DI will analyze if there are any circular dependencies between dependencies, and if found, it will throw an error:
+
+```tsx highlight=2,10,21
+export class AuthService {
+  constructor(@Inject(FileService) private readonly fileService: FileService) {}
+
+  public changeAuth(auth) {
+    this.fileService.changePermission(auth);
+  }
+}
+
+export class FileService {
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+
+  public changeFile(file) {
+    if (file.locked) {
+      this.authService.changeAuth({ editable: false });
+    }
+  }
+}
+
+const injector = new Inject([[AuthService], [FileService]]);
+
+injector.get(FileService); // ERROR!
+```
+
+## Using DI in Large Projects
+
+Now that we've seen how the DI pattern solves dependency issues, let's discuss how to apply DI's ability to solve dependency problems in large projects.
+
+### Layered Architecture and DI
+
+In large projects, modules are often planned in layers. In a layered architecture, upper-level modules are allowed to depend on lower-level modules, while the reverse dependency is prohibited. DI can easily achieve this.
+
+All DI tools allow multiple injectors to form a multi-branch tree structure. When a dependency is requested from any node in the tree (an injector), if that injector cannot provide it, it will delegate to the parent node to obtain the dependency. If a node has no parent (i.e., root node) and cannot obtain the dependency, an error will be thrown.
+
+```tsx
+class StorageService {}
+
+const parentInjector = new Injector([[StorageService]]);
+const childInjector = parentInjector.createChild([]);
+
+childInjector.get(StorageService); // -> Retrieves StorageService from parentInjector
+```
+
+Since this delegation relationship can only go from child nodes to parent nodes, placing lower-level modules in the parent container and upper-level modules in the child container ensures that lower-level modules can be injected into upper-level modules, but not vice versa.
+
+```tsx
+class DataModel {}
+
+const parentInjector = new Injector([[DataModel]]);
+
+class Controller {
+  constructor(@Inject(DataModel) private readonly dataModel: DataModel) {}
+}
+
+const childInjector = parentInjector.createChild([[Controller]]);
+
+childInjector.get(Controller); // -> Controller
+```
+
+### DI and Design Principles
+
+With DI, establishing dependencies between classes becomes easy - simply declare the dependencies and add them to an injector. This lowers the cost of splitting a large class into smaller classes, encouraging developers to split modules as much as possible. Understanding how to split becomes crucial.
+
+We can seek help from some classic OO design principles:
+
+- **Single Responsibility Principle**: Each class should have only one responsibility to achieve high cohesion and manageable scope of changes. With the low cost of splitting classes introduced by DI, classes with too many responsibilities should be split into smaller classes with single responsibilities, and dependencies can be established between them through DI.
+- **Dependency Inversion Principle**: We have already discussed injecting interfaces rather than concrete implementations when using DI. It is advisable to inject interfaces whenever possible.
+- **Interface Segregation Principle**: When one class calls another class, the interface of the class being depended on should be minimized. The more interfaces exposed, the higher the coupling between the two classes. When injecting dependencies through DI, first split the dependencies based on the Single Responsibility Principle, and then inject as few dependencies as possible. If injecting an interface, carefully design the interface to avoid injecting a large interface.
+- **Single Source of Truth**: The data required to fulfill a responsibility should be stored in one place (e.g., a class), and other modules needing this data should subscribe to changes happening there instead of maintaining a separate copy of the data to keep the data synchronized within the application. With DI, you can easily inject this class into relevant modules for them to subscribe to.
+
+## DI and React
+
+Some front-end libraries have context capabilities, allowing parameters to be passed directly to descendant components without going through component props. By passing an injector through context, you can use the DI pattern in these libraries, enabling:
+
+- **Separation of Views, State, and Logic**: Encapsulate business logic into a class, inject it into components, and have components focus on fetching data from these classes through defined interfaces for rendering. This separation of concerns allows for modifying UI without concerning business logic, and vice versa.
+- **Dependency Injection-Based State Management**: Building on the previous point, DI can be used for application state management. Encapsulate both state and methods for changing that state into a class, have components fetch this class through DI, subscribe to data changes, and re-render when data changes occur. When users interact, call methods from the class to trigger state changes. Compared to solutions like Redux, DI does not require introducing new concepts like reducers, side effects, actions, or tools for managing side effects like redux-saga, making it easier to write, read, and debug.
+
+<Callout>
+  Read the [documentation](/docs/react) to learn how to use relevant APIs.
+</Callout>
+
+## Conclusion: When to Use DI
+
+The problems that DI aims to solve are clear: dependency issues in software - problems with constructing dependencies, abstracting dependencies, and managing dependency relationships. If your software consists of many different modules with complex dependency relationships, and you want to manage these dependencies in a way that is low in cognitive burden, ensuring that modules are as cohesive and loosely coupled as possible to maintain architectural flexibility, then using DI is highly appropriate.
+
+## Discussion on DI Design Solutions
+
+<Callout>
+  The following content is related to the implementation of DI. If you are not
+  interested, you can stop reading.
+</Callout>
+
+### Whether to Use reflect-metadata
+
+DI is already a very mature solution, so the functionality and API design of various frameworks are quite similar. However, due to the language features of JavaScript (lack of reflection mechanism), when designing a DI library for the JavaScript language, special consideration needs to be given to the API for declaring dependency relationships, which has become the main difference between various DI libraries. The design of such APIs can be seen in two main approaches, one represented by InversifyJS and early Angular, utilizing TypeScript compiler and reflect-metadata for automatic inference of compile-time dependencies, and another represented by vscode, where users manually declare dependencies.
+
+The first approach requires adding an Injectable decorator on the dependency:
+
+```ts
+@Injectable()
+class A {
+  constructor(private readonly b: B) {}
+}
+```
+
+Through TypeScript compilation, the prototype of class A will record that class B is the first parameter of A's constructor, and when constructing A, the injector will read the corresponding record and construct B first.
+
+The second approach requires users to manually indicate which parameters need to be handled by the dependency injection framework:
+
+```ts
+class A {
+  constructor(@Inject(B) private readonly b: B) {}
+}
+```
+
+Here, the decorator is responsible for recording that B is the first dependency of A.
+
+It seems that if there are many injectables, the first approach can save developers from writing some code. However, we believe that the second approach is a better choice for the following reasons:
+
+1. The first approach requires TypeScript to record type information of constructor parameters at compile time, hence cannot be used in JavaScript. The second approach can be used in JavaScript with certain babel configurations.
+2. TypeScript's inference capabilities are limited, only handling class injections, for identifier-based injections, you must write code similar to the second approach, so it's better to use the second approach for API consistency.
+3. The first approach requires the introduction of the reflect-metadata library.
+4. The second approach allows some constructor parameters to be passed by the developer instead of the dependency injection library, enabling the creation of small classes that do not need to be part of the dependency injection system.
+5. By configuring the editor's snippet, the second approach does not result in writing more code than the first approach.
+
+[This list](https://gist.github.com/wzhudev/9297610736ecb083b08636282d251d48) provides some open-source DI implementations based on the implementation principles, which can be referenced.
