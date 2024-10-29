@@ -1,0 +1,25 @@
+{
+  "name": "redi-site",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next",
+    "start": "next start",
+    "build": "next build"
+  },
+  "author": "Wenzhao Hu <wzhudev@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/analytics": "^1.2.2",
+    "next": "^14.2.15",
+    "nextra": "^3.1.1",
+    "nextra-theme-docs": "^3.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.10",
+    "typescript": "^5.6.3"
+  }
+}

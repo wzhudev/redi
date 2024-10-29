@@ -1,0 +1,22 @@
+# 依赖项勾子
+
+你或许想要在某些时机插入一些行为（例如，在一个依赖项实例化之后对它立即进行一些配置），可以使用下面这些依赖项勾子
+
+## `onInstantiation`
+
+对于 `ClassDependencyItem` 和 `FactoryDependencyItem` ，如果想要在依赖实例化之后立即做一些事情，可以传递一个 `onInstantiation` 勾子
+
+```ts highlight=6
+const configService = [
+  IConfigService,
+  {
+    useClass: ConfigService,
+    lazy: true,
+    onInstantiation: (s: IConfigService) => {
+      s.setConfig();
+    },
+  },
+];
+```
+
+这个函数会在 constructor 或者 factory 执行完毕之后立即调用。如果一个 `ClassDependencyItem` 是惰性实例化的，那么就会在惰性实例化后立即调用。

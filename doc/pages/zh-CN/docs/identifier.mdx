@@ -1,0 +1,89 @@
+import { Callout } from "nextra/components";
+
+# 标识符
+
+有两种方法创建一个标识符：
+
+- 一个类可以用它本身作为标识符
+- 调用 `createIdentifier` 函数创建标识符
+
+## 类作为标识符
+
+一个类可以作为其自身的标识符：
+
+```typescript
+class ClassDependency {}
+
+const injector = new Injector([[ClassDependency]]);
+```
+
+所以，你可以直接用类作为标识符从注入器获取一个实例：
+
+```ts
+const classDependency = injector.get(ClassDependency);
+```
+
+这是最简单的方法，不过这也意味着没有抽象，降低了依赖注入带来的灵活性。
+
+## `createIdentifier`
+
+更推荐的做法是通过 `createIdentifier` 方法创建标识符，样可以让一个模块依赖一个接口，而不是一个具体的类。
+
+例如，我们的代码需要依赖剪贴板服务从系统剪贴板里获取数据，我们可以创建一个接口 `IClipboardInterfaceService`，以及对应的标识符：
+
+```ts highlight=1, 5
+export interface IClipboardInterfaceService {
+  readText(): string | undefined;
+}
+
+export const IClipboardInterfaceService =
+  createIdentifier<IClipboardInterfaceService>("clipboard-interface");
+```
+
+<Callout>
+  在 TypeScript
+  当中，类型变量和值变量使用不同的命名空间，所以一个接口和一个值有完全相同的名称
+  `IClipboardInterfaceService`
+  是合法的，这个小技巧能够将接口和标识符结合起来，降低开发者的心智负担。
+</Callout>
+
+然后在提供该接口对应的依赖时，我们可以在不同的运行环境中通过这个接口注入不同的类。例如在浏览器中可以注入针对原生浏览器 API 的实现：
+
+```ts highlight=1, 7
+class WebClipboardInterfaceService implements IClipboardInterfaceService {
+  readText() {
+    return navigator.clipboard.readText();
+  }
+}
+
+const injector = new Injector([
+  [IClipboardInterfaceService, { useClass: WebClipboardInterfaceService }],
+]);
+```
+
+在移动端环境中使用 bridge 来实现：
+
+```ts highlight=1, 7
+class MobileClipboardInterfaceService implements IClipboardInterfaceService {
+  readText() {
+    return window.bridge.readText();
+  }
+}
+
+const injector = new Injector([
+  [IClipboardInterfaceService, { useClass: MobileClipboardInterfaceService }],
+]);
+```
+
+对于 `IClipboardInterfaceService` 的使用方，只需要依赖于这个接口，而不需要关心具体的实现：
+
+```ts
+injector.get(IClipboardInterfaceService).readText();
+```
+
+<Callout>
+  如果你的应用支持多端，你应该会给不同端的资源设置不同的 bundle。请确保在不同的
+  bundle 内分别注入对应的实现。
+</Callout>
+
+通过这样的方式，你可以在不同的环境中切换实现，而不需要修改使用方的代码。

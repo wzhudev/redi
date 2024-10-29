@@ -1,0 +1,51 @@
+# Creating a new instance for every injection
+
+You can use `WithNew` to inject a new instance every time, which only makes sense when the dependency is a class or a factory.
+
+When the injection item is a class:
+
+```ts
+let c = 0
+
+class A {
+    count = c++
+}
+
+class B {
+    constructor(@WithNew() @Inject(A) private readonly a: A) {}
+
+    get(): number {
+        return this.a.count
+    }
+}
+
+const j = new Injector([[A], [B]])
+const b1 = j.createInstance(B)
+const b2 = j.createInstance(B)
+
+expect(b1.get()).toBe(0)
+expect(b2.get()).toBe(1)
+})
+```
+
+When the injection item is a factory:
+
+```ts
+let c = 0;
+
+const ICount = createIdentifier<number>("ICount");
+
+class B {
+  constructor(@WithNew() @Inject(ICount) public readonly count: number) {}
+}
+
+const j = new Injector([[B], [ICount, { useFactory: () => c++ }]]);
+
+const b1 = j.createInstance(B);
+const b2 = j.createInstance(B);
+
+expect(b1.count).toBe(0);
+expect(b2.count).toBe(1);
+```
+
+Note that redi would not cache the instance so you need to dispose the instance by yourself.
