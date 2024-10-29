@@ -1,5 +1,5 @@
 export default {
-  docsRepositoryBase: 'https://github.com/wzhudev/redi-site/tree/main',
+  docsRepositoryBase: 'https://github.com/wzhudev/redi/tree/main/docs',
   project: {
     link: 'https://github.com/wzhudev/redi',
   },
