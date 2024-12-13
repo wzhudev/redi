@@ -23,7 +23,7 @@ export class QuantityCheckError extends RediError {
     }
 
     if (actual > 1) {
-      msg += 'You register it more than once.'
+      msg += ' You register it more than once.'
     }
 
     super(msg)
