@@ -1,5 +1,12 @@
 
 
+## [0.16.2](https://github.com/wzhudev/redi/compare/v0.16.1...v0.16.2) (2024-12-13)
+
+
+### Bug Fixes
+
+* fix optional looking up ([#32](https://github.com/wzhudev/redi/issues/32)) ([84e3b79](https://github.com/wzhudev/redi/commit/84e3b7904e4fc0f2fb439d2e998d0333db425f6a))
+
 ## [0.16.1](https://github.com/wzhudev/redi/compare/v0.16.0...v0.16.1) (2024-07-31)
 
 
