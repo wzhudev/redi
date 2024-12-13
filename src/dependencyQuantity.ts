@@ -8,15 +8,23 @@ import { Ctor, prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
 import { Quantity } from './types'
 
-class QuantityCheckError extends RediError {
+export class QuantityCheckError extends RediError {
   constructor(
     id: DependencyIdentifier<any>,
-    quantity: Quantity,
-    actual: number
+    public readonly quantity: Quantity,
+    public readonly actual: number
   ) {
-    const msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
+    let msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
       id
     )}" but get ${actual}.`
+
+    if (actual == 0) {
+      msg += ' Did you forget to register it?'
+    }
+
+    if (actual > 1) {
+      msg += ' You register it more than once.'
+    }
 
     super(msg)
   }

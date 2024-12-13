@@ -31,6 +31,7 @@ import {
   isExistingDependencyItem,
   ExistingDependencyItem,
 } from './dependencyItem'
+import { checkQuantity, QuantityCheckError } from './dependencyQuantity'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
 import { LookUp, Quantity } from './types'
@@ -525,7 +526,7 @@ export class Injector {
         )
         resolvedArgs.push(thing)
       } catch (error: unknown) {
-        if (error instanceof DependencyNotFoundError) {
+        if (error instanceof DependencyNotFoundError || (error instanceof QuantityCheckError && error.actual === 0)) {
           throw new DependencyNotFoundForModuleError(
             ctor,
             dep.identifier,
@@ -586,7 +587,7 @@ export class Injector {
         )
         resolvedArgs.push(thing)
       } catch (error: unknown) {
-        if (error instanceof DependencyNotFoundError) {
+        if (error instanceof DependencyNotFoundError || (error instanceof QuantityCheckError && error.actual === 0)) {
           throw new DependencyNotFoundForModuleError(
             id,
             dep.identifier,
@@ -677,12 +678,23 @@ export class Injector {
       if (this.parent) {
         return this.parent.getValue(id, quantity)
       } else {
-        return NotInstantiatedSymbol
+        // If the parent injector is missing, we should check quantity with 0 values.
+        checkQuantity(id, quantity, 0);
+
+        if (quantity === Quantity.MANY) {
+          return []
+        } else {
+          return null
+        }
       }
     }
 
     if (lookUp === LookUp.SKIP_SELF) {
       return onParent()
+    }
+
+    if (id === Injector) {
+      return this as unknown as T;
     }
 
     if (lookUp === LookUp.SELF) {
@@ -738,10 +750,6 @@ export class Injector {
 
     if (lookUp === LookUp.SKIP_SELF) {
       return onParent()
-    }
-
-    if ((id as any as Ctor<Injector>) === Injector) {
-      return this as any as T
     }
 
     if (this.dependencyCollection.has(id)) {
