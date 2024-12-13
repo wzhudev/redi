@@ -13,6 +13,8 @@ import {
   setDependencies,
   SkipSelf,
   WithNew,
+  Quantity,
+  LookUp,
 } from '@wendellhu/redi'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
@@ -705,6 +707,7 @@ describe('core', () => {
         const j = new Injector([[aI, { useValue: a }]])
 
         // totally verbose for real use case, but to show this works
+        expect(j.get(Injector)).toBe(j)
         expect(j.get(Injector).get(aI).key).toBe('a')
       })
     })
@@ -964,7 +967,7 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(A),
-        `[redi]: Cannot find "A" registered by any injector.`
+        `[redi]: Expect "required" dependency items for id "A" but get 0. Did you forget to register it?`
       )
     })
   })
@@ -1243,6 +1246,17 @@ describe('core', () => {
 
       expectToThrow(() => j.get(A), 'Injector cannot be accessed after it was disposed.')
     })
+  })
+
+  describe('Lookup', () => {
+    it('should support optional lookup even if parent does not exist', () => {
+      class A { }
+
+      const parentInjector = new Injector()
+      const childInjector = parentInjector.createChild([[A]])
+
+      expect(childInjector.get(A, Quantity.OPTIONAL, LookUp.SKIP_SELF)).toBeNull()
+    });
   })
 
   it('should throw error when identifier has been declared before', () => {
