@@ -6,7 +6,7 @@
   "author": "Wenzhao Hu<wzhudev@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "pre-commit": "lint-staged",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
