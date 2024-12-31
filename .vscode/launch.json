@@ -9,7 +9,6 @@
       "resolveSourceMapLocations": [
         "${workspaceFolder}/**",
         "!${workspaceFolder}/node_modules/**",
-        // we do not need vite
         "!${workspaceFolder}/@vite/**"
       ],
       "runtimeExecutable": "pnpx",
@@ -17,7 +16,6 @@
         "vitest",
         "run",
         "${relativeFile}",
-        // 因为我们只调试一个文件，禁用线程速度更快
         "--threads",
         "false"
       ],
