@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky install",
+    "pre-commit": "lint-staged",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "watch": "vitest",
@@ -35,6 +36,7 @@
     "@wendellhu/squirrel": "^0.1.8",
     "eslint": "9.16.0",
     "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
     "jsdom": "^19.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
