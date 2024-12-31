@@ -1,5 +1,12 @@
 
 
+# [0.17.0](https://github.com/wzhudev/redi/compare/v0.16.2...v0.17.0) (2024-12-31)
+
+
+### Features
+
+* add onDispose ([#33](https://github.com/wzhudev/redi/issues/33)) ([18daf03](https://github.com/wzhudev/redi/commit/18daf037b51308cbfb447270f5e18cd9614a5a4f))
+
 ## [0.16.2](https://github.com/wzhudev/redi/compare/v0.16.1...v0.16.2) (2024-12-13)
 
 
