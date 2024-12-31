@@ -32,6 +32,7 @@ import {
   ExistingDependencyItem,
 } from './dependencyItem'
 import { checkQuantity, QuantityCheckError } from './dependencyQuantity'
+import { IDisposable } from './dispose'
 import { RediError } from './error'
 import { IdleValue } from './idleValue'
 import { LookUp, Quantity } from './types'
@@ -95,9 +96,6 @@ export interface IAccessor {
   has: Injector['has']
 }
 
-/**
- *
- */
 export class Injector {
   private readonly dependencyCollection: DependencyCollection
   private readonly resolvedDependencyCollection: ResolvedDependencyCollection
@@ -105,6 +103,8 @@ export class Injector {
   private readonly children: Injector[] = []
 
   private resolutionOngoing = 0
+
+  private disposingCallbacks = new Set<() => void>();
 
   private disposed = false
 
@@ -123,6 +123,19 @@ export class Injector {
     if (parent) {
       parent.children.push(this)
     }
+  }
+
+  /**
+   * Add a callback function that will be triggered when the Injector is disposed.
+   * Please note that when you callback is invoked, the injector is already disposed and
+   * you will not be able to interact with this Injector any more.
+   *
+   * @param {() => void} callback The callback function that will be invoked when
+   * the Injector is disposed.
+   */
+  public onDispose(callback: () => void): IDisposable {
+    this.disposingCallbacks.add(callback);
+    return { dispose: () => this.disposingCallbacks.delete(callback) }
   }
 
   /**
@@ -148,9 +161,13 @@ export class Injector {
     this.dependencyCollection.dispose()
     this.resolvedDependencyCollection.dispose()
 
+    // Detach itself from parent.
     this.deleteSelfFromParent()
 
     this.disposed = true
+
+    this.disposingCallbacks.forEach(callback => callback());
+    this.disposingCallbacks.clear();
   }
 
   private deleteSelfFromParent(): void {
