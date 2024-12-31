@@ -1267,4 +1267,21 @@ describe('core', () => {
       '[redi]: Identifier "a" already exists.'
     )
   })
+
+  describe('test "onDispose" callback', () => {
+    it('should be called when the Injector is disposed', () => {
+      let disposed = false;
+      let disposed2 = false;
+
+      const j = new Injector();
+      j.onDispose(() => disposed = true);
+
+      const disposable = j.onDispose(() => disposed2 = true);
+      disposable.dispose();
+
+      j.dispose();
+      expect(disposed).toBe(true);
+      expect(disposed2).toBe(false);
+    })
+  })
 })
