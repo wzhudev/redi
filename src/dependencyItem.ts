@@ -1,10 +1,12 @@
-import {
+import type {
   DependencyIdentifier,
+} from './dependencyIdentifier'
+import type { Self, SkipSelf } from './dependencyLookUp'
+import type { Many, Optional } from './dependencyQuantity'
+import type { WithNew } from './dependencyWithNew'
+import {
   IdentifierDecoratorSymbol,
 } from './dependencyIdentifier'
-import { Self, SkipSelf } from './dependencyLookUp'
-import { Many, Optional } from './dependencyQuantity'
-import { WithNew } from './dependencyWithNew'
 
 export interface Ctor<T> {
   new(...args: any[]): T
@@ -24,7 +26,7 @@ export interface ClassDependencyItem<T> extends DependencyItemHooks<T> {
   lazy?: boolean
 }
 export function isClassDependencyItem<T>(
-  thing: unknown
+  thing: unknown,
 ): thing is ClassDependencyItem<T> {
   if (thing && typeof (thing as any).useClass !== 'undefined') {
     return true
@@ -50,7 +52,7 @@ export interface FactoryDependencyItem<T> extends DependencyItemHooks<T> {
   deps?: FactoryDep<any>[]
 }
 export function isFactoryDependencyItem<T>(
-  thing: unknown
+  thing: unknown,
 ): thing is FactoryDependencyItem<T> {
   if (thing && typeof (thing as any).useFactory !== 'undefined') {
     return true
@@ -63,7 +65,7 @@ export interface ValueDependencyItem<T> extends DependencyItemHooks<T> {
   useValue: T
 }
 export function isValueDependencyItem<T>(
-  thing: unknown
+  thing: unknown,
 ): thing is ValueDependencyItem<T> {
   if (thing && typeof (thing as any).useValue !== 'undefined') {
     return true
@@ -82,7 +84,7 @@ export interface ExistingDependencyItem<T> extends DependencyItemHooks<T> {
   useExisting: DependencyIdentifier<T>
 }
 export function isExistingDependencyItem<T>(
-  thing: unknown
+  thing: unknown,
 ): thing is ExistingDependencyItem<T> {
   if (thing && typeof (thing as any).useExisting !== 'undefined') {
     return true
@@ -97,7 +99,7 @@ export interface AsyncDependencyItem<T> extends DependencyItemHooks<T> {
   >
 }
 export function isAsyncDependencyItem<T>(
-  thing: unknown
+  thing: unknown,
 ): thing is AsyncDependencyItem<T> {
   if (thing && typeof (thing as any).useAsync !== 'undefined') {
     return true
@@ -109,10 +111,10 @@ export function isAsyncDependencyItem<T>(
 export const AsyncHookSymbol = Symbol('AsyncHook')
 export interface AsyncHook<T> {
   __symbol: typeof AsyncHookSymbol
-  whenReady(): Promise<T>
+  whenReady: () => Promise<T>
 }
 export function isAsyncHook<T>(thing: unknown): thing is AsyncHook<T> {
-  if (thing && (thing as any)['__symbol'] === AsyncHookSymbol) {
+  if (thing && (thing as any).__symbol === AsyncHookSymbol) {
     // FIXME@wzhudev: should not be undefined but a symbol here
     return true
   }

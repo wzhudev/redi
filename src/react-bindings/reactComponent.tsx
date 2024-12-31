@@ -1,10 +1,11 @@
+import type { Dependency } from '@wendellhu/redi'
+import { Injector } from '@wendellhu/redi'
 import * as React from 'react'
-import { Injector, Dependency } from '@wendellhu/redi'
 
-import { RediProvider, RediConsumer } from './reactContext'
+import { RediConsumer, RediProvider } from './reactContext'
 
 function RediInjector(
-  props: React.PropsWithChildren<{ dependencies: Dependency[] }>
+  props: React.PropsWithChildren<{ dependencies: Dependency[] }>,
 ) {
   const { children, dependencies } = props
   const childInjectorRef = React.useRef<Injector | null>(null)
@@ -19,7 +20,8 @@ function RediInjector(
 
         if (childInjectorRef.current) {
           childInjector = childInjectorRef.current
-        } else {
+        }
+        else {
           childInjector = context.injector
             ? context.injector.createChild(dependencies)
             : new Injector(dependencies)
@@ -40,11 +42,11 @@ function RediInjector(
 /**
  * @param Comp
  * @param injector
- * @returns
+ * @returns A component type that can be rendered.
  */
 export function connectInjector<P>(
   Comp: React.ComponentType<P>,
-  injector: Injector
+  injector: Injector,
 ): React.ComponentType<P> {
   return function ComponentWithInjector(props: P) {
     return (
@@ -57,7 +59,7 @@ export function connectInjector<P>(
 
 export function connectDependencies<P>(
   Comp: React.ComponentType<P>,
-  dependencies: Dependency[]
+  dependencies: Dependency[],
 ): React.ComponentType<P> {
   return function ComponentWithInjector(props: P) {
     return (

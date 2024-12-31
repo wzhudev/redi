@@ -2,22 +2,23 @@
  * @vitest-environment jsdom
  */
 
-import { describe, afterEach, it, expect } from 'vitest'
+import type { IDisposable } from '@wendellhu/redi'
+import type { Observable } from 'rxjs'
 import { act, render, renderHook } from '@testing-library/react'
-import React, { Component, useState } from 'react'
-import { BehaviorSubject, interval, Observable, of, Subject } from 'rxjs'
-import { scan, startWith } from 'rxjs/operators'
-
-import { IDisposable } from '@wendellhu/redi'
 import {
+  connectDependencies,
   useDependency,
-  useDependencyValue,
-  useUpdateBinder,
   useDependencyContext,
   useDependencyContextValue,
-  connectDependencies,
+  useDependencyValue,
   useObservable,
+  useUpdateBinder,
 } from '@wendellhu/redi/react-bindings'
+import React, { Component, useState } from 'react'
+import { BehaviorSubject, interval, of, Subject } from 'rxjs'
+
+import { scan, startWith } from 'rxjs/operators'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { expectToThrow } from './util/expectToThrow'
@@ -31,7 +32,7 @@ describe('test legacy rxjs utils', () => {
     class CounterService {
       counter$ = interval(100).pipe(
         startWith(0),
-        scan((acc) => acc + 1)
+        scan(acc => acc + 1),
       )
     }
 
@@ -41,7 +42,7 @@ describe('test legacy rxjs utils', () => {
           return <Display />
         }
       },
-      [[CounterService]]
+      [[CounterService]],
     )
 
     function Display() {
@@ -55,7 +56,7 @@ describe('test legacy rxjs utils', () => {
     expect(container.firstChild!.textContent).toBe('0')
 
     await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360))
+      () => new Promise<undefined>(res => setTimeout(() => res(void 0), 360)),
     )
     expect(container.firstChild!.textContent).toBe('3')
   })
@@ -81,10 +82,10 @@ describe('test legacy rxjs utils', () => {
     }
 
     const App = connectDependencies(
-      function () {
+      () => {
         return <Child />
       },
-      [[CounterService]]
+      [[CounterService]],
     )
 
     function Child() {
@@ -98,7 +99,7 @@ describe('test legacy rxjs utils', () => {
     expect(container.firstChild!.textContent).toBe('5')
 
     await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 320))
+      () => new Promise<undefined>(res => setTimeout(() => res(void 0), 320)),
     )
     expect(container.firstChild!.textContent).toBe('8')
   })
@@ -109,15 +110,15 @@ describe('test legacy rxjs utils', () => {
     class CounterService {
       counter$ = interval(100).pipe(
         startWith(0),
-        scan((acc) => acc + 1)
+        scan(acc => acc + 1),
       )
     }
 
     const App = connectDependencies(
-      function () {
+      () => {
         return <Parent />
       },
-      [[CounterService]]
+      [[CounterService]],
     )
 
     function Parent() {
@@ -137,7 +138,7 @@ describe('test legacy rxjs utils', () => {
     expect(childRenderCount).toBe(1)
 
     await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360))
+      () => new Promise<undefined>(res => setTimeout(() => res(void 0), 360)),
     )
     expect(container.firstChild!.textContent).toBe('3')
     expect(childRenderCount).toBe(2)
@@ -149,15 +150,15 @@ describe('test legacy rxjs utils', () => {
     class CounterService {
       counter$ = interval(100).pipe(
         startWith(0),
-        scan((acc) => acc + 1)
+        scan(acc => acc + 1),
       )
     }
 
     const App = connectDependencies(
-      function () {
+      () => {
         return <Parent />
       },
-      [[CounterService]]
+      [[CounterService]],
     )
 
     function useCounter$() {
@@ -189,7 +190,7 @@ describe('test legacy rxjs utils', () => {
     expect(childRenderCount).toBe(1)
 
     await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360))
+      () => new Promise<undefined>(res => setTimeout(() => res(void 0), 360)),
     )
     expect(childRenderCount).toBe(2)
   })
@@ -198,15 +199,15 @@ describe('test legacy rxjs utils', () => {
     class CounterService {
       counter$ = interval(1000).pipe(
         startWith(0),
-        scan((acc) => acc + 1)
+        scan(acc => acc + 1),
       )
     }
 
     const App = connectDependencies(
-      function App() {
+      () => {
         return <Parent />
       },
-      [[CounterService]]
+      [[CounterService]],
     )
 
     function useCounter$() {
@@ -226,7 +227,7 @@ describe('test legacy rxjs utils', () => {
 
     expectToThrow(
       () => render(<App />),
-      '[redi]: try to read context value but no ancestor component subscribed it.'
+      '[redi]: try to read context value but no ancestor component subscribed it.',
     )
   })
 
@@ -250,10 +251,10 @@ describe('test legacy rxjs utils', () => {
     }
 
     const App = connectDependencies(
-      function () {
+      () => {
         return <Child />
       },
-      [[CounterService]]
+      [[CounterService]],
     )
 
     function Child() {
@@ -268,7 +269,7 @@ describe('test legacy rxjs utils', () => {
     expect(container.firstChild!.textContent).toBe('0')
 
     await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 310))
+      () => new Promise<undefined>(res => setTimeout(() => res(void 0), 310)),
     )
     expect(container.firstChild!.textContent).toBe('3')
   })
@@ -276,76 +277,76 @@ describe('test legacy rxjs utils', () => {
 
 describe('test "useObservable"', () => {
   it('should return undefined when no initial value is provided', () => {
-    const observable: Observable<boolean> | undefined = undefined;
+    const observable: Observable<boolean> | undefined = undefined
 
-    const { result } = renderHook(() => useObservable<boolean>(observable));
-    expect(result.current).toBeUndefined();
-  });
+    const { result } = renderHook(() => useObservable<boolean>(observable))
+    expect(result.current).toBeUndefined()
+  })
 
   it('should return the initial value when provided', () => {
-    const observable: Observable<boolean> | undefined = undefined;
+    const observable: Observable<boolean> | undefined = undefined
 
-    const { result } = renderHook(() => useObservable<boolean>(observable, true));
-    expect(result.current).toBeTruthy();
-  });
+    const { result } = renderHook(() => useObservable<boolean>(observable, true))
+    expect(result.current).toBeTruthy()
+  })
 
   it('should return the initial value when provided synchronously', () => {
-    const observable: Observable<boolean> = of(true);
+    const observable: Observable<boolean> = of(true)
 
-    const { result } = renderHook(() => useObservable<boolean>(observable));
-    expect(result.current).toBeTruthy();
-  });
+    const { result } = renderHook(() => useObservable<boolean>(observable))
+    expect(result.current).toBeTruthy()
+  })
 
   function useTestUseObservableBed() {
-    const observable = new Subject<boolean>();
-    const result = useObservable(observable, undefined);
+    const observable = new Subject<boolean>()
+    const result = useObservable(observable, undefined)
 
     return {
       observable,
       result,
-    };
+    }
   }
 
   it('should emit new value when observable emits', () => {
-    const { result } = renderHook(() => useTestUseObservableBed());
+    const { result } = renderHook(() => useTestUseObservableBed())
 
-    expect(result.current.result).toBeUndefined();
+    expect(result.current.result).toBeUndefined()
 
-    act(() => result.current.observable.next(true));
-    expect(result.current.result).toBeTruthy();
+    act(() => result.current.observable.next(true))
+    expect(result.current.result).toBeTruthy()
 
-    act(() => result.current.observable.next(false));
-    expect(result.current.result).toBeFalsy();
-  });
+    act(() => result.current.observable.next(false))
+    expect(result.current.result).toBeFalsy()
+  })
 
   function useTestSwitchObservableBed() {
-    const [observable, setObservable] = useState<Observable<boolean> | undefined>(undefined);
-    const result = useObservable(observable);
+    const [observable, setObservable] = useState<Observable<boolean> | undefined>(undefined)
+    const result = useObservable(observable)
 
     return {
       result,
       observable,
       setObservable,
-    };
+    }
   }
 
   it('should emit when passing new observable to the hook', () => {
-    const { result } = renderHook(() => useTestSwitchObservableBed());
+    const { result } = renderHook(() => useTestSwitchObservableBed())
 
-    expect(result.current.result).toBeUndefined();
+    expect(result.current.result).toBeUndefined()
 
-    act(() => result.current.setObservable(of(true)));
-    expect(result.current.result).toBeTruthy();
+    act(() => result.current.setObservable(of(true)))
+    expect(result.current.result).toBeTruthy()
 
-    act(() => result.current.setObservable(of(false)));
-    expect(result.current.result).toBeFalsy();
-  });
+    act(() => result.current.setObservable(of(false)))
+    expect(result.current.result).toBeFalsy()
+  })
 
   it('should support a callback function returns an observable', () => {
     // const { result } = renderHook(() => useObservable(() => of(true)));
     // This line above would cause infinite look. Pass `deps` to fix the problem.
-    const { result } = renderHook(() => useObservable(() => of(true), undefined, true, []));
+    const { result } = renderHook(() => useObservable(() => of(true), undefined, true, []))
 
-    expect(result.current).toBeTruthy();
-  });
-});
+    expect(result.current).toBeTruthy()
+  })
+})

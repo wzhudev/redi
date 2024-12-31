@@ -1,17 +1,20 @@
+import type { Injector } from '@wendellhu/redi'
 import * as React from 'react'
-import { Injector } from '@wendellhu/redi'
 
 const __REDI_CONTEXT_LOCK__ = 'REDI_CONTEXT_LOCK'
+// eslint-disable-next-line node/prefer-global/process
 const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null
 
-const globalObject: any =
-  (typeof globalThis !== 'undefined' && globalThis) ||
-  (typeof window !== 'undefined' && window) ||
-  (typeof global !== 'undefined' && global)
+const globalObject: any
+  = (typeof globalThis !== 'undefined' && globalThis)
+  || (typeof window !== 'undefined' && window)
+  // eslint-disable-next-line no-restricted-globals
+  || (typeof global !== 'undefined' && global)
 
 if (!globalObject[__REDI_CONTEXT_LOCK__]) {
   globalObject[__REDI_CONTEXT_LOCK__] = true
-} else if (!isNode) {
+}
+else if (!isNode) {
   console.error('[redi]: "RediContext" is already created. You may import "RediContext" from different paths. Use "import { RediContext } from \'@wendellhu/redi/react-bindings\'; instead."')
 }
 

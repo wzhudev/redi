@@ -1,11 +1,13 @@
-import * as React from 'react'
-import {
+import type {
   DependencyIdentifier,
   Injector,
   LookUp,
   Quantity,
+} from '@wendellhu/redi'
+import {
   RediError,
 } from '@wendellhu/redi'
+import * as React from 'react'
 
 import { RediContext } from './reactContext'
 
@@ -56,8 +58,8 @@ export function useDependency<T>(
 export function useDependency<T>(
   id: DependencyIdentifier<T>,
   quantityOrLookUp?: Quantity | LookUp,
-  lookUp?: LookUp
+  lookUp?: LookUp,
 ): T | T[] | null {
   const injector = useInjector()
-  return React.useMemo(() => injector.get<T>(id, quantityOrLookUp, lookUp), [id, quantityOrLookUp, lookUp]);
+  return React.useMemo(() => injector.get<T>(id, quantityOrLookUp, lookUp), [id, quantityOrLookUp, lookUp])
 }

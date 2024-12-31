@@ -1,5 +1,5 @@
+import type { Ctor } from './dependencyItem'
 import { getDependencyByIndex } from './decorators'
-import { Ctor } from './dependencyItem'
 
 function changeToSelf(target: Ctor<any>, index: number, withNew: boolean) {
   const descriptor = getDependencyByIndex(target, index)

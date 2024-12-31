@@ -1,9 +1,9 @@
-import { Ctor } from './dependencyItem'
-import { ForwardRef } from './dependencyForwardRef'
+import type { ForwardRef } from './dependencyForwardRef'
+import type { Ctor } from './dependencyItem'
 
 export const IdentifierDecoratorSymbol = Symbol('$$IDENTIFIER_DECORATOR')
 
-export type IdentifierDecorator<T> = {
+export interface IdentifierDecorator<T> {
   [IdentifierDecoratorSymbol]: true
 
   // call signature of an decorator
@@ -12,13 +12,13 @@ export type IdentifierDecorator<T> = {
   /**
    * beautify console
    */
-  toString(): string
+  toString: () => string
 
   type: T
 }
 
 export function isIdentifierDecorator<T>(
-  thing: any
+  thing: any,
 ): thing is IdentifierDecorator<T> {
   return thing && thing[IdentifierDecoratorSymbol] === true
 }

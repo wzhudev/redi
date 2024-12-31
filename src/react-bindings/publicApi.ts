@@ -1,5 +1,5 @@
-export { useInjector, useDependency } from './reactHooks'
-export { connectInjector, connectDependencies } from './reactComponent'
-export { RediContext, RediProvider, RediConsumer } from './reactContext'
+export { connectDependencies, connectInjector } from './reactComponent'
+export { RediConsumer, RediContext, RediProvider } from './reactContext'
 export { WithDependency } from './reactDecorators'
+export { useDependency, useInjector } from './reactHooks'
 export * from './reactRx'

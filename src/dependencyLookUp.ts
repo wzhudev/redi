@@ -1,5 +1,5 @@
+import type { Ctor } from './dependencyItem'
 import { getDependencyByIndex } from './decorators'
-import { Ctor } from './dependencyItem'
 import { LookUp } from './types'
 
 function changeLookup(target: Ctor<any>, index: number, lookUp: LookUp) {
@@ -27,7 +27,7 @@ interface SkipSelfDecorator {
  * when resolving this dependency, skip the current injector
  */
 export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(
-  LookUp.SKIP_SELF
+  LookUp.SKIP_SELF,
 )
 
 interface SelfDecorator {

@@ -1,26 +1,30 @@
-import {
+import type {
   DependencyIdentifier,
+} from './dependencyIdentifier'
+import type { Ctor, DependencyItem } from './dependencyItem'
+import type { IDisposable } from './dispose'
+import {
   isIdentifierDecorator,
 } from './dependencyIdentifier'
-import { Ctor, DependencyItem, prettyPrintIdentifier } from './dependencyItem'
+import { prettyPrintIdentifier } from './dependencyItem'
 import { checkQuantity, retrieveQuantity } from './dependencyQuantity'
-import { IDisposable, isDisposable } from './dispose'
-import { Quantity } from './types'
+import { isDisposable } from './dispose'
 import { RediError } from './error'
+import { Quantity } from './types'
 
 export type DependencyPair<T> = [DependencyIdentifier<T>, DependencyItem<T>]
 export type DependencyClass<T> = [Ctor<T>]
 export type Dependency<T = any> = DependencyPair<T> | DependencyClass<T>
 export type DependencyWithInstance<T = any> = [
   Ctor<T> | DependencyIdentifier<T>,
-  T
+  T,
 ]
 export type DependencyOrInstance<T = any> =
   | Dependency<T>
   | DependencyWithInstance<T>
 
 export function isBareClassDependency<T>(
-  thing: Dependency<T>
+  thing: Dependency<T>,
 ): thing is DependencyClass<T> {
   return thing.length === 1
 }
@@ -48,7 +52,7 @@ export class DependencyNotFoundForModuleError extends RediError {
     const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. It is the ${index}th param of "${isIdentifierDecorator(toInstantiate)
       ? prettyPrintIdentifier(toInstantiate)
       : (toInstantiate as Ctor<any>).name
-      }".`
+    }".`
 
     super(msg)
   }
@@ -58,11 +62,11 @@ export class DependencyNotFoundError extends RediError {
   constructor(
     id: DependencyIdentifier<any>,
   ) {
-    const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. The stack of dependencies is: "${ResolvingStack.map((id) => prettyPrintIdentifier(id)).join(' -> ')}".`
+    const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. The stack of dependencies is: "${ResolvingStack.map(id => prettyPrintIdentifier(id)).join(' -> ')}".`
 
     super(msg)
 
-    clearResolvingStack();
+    clearResolvingStack()
   }
 }
 
@@ -78,8 +82,8 @@ export class DependencyCollection implements IDisposable {
   >()
 
   constructor(dependencies: Dependency[]) {
-    this.normalizeDependencies(dependencies).map((pair) =>
-      this.add(pair[0], pair[1])
+    this.normalizeDependencies(dependencies).map(pair =>
+      this.add(pair[0], pair[1]),
     )
   }
 
@@ -87,7 +91,7 @@ export class DependencyCollection implements IDisposable {
   public add<T>(id: DependencyIdentifier<T>, val: DependencyItem<T>): void
   public add<T>(
     ctorOrId: Ctor<T> | DependencyIdentifier<T>,
-    val?: DependencyItem<T>
+    val?: DependencyItem<T>,
   ): void {
     if (typeof val === 'undefined') {
       val = { useClass: ctorOrId as Ctor<T>, lazy: false }
@@ -124,7 +128,7 @@ export class DependencyCollection implements IDisposable {
   ): DependencyItem<T> | DependencyItem<T>[] | null
   public get<T>(
     id: DependencyIdentifier<T>,
-    quantity: Quantity = Quantity.REQUIRED
+    quantity: Quantity = Quantity.REQUIRED,
   ): DependencyItem<T> | DependencyItem<T>[] | null {
     const ret = this.dependencyMap.get(id)!
 
@@ -137,8 +141,8 @@ export class DependencyCollection implements IDisposable {
   }
 
   public append(dependencies: Dependency<any>[]): void {
-    this.normalizeDependencies(dependencies).forEach((pair) =>
-      this.add(pair[0], pair[1])
+    this.normalizeDependencies(dependencies).forEach(pair =>
+      this.add(pair[0], pair[1]),
     )
   }
 
@@ -150,7 +154,7 @@ export class DependencyCollection implements IDisposable {
    * normalize dependencies to `DependencyItem`
    */
   private normalizeDependencies(
-    dependencies: Dependency[]
+    dependencies: Dependency[],
   ): DependencyPair<any>[] {
     return dependencies.map((dependency) => {
       const id = dependency[0]
@@ -160,7 +164,8 @@ export class DependencyCollection implements IDisposable {
           useClass: dependency[0],
           lazy: false,
         }
-      } else {
+      }
+      else {
         val = dependency[1]
       }
 
@@ -197,7 +202,7 @@ export class ResolvedDependencyCollection implements IDisposable {
   public delete<T>(id: DependencyIdentifier<T>): void {
     if (this.resolvedDependencies.has(id)) {
       const things = this.resolvedDependencies.get(id)!
-      things.forEach((t) => (isDisposable(t) ? t.dispose() : void 0))
+      things.forEach(t => (isDisposable(t) ? t.dispose() : void 0))
       this.resolvedDependencies.delete(id)
     }
   }
@@ -212,7 +217,7 @@ export class ResolvedDependencyCollection implements IDisposable {
   public get<T>(id: DependencyIdentifier<T>, quantity: Quantity): T[] | T | null
   public get<T>(
     id: DependencyIdentifier<T>,
-    quantity: Quantity = Quantity.REQUIRED
+    quantity: Quantity = Quantity.REQUIRED,
   ): T | T[] | null {
     const ret = this.resolvedDependencies.get(id)
 
@@ -224,14 +229,15 @@ export class ResolvedDependencyCollection implements IDisposable {
 
     if (quantity === Quantity.MANY) {
       return ret
-    } else {
+    }
+    else {
       return ret[0]
     }
   }
 
   public dispose(): void {
     Array.from(this.resolvedDependencies.values()).forEach((items) => {
-      items.forEach((item) => (isDisposable(item) ? item.dispose() : void 0))
+      items.forEach(item => (isDisposable(item) ? item.dispose() : void 0))
     })
 
     this.resolvedDependencies.clear()

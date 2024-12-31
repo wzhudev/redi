@@ -1,17 +1,20 @@
-import React, {
-  useEffect,
-  useState,
-  createContext,
-  useMemo,
-  useContext,
-  useCallback,
-  ReactNode,
+import type {
   Context,
-  useRef,
+  ReactNode,
 } from 'react'
-import { BehaviorSubject, Observable, Subscription } from 'rxjs'
-
+import type { Observable, Subscription } from 'rxjs'
 import { RediError } from '@wendellhu/redi'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+
+import { BehaviorSubject } from 'rxjs'
 
 /**
  * unwrap an observable value, return it to the component for rendering, and
@@ -27,10 +30,10 @@ import { RediError } from '@wendellhu/redi'
  */
 export function useDependencyValue<T>(
   depValue$: Observable<T>,
-  defaultValue?: T
+  defaultValue?: T,
 ): T | undefined {
-  const firstValue: T | undefined =
-    depValue$ instanceof BehaviorSubject && typeof defaultValue === 'undefined'
+  const firstValue: T | undefined
+    = depValue$ instanceof BehaviorSubject && typeof defaultValue === 'undefined'
       ? depValue$.getValue()
       : defaultValue
   const [value, setValue] = useState(firstValue)
@@ -43,15 +46,15 @@ export function useDependencyValue<T>(
   return value
 }
 
-type ObservableOrFn<T> = Observable<T> | (() => Observable<T>);
-type Nullable<T> = T | undefined | null;
+type ObservableOrFn<T> = Observable<T> | (() => Observable<T>)
+type Nullable<T> = T | undefined | null
 
 function unwrap<T>(o: ObservableOrFn<T>): Observable<T> {
   if (typeof o === 'function') {
-    return o();
+    return o()
   }
 
-  return o;
+  return o
 }
 
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>): T | undefined
@@ -65,55 +68,54 @@ export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaul
  * @param defaultValue The default value of the observable. It the `observable` can omit an initial value, this value will be neglected.
  * @param shouldHaveSyncValue If the observable should have a sync value. If it does not have a sync value, an error will be thrown.
  * @param deps A dependency array to decide if we should re-subscribe when the `observable` is a function.
- * @returns
+ * @returns Value or null.
  */
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue?: undefined, shouldHaveSyncValue?: true, deps?: any[]): T | undefined {
   if (typeof observable === 'function' && !deps) {
-    throw new RediError("Expected deps to be provided when observable is a function!")
+    throw new RediError('Expected deps to be provided when observable is a function!')
   }
 
-  const observableRef = useRef<Observable<T> | null>(null);
-  const initializedRef = useRef<boolean>(false);
+  const observableRef = useRef<Observable<T> | null>(null)
+  const initializedRef = useRef<boolean>(false)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const destObservable = useMemo(() => observable, [...(typeof deps !== 'undefined' ? deps : [observable])]);
+  const destObservable = useMemo(() => observable, [...(typeof deps !== 'undefined' ? deps : [observable])])
 
   // This state is only for trigger React to re-render. We do not use `setValue` directly because it may cause
   // memory leaking.
-  const [_, setRenderCounter] = useState<number>(0);
+  const [_, setRenderCounter] = useState<number>(0)
 
   const valueRef = useRef<T | undefined>((() => {
-    let innerDefaultValue: T | undefined;
+    let innerDefaultValue: T | undefined
     if (destObservable) {
       const sub = unwrap(destObservable).subscribe((value) => {
-        initializedRef.current = true;
-        innerDefaultValue = value;
-      });
+        initializedRef.current = true
+        innerDefaultValue = value
+      })
 
-      sub.unsubscribe();
+      sub.unsubscribe()
     }
 
-    return innerDefaultValue ?? defaultValue;
-  })());
+    return innerDefaultValue ?? defaultValue
+  })())
 
   useEffect(() => {
-    let subscription: Subscription | null = null;
+    let subscription: Subscription | null = null
     if (destObservable) {
-      observableRef.current = unwrap(destObservable);
+      observableRef.current = unwrap(destObservable)
       subscription = observableRef.current.subscribe((value) => {
-        valueRef.current = value;
-        setRenderCounter((prev) => prev + 1);
-      });
+        valueRef.current = value
+        setRenderCounter(prev => prev + 1)
+      })
     }
 
-    return () => subscription?.unsubscribe();
-  }, [destObservable]);
+    return () => subscription?.unsubscribe()
+  }, [destObservable])
 
   if (shouldHaveSyncValue && !initializedRef.current) {
-    throw new Error('Expect `shouldHaveSyncValue` but not getting a sync value!');
+    throw new Error('Expect `shouldHaveSyncValue` but not getting a sync value!')
   }
 
-  return valueRef.current;
+  return valueRef.current
 }
 
 /**
@@ -125,7 +127,7 @@ export function useUpdateBinder(update$: Observable<void>): void {
   const [, dumpSet] = useState(0)
 
   useEffect(() => {
-    const subscription = update$.subscribe(() => dumpSet((prev) => prev + 1))
+    const subscription = update$.subscribe(() => dumpSet(prev => prev + 1))
     return () => subscription.unsubscribe()
   }, [])
 }
@@ -138,21 +140,21 @@ const DepValueMapProvider = new WeakMap<Observable<any>, Context<any>>()
  */
 export function useDependencyContext<T>(
   depValue$: Observable<T>,
-  defaultValue?: T
+  defaultValue?: T,
 ): {
-  Provider: (props: { initialState?: T; children: ReactNode }) => JSX.Element
-  value: T | undefined
-} {
+    Provider: (props: { initialState?: T, children: ReactNode }) => JSX.Element
+    value: T | undefined
+  } {
   const depRef = useRef<Observable<T> | undefined>(undefined)
   const value = useDependencyValue(depValue$, defaultValue)
   const Context = useMemo(() => {
     return createContext<T | undefined>(value)
   }, [depValue$])
   const Provider = useCallback(
-    (props: { initialState?: T; children: ReactNode }) => {
+    (props: { initialState?: T, children: ReactNode }) => {
       return <Context.Provider value={value}>{props.children}</Context.Provider>
     },
-    [depValue$, value]
+    [depValue$, value],
   )
 
   if (depRef.current !== depValue$) {
@@ -171,13 +173,13 @@ export function useDependencyContext<T>(
 }
 
 export function useDependencyContextValue<T>(
-  depValue$: Observable<T>
+  depValue$: Observable<T>,
 ): T | undefined {
   const context = DepValueMapProvider.get(depValue$)
 
   if (!context) {
     throw new RediError(
-      `try to read context value but no ancestor component subscribed it.`
+      `try to read context value but no ancestor component subscribed it.`,
     )
   }
 

@@ -1,12 +1,16 @@
-import { DependencyDescriptor } from './dependencyDescriptor'
-import {
+import type { DependencyDescriptor } from './dependencyDescriptor'
+import type {
   DependencyIdentifier,
   IdentifierDecorator,
+} from './dependencyIdentifier'
+import type { Ctor } from './dependencyItem'
+import type { LookUp } from './types'
+import {
   IdentifierDecoratorSymbol,
 } from './dependencyIdentifier'
-import { Ctor, prettyPrintIdentifier } from './dependencyItem'
-import { LookUp, Quantity } from './types'
+import { prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
+import { Quantity } from './types'
 
 export const TARGET = Symbol('$$TARGET')
 export const DEPENDENCIES = Symbol('$$DEPENDENCIES')
@@ -14,7 +18,7 @@ export const DEPENDENCIES = Symbol('$$DEPENDENCIES')
 class DependencyDescriptorNotFoundError extends RediError {
   constructor(index: number, target: Ctor<any>) {
     const msg = `Could not find dependency registered on the ${index} (indexed) parameter of the constructor of "${prettyPrintIdentifier(
-      target
+      target,
     )}".`
 
     super(msg)
@@ -26,7 +30,7 @@ export class IdentifierUndefinedError extends RediError {
     const msg = `It seems that you register "undefined" as dependency on the ${
       index + 1
     } parameter of "${prettyPrintIdentifier(
-      target
+      target,
     )}". Please make sure that there is not cyclic dependency among your TypeScript files, or consider using "forwardRef". For more info please visit our website https://redi.wendell.fun/docs/debug#could-not-find-dependency-registered-on`
 
     super(msg)
@@ -37,7 +41,7 @@ export class IdentifierUndefinedError extends RediError {
  * @internal
  */
 export function getDependencies<T>(
-  registerTarget: Ctor<T>
+  registerTarget: Ctor<T>,
 ): DependencyDescriptor<any>[] {
   const target = registerTarget as any
   return target[DEPENDENCIES] || []
@@ -48,11 +52,11 @@ export function getDependencies<T>(
  */
 export function getDependencyByIndex<T>(
   registerTarget: Ctor<T>,
-  index: number
+  index: number,
 ): DependencyDescriptor<any> {
   const allDependencies = getDependencies(registerTarget)
   const dep = allDependencies.find(
-    (descriptor) => descriptor.paramIndex === index
+    descriptor => descriptor.paramIndex === index,
   )
 
   if (!dep) {
@@ -70,7 +74,7 @@ export function setDependency<T, U>(
   identifier: DependencyIdentifier<T>,
   paramIndex: number,
   quantity: Quantity = Quantity.REQUIRED,
-  lookUp?: LookUp
+  lookUp?: LookUp,
 ): void {
   const descriptor: DependencyDescriptor<T> = {
     paramIndex,
@@ -90,7 +94,8 @@ export function setDependency<T, U>(
   // deal with inheritance, subclass need to declare dependencies on its on
   if (target[TARGET] === target) {
     target[DEPENDENCIES].push(descriptor)
-  } else {
+  }
+  else {
     target[DEPENDENCIES] = [descriptor]
     target[TARGET] = target
   }
@@ -107,7 +112,8 @@ const knownIdentifiers = new Set<string>()
 export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
   if (knownIdentifiers.has(id)) {
     throw new RediError(`Identifier "${id}" already exists.`)
-  } else {
+  }
+  else {
     knownIdentifiers.add(id)
   }
 

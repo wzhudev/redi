@@ -1,3 +1,3 @@
 export default {
-  "di": "JavaScript 中的依赖注入"
+  di: 'JavaScript 中的依赖注入',
 }

@@ -2,19 +2,20 @@
  * @vitest-environment jsdom
  */
 
-import { describe, afterEach, it, expect } from 'vitest'
-import { render, act, fireEvent } from '@testing-library/react'
-import React from 'react'
-
-import { createIdentifier, IDisposable, Injector } from '@wendellhu/redi'
+import type { IDisposable } from '@wendellhu/redi'
+import { act, fireEvent, render } from '@testing-library/react'
+import { createIdentifier, Injector } from '@wendellhu/redi'
 import {
-  connectInjector,
   connectDependencies,
-  useInjector,
+  connectInjector,
   RediContext,
   useDependency,
+  useInjector,
   WithDependency,
 } from '@wendellhu/redi/react-bindings'
+
+import React from 'react'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 
@@ -34,7 +35,7 @@ describe('react', () => {
 
     const injector = new Injector([[aI, { useValue: { key: 'a' } }]])
 
-    const App = connectInjector(function AppImpl() {
+    const App = connectInjector(() => {
       const j = useInjector()
       const a = j.get(aI)
 
@@ -53,13 +54,13 @@ describe('react', () => {
     const aI = createIdentifier<A>('aI')
 
     const App = connectDependencies(
-      function AppImpl() {
+      () => {
         const j = useInjector()
         const a = j.get(aI)
 
         return <div>{a.key}</div>
       },
-      [[aI, { useValue: { key: 'a' } }]]
+      [[aI, { useValue: { key: 'a' } }]],
     )
 
     const { container } = render(<App />)
@@ -156,12 +157,12 @@ describe('react', () => {
     }
 
     const Child = connectDependencies(
-      function ChildImpl() {
+      () => {
         const j = useInjector()
         const a = j.get(A)
         return <div>{a.key}</div>
       },
-      [[A]]
+      [[A]],
     )
 
     function App() {
@@ -178,7 +179,7 @@ describe('react', () => {
     const { container } = render(<App />)
     await act(() => {
       fireEvent.click(container.firstElementChild!.firstElementChild!)
-      return new Promise<void>((res) => setTimeout(res, 20))
+      return new Promise<void>(res => setTimeout(res, 20))
     })
 
     expect(disposed).toBe(true)

@@ -3,12 +3,18 @@
   "name": "@wendellhu/redi",
   "version": "0.16.1",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
+  "author": "Wenzhao Hu<wzhudev@gmail.com>",
+  "license": "MIT",
   "scripts": {
+    "prepare": "husky",
+    "pre-commit": "lint-staged",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "watch": "vitest",
     "build": "squirrel",
     "release": "release-it",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "dev:doc": "pnpm --filter redi-site dev",
     "build:doc": "pnpm --filter redi-site build"
   },
@@ -18,9 +24,8 @@
       "LICENSE"
     ]
   },
-  "author": "Wenzhao Hu<wzhudev@gmail.com>",
-  "license": "MIT",
   "devDependencies": {
+    "@antfu/eslint-config": "3.11.2",
     "@release-it/conventional-changelog": "^8.0.1",
     "@testing-library/dom": "^8.5.0",
     "@testing-library/react": "^14.0.0",
@@ -29,6 +34,9 @@
     "@types/react": "^18.2.48",
     "@vitest/coverage-istanbul": "^1.5.0",
     "@wendellhu/squirrel": "^0.1.8",
+    "eslint": "9.16.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
     "jsdom": "^19.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -36,5 +44,8 @@
     "rxjs": "^6.2.1",
     "typescript": "^5.3.3",
     "vitest": "^1.5.0"
+  },
+  "lint-staged": {
+    "*": "eslint --fix"
   }
 }
