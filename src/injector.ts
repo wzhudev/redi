@@ -132,6 +132,7 @@ export class Injector {
    *
    * @param {() => void} callback The callback function that will be invoked when
    * the Injector is disposed.
+   * @returns A disposable that will remove the callback.
    */
   public onDispose(callback: () => void): IDisposable {
     this.disposingCallbacks.add(callback);
