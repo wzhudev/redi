@@ -1,25 +1,31 @@
-import { vi, describe, afterEach, it, expect } from 'vitest'
+/* eslint-disable unused-imports/no-unused-vars */
+/* eslint-disable ts/no-redeclare */
+
+import type {
+  AsyncHook,
+  IDisposable,
+} from '@wendellhu/redi'
+import type { BB } from './async/async.base'
 
 import {
-  AsyncHook,
   createIdentifier,
-  IDisposable,
   forwardRef,
   Inject,
   Injector,
+  LookUp,
   Many,
   Optional,
+  Quantity,
   Self,
   setDependencies,
   SkipSelf,
   WithNew,
-  Quantity,
-  LookUp,
 } from '@wendellhu/redi'
 
-import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { AA, BB, bbI } from './async/async.base'
+import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
+import { AA, bbI } from './async/async.base'
 import { expectToThrow } from './util/expectToThrow'
 
 function cleanupTest() {
@@ -27,7 +33,7 @@ function cleanupTest() {
 }
 
 describe('core', () => {
-  afterEach(() => cleanupTest());
+  afterEach(() => cleanupTest())
 
   it('should print the dependencies stack when cannot resolve', () => {
     class A { }
@@ -35,12 +41,11 @@ describe('core', () => {
     class C { constructor(@Inject(B) private b: B) { } }
     class D { constructor(@Inject(C) private c: C) { } }
 
-    const j = new Injector([[B], [C], [D]]);
-    expectToThrow(() => j.get(D), 'Cannot find "A" registered by any injector. It is the 0th param of "B".');
-  });
+    const j = new Injector([[B], [C], [D]])
+    expectToThrow(() => j.get(D), 'Cannot find "A" registered by any injector. It is the 0th param of "B".')
+  })
 
   describe('basics', () => {
-
     it('should resolve instance and then cache it', () => {
       let createCount = 0
 
@@ -191,11 +196,11 @@ describe('core', () => {
       class B {
         constructor(
           private readonly otherKey: string,
-          @Inject(A) public readonly a: A
+          @Inject(A) public readonly a: A,
         ) { }
 
         get key() {
-          return this.otherKey + 'a'
+          return `${this.otherKey}a`
         }
       }
 
@@ -215,11 +220,11 @@ describe('core', () => {
         constructor(
           private readonly otherKey: string,
           private readonly secondKey: string,
-          @Inject(A) public readonly a: A
+          @Inject(A) public readonly a: A,
         ) { }
 
         get key() {
-          return this.otherKey + this.secondKey + ' ' + this.a.key
+          return `${this.otherKey + this.secondKey} ${this.a.key}`
         }
       }
 
@@ -254,7 +259,7 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(aI),
-        `[redi]: Detecting cyclic dependency. The last identifier is "B".`
+        `[redi]: Detecting cyclic dependency. The last identifier is "B".`,
       )
     })
 
@@ -307,7 +312,7 @@ describe('core', () => {
           key: string
 
           constructor(@aI private readonly _a: A) {
-            this.key = this._a.key + 'b'
+            this.key = `${this._a.key}b`
           }
         }
 
@@ -316,7 +321,7 @@ describe('core', () => {
         j.get(B)
         expect(count).toBe(1)
 
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        await new Promise(resolve => setTimeout(resolve, 200))
 
         expect(count).toBe(1)
       })
@@ -325,7 +330,7 @@ describe('core', () => {
         interface A {
           key: string
 
-          getAnotherKey(): string
+          getAnotherKey: () => string
         }
 
         let flag = false
@@ -340,7 +345,7 @@ describe('core', () => {
           }
 
           getAnotherKey(): string {
-            return 'another ' + this.key
+            return `another ${this.key}`
           }
         }
 
@@ -348,11 +353,11 @@ describe('core', () => {
           constructor(@Inject(aI) private a: A) { }
 
           get key(): string {
-            return this.a.key + 'b'
+            return `${this.a.key}b`
           }
 
           getAnotherKey(): string {
-            return this.a.getAnotherKey() + 'b'
+            return `${this.a.getAnotherKey()}b`
           }
 
           setKey(): void {
@@ -400,17 +405,17 @@ describe('core', () => {
           get key(): string {
             return typeof this.b === 'undefined'
               ? 'undefined'
-              : 'a' + this.b.key
+              : `a${this.b.key}`
           }
         }
 
         // mock that B is not assigned to the class constructor
-        let B: any = undefined
+        let B: any
 
         expect(() => {
           setDependencies(A, [B])
         }).toThrow(
-          '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".'
+          '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".',
         )
 
         B = class {
@@ -426,7 +431,9 @@ describe('core', () => {
         }
 
         const j = new Injector([[B]])
-        expect(() => { j.get(B) }).toThrow('[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".');
+        expect(() => {
+          j.get(B)
+        }).toThrow('[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".')
       })
     })
 
@@ -507,12 +514,10 @@ describe('core', () => {
 
         expect(j.get(b)).toBe(j.get(A))
         expect(initCount).toBe(1)
-      });
+      })
     })
 
     describe('async item', () => {
-
-
       it('should support async loaded ctor', () =>
         new Promise<void>((done) => {
           const j = new Injector([
@@ -521,7 +526,7 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then((module) => module.BBImpl),
+                  import('./async/async.item').then(module => module.BBImpl),
               },
             ],
           ])
@@ -537,7 +542,7 @@ describe('core', () => {
             expect(bb.getConstructedTime?.()).toBe(1)
           })
 
-          new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
+          new Promise(resolve => setTimeout(resolve, 3000)).then(() => {
             // should use cached value this time
             j.getAsync(bbI).then((bb) => {
               expect(bb.key).toBe('aabb')
@@ -556,7 +561,7 @@ describe('core', () => {
               {
                 useAsync: () =>
                   import('./async/async.item').then(
-                    (module) => module.BBFactory
+                    module => module.BBFactory,
                   ),
               },
             ],
@@ -576,7 +581,7 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then((module) => module.BBValue),
+                  import('./async/async.item').then(module => module.BBValue),
               },
             ],
           ])
@@ -621,7 +626,7 @@ describe('core', () => {
               {
                 useAsync: () =>
                   import('./async/async.item').then(
-                    (module) => module.BBLoader
+                    module => module.BBLoader,
                   ),
               },
             ],
@@ -644,7 +649,7 @@ describe('core', () => {
             bbI,
             {
               useAsync: () =>
-                import('./async/async.item').then((module) => module.BBFactory),
+                import('./async/async.item').then(module => module.BBFactory),
             },
           ],
         ])
@@ -660,7 +665,7 @@ describe('core', () => {
             constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) { }
 
             public readKey(): Promise<string> {
-              return this.bbILoader.whenReady().then((bb) => bb.key)
+              return this.bbILoader.whenReady().then(bb => bb.key)
             }
           }
 
@@ -672,7 +677,7 @@ describe('core', () => {
               {
                 useAsync: () =>
                   import('./async/async.item').then(
-                    (module) => module.BBFactory
+                    module => module.BBFactory,
                   ),
               },
             ],
@@ -692,7 +697,6 @@ describe('core', () => {
     })
 
     describe('injector', () => {
-
       it('should support inject itself', () => {
         const a = {
           key: 'a',
@@ -714,7 +718,6 @@ describe('core', () => {
   })
 
   describe('quantities', () => {
-
     it('should support "Many"', () => {
       interface A {
         key: string
@@ -734,7 +737,7 @@ describe('core', () => {
         constructor(@Many(aI) private aS: A[]) { }
 
         get key(): string {
-          return this.aS.map((a) => a.key).join('') + 'b'
+          return `${this.aS.map(a => a.key).join('')}b`
         }
       }
 
@@ -748,7 +751,7 @@ describe('core', () => {
           cI,
           {
             useFactory: (aS: A[]) => ({
-              key: aS.map((a) => a.key).join('') + 'c',
+              key: `${aS.map(a => a.key).join('')}c`,
             }),
             deps: [[new Many(), aI]],
           },
@@ -826,13 +829,12 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(B),
-        `[redi]: Expect "required" dependency items for id "aI" but get 2.`
+        `[redi]: Expect "required" dependency items for id "aI" but get 2.`,
       )
     })
   })
 
   describe('layered injection system', () => {
-
     it('should get dependencies upwards', () => {
       class A {
         key = 'a'
@@ -848,7 +850,7 @@ describe('core', () => {
         constructor(@Inject(A) private a: A, @Inject(cI) private c: C) { }
 
         get key() {
-          return this.a.key + 'b' + this.c.key
+          return `${this.a.key}b${this.c.key}`
         }
       }
 
@@ -895,7 +897,7 @@ describe('core', () => {
         constructor(@SkipSelf() @cI private readonly c: C) { }
 
         get key(): string {
-          return this.c.key + 'd'
+          return `${this.c.key}d`
         }
       }
 
@@ -906,7 +908,7 @@ describe('core', () => {
           bI,
           {
             useFactory: (a: A, c: C) => ({
-              key: a.key + 'b' + c.key,
+              key: `${a.key}b${c.key}`,
             }),
             deps: [A, [new SkipSelf(), cI]],
           },
@@ -947,7 +949,7 @@ describe('core', () => {
           bI,
           {
             useFactory: (a: A, c: C) => ({
-              key: a.key + 'b' + c.key,
+              key: `${a.key}b${c.key}`,
             }),
             deps: [A, [new Self(), cI]],
           },
@@ -956,7 +958,7 @@ describe('core', () => {
 
       expectToThrow(
         () => child.get(bI),
-        '[redi]: Cannot find "cI" registered by any injector. It is the 1th param of "bI".'
+        '[redi]: Cannot find "cI" registered by any injector. It is the 1th param of "bI".',
       )
     })
 
@@ -967,7 +969,7 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(A),
-        `[redi]: Expect "required" dependency items for id "A" but get 0. Did you forget to register it?`
+        `[redi]: Expect "required" dependency items for id "A" but get 0. Did you forget to register it?`,
       )
     })
   })
@@ -976,12 +978,14 @@ describe('core', () => {
     it('should throw Error when forwardRef is not used', () => {
       expectToThrow(() => {
         class A {
+          // Intented to throw error.
+          // eslint-disable-next-line ts/no-use-before-define
           constructor(@Inject(B) private b: B) { }
 
           get key(): string {
             return typeof this.b === 'undefined'
               ? 'undefined'
-              : 'a' + this.b.key
+              : `a${this.b.key}`
           }
         }
 
@@ -996,7 +1000,7 @@ describe('core', () => {
         constructor(@Inject(forwardRef(() => B)) private b: B) { }
 
         get key(): string {
-          return typeof this.b === 'undefined' ? 'undefined' : 'a' + this.b.key
+          return typeof this.b === 'undefined' ? 'undefined' : `a${this.b.key}`
         }
       }
 
@@ -1053,12 +1057,11 @@ describe('core', () => {
   })
 
   describe('hooks', () => {
-
     it('should "onInstantiation" work for class dependencies', () => {
       interface A {
         key: string
 
-        getAnotherKey(): string
+        getAnotherKey: () => string
       }
 
       let flag = false
@@ -1073,7 +1076,7 @@ describe('core', () => {
         }
 
         getAnotherKey(): string {
-          return 'another ' + this.key
+          return `another ${this.key}`
         }
       }
 
@@ -1081,11 +1084,11 @@ describe('core', () => {
         constructor(@Inject(aI) private a: A) { }
 
         get key(): string {
-          return this.a.key + 'b'
+          return `${this.a.key}b`
         }
 
         getAnotherKey(): string {
-          return this.a.getAnotherKey() + 'b'
+          return `${this.a.getAnotherKey()}b`
         }
 
         setKey(): void {
@@ -1119,12 +1122,12 @@ describe('core', () => {
     })
 
     it('should "onInstantiation" work for lazy class during', () => {
-      vi.useFakeTimers();
+      vi.useFakeTimers()
 
       interface A {
         key: string
 
-        getAnotherKey(): string
+        getAnotherKey: () => string
       }
 
       let flag = false
@@ -1139,7 +1142,7 @@ describe('core', () => {
         }
 
         getAnotherKey(): string {
-          return 'another ' + this.key
+          return `another ${this.key}`
         }
       }
 
@@ -1147,11 +1150,11 @@ describe('core', () => {
         constructor(@Inject(aI) private a: A) { }
 
         get key(): string {
-          return this.a.key + 'b'
+          return `${this.a.key}b`
         }
 
         getAnotherKey(): string {
-          return this.a.getAnotherKey() + 'b'
+          return `${this.a.getAnotherKey()}b`
         }
 
         setKey(): void {
@@ -1209,7 +1212,6 @@ describe('core', () => {
   })
 
   describe('dispose', () => {
-
     it('should dispose', () => {
       let flag = false
 
@@ -1222,7 +1224,7 @@ describe('core', () => {
         constructor(@Inject(A) private readonly a: A) { }
 
         get key(): string {
-          return this.a.key + 'b'
+          return `${this.a.key}b`
         }
 
         dispose() {
@@ -1248,7 +1250,7 @@ describe('core', () => {
     })
   })
 
-  describe('Lookup', () => {
+  describe('lookup', () => {
     it('should support optional lookup even if parent does not exist', () => {
       class A { }
 
@@ -1256,7 +1258,7 @@ describe('core', () => {
       const childInjector = parentInjector.createChild([[A]])
 
       expect(childInjector.get(A, Quantity.OPTIONAL, LookUp.SKIP_SELF)).toBeNull()
-    });
+    })
   })
 
   it('should throw error when identifier has been declared before', () => {
@@ -1264,24 +1266,24 @@ describe('core', () => {
 
     expectToThrow(
       () => createIdentifier('a'),
-      '[redi]: Identifier "a" already exists.'
+      '[redi]: Identifier "a" already exists.',
     )
   })
 
   describe('test "onDispose" callback', () => {
     it('should be called when the Injector is disposed', () => {
-      let disposed = false;
-      let disposed2 = false;
+      let disposed = false
+      let disposed2 = false
 
-      const j = new Injector();
-      j.onDispose(() => disposed = true);
+      const j = new Injector()
+      j.onDispose(() => disposed = true)
 
-      const disposable = j.onDispose(() => disposed2 = true);
-      disposable.dispose();
+      const disposable = j.onDispose(() => disposed2 = true)
+      disposable.dispose()
 
-      j.dispose();
-      expect(disposed).toBe(true);
-      expect(disposed2).toBe(false);
+      j.dispose()
+      expect(disposed).toBe(true)
+      expect(disposed2).toBe(false)
     })
   })
 })

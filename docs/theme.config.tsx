@@ -5,7 +5,7 @@ export default {
   },
   useNextSeoProps() {
     return {
-      titleTemplate: '%s – Redi'
+      titleTemplate: '%s – Redi',
     }
   },
   logo: (
@@ -21,23 +21,28 @@ export default {
     </>
   ),
   i18n: [
-    { locale: "en-US", name: "English" },
-    { locale: "zh-CN", name: "简体中文" },
+    { locale: 'en-US', name: 'English' },
+    { locale: 'zh-CN', name: '简体中文' },
   ],
   toc: {
     title: '',
-    backToTop: true
+    backToTop: true,
   },
   footer: {
     content: (
       <span>
-        MIT {new Date().getFullYear()} ©{' '}
+        MIT
+        {' '}
+        {new Date().getFullYear()}
+        {' '}
+        ©
+        {' '}
         <a href="https://wzhu.dev" target="_blank">
           wzhudev
         </a>
         .
       </span>
-    )
+    ),
   },
-  faviconGlyph: "💉"
+  faviconGlyph: '💉',
 }

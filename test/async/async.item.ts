@@ -1,6 +1,8 @@
-import { DependencyPair, Inject } from '@wendellhu/redi'
+import type { DependencyPair } from '@wendellhu/redi'
+import type { BB } from './async.base'
 
-import { AA, BB, bbI } from './async.base'
+import { Inject } from '@wendellhu/redi'
+import { AA, bbI } from './async.base'
 
 export class BBImpl implements BB {
   static counter = 0
@@ -10,7 +12,7 @@ export class BBImpl implements BB {
   }
 
   get key(): string {
-    return this.aa.key + 'bb'
+    return `${this.aa.key}bb`
   }
 
   public getConstructedTime(): number {
@@ -23,7 +25,7 @@ export const BBFactory: DependencyPair<BB> = [
   {
     useFactory: (aa: AA) => {
       return {
-        key: aa.key + 'bb2',
+        key: `${aa.key}bb2`,
       }
     },
     deps: [AA],
@@ -33,7 +35,7 @@ export const BBFactory: DependencyPair<BB> = [
 export const BBLoader: DependencyPair<any> = [
   'dead',
   {
-    useAsync: () => import('./async.dead').then((module) => module.A),
+    useAsync: () => import('./async.dead').then(module => module.A),
   },
 ]
 

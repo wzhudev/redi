@@ -1,48 +1,48 @@
 {
-    "configurations": [
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Vitest: Debug Current Test File",
-            "autoAttachChildProcesses": true,
-            "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/**",
-                "!${workspaceFolder}/node_modules/**",
-                //we do not need vite
-                "!${workspaceFolder}/@vite/**"
-            ],
-            "runtimeExecutable": "pnpx",
-            "runtimeArgs": [
-                "vitest",
-                "run",
-                "${relativeFile}",
-                // 因为我们只调试一个文件，禁用线程速度更快
-                "--threads",
-                "false"
-            ],
-            "timeout": 10000,
-            "smartStep": true,
-            "console": "integratedTerminal"
-        },
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Vitest: Debug Current Test File",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!${workspaceFolder}/node_modules/**",
+        // we do not need vite
+        "!${workspaceFolder}/@vite/**"
+      ],
+      "runtimeExecutable": "pnpx",
+      "runtimeArgs": [
+        "vitest",
+        "run",
+        "${relativeFile}",
+        // 因为我们只调试一个文件，禁用线程速度更快
+        "--threads",
+        "false"
+      ],
+      "timeout": 10000,
+      "smartStep": true,
+      "console": "integratedTerminal"
+    },
 
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Vitest: Debug Current Test File (Watch Mode)",
-            "autoAttachChildProcesses": true,
-            "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/**",
-                "!${workspaceFolder}/node_modules/**",
-                //we do not need vite
-                "!${workspaceFolder}/@vite/**"
-            ],
-            "runtimeExecutable": "pnpx",
-            "runtimeArgs": ["vitest", "${relativeFile}", "--threads", "false"],
-            "timeout": 10000,
-            "smartStep": true,
-            "console": "integratedTerminal"
-        }
-    ]
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Vitest: Debug Current Test File (Watch Mode)",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!${workspaceFolder}/node_modules/**",
+        // we do not need vite
+        "!${workspaceFolder}/@vite/**"
+      ],
+      "runtimeExecutable": "pnpx",
+      "runtimeArgs": ["vitest", "${relativeFile}", "--threads", "false"],
+      "timeout": 10000,
+      "smartStep": true,
+      "console": "integratedTerminal"
+    }
+  ]
 }

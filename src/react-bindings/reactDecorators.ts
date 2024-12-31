@@ -1,17 +1,19 @@
-import {
+import type {
   DependencyIdentifier,
-  Quantity,
   LookUp,
+} from '@wendellhu/redi'
+import type { IRediContext } from './reactContext'
+import {
+  Quantity,
   RediError,
 } from '@wendellhu/redi'
-import { IRediContext } from './reactContext'
 
 class ClassComponentNotInRediContextError<T> extends RediError {
   constructor(component: React.Component<T>) {
     super(
-      `You should make "RediContext" as ${component.constructor.name}'s default context type. ` +
-        'If you want to use multiple context, please check this on React doc site. ' +
-        'https://reactjs.org/docs/context.html#classcontexttype'
+      `You should make "RediContext" as ${component.constructor.name}'s default context type. `
+      + 'If you want to use multiple context, please check this on React doc site. '
+      + 'https://reactjs.org/docs/context.html#classcontexttype',
     )
   }
 }
@@ -19,7 +21,7 @@ class ClassComponentNotInRediContextError<T> extends RediError {
 export function WithDependency<T>(
   id: DependencyIdentifier<T>,
   quantity?: Quantity,
-  lookUp?: LookUp
+  lookUp?: LookUp,
 ): any {
   return function () {
     return {

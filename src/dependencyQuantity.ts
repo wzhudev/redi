@@ -1,10 +1,11 @@
+import type { DependencyIdentifier } from './dependencyIdentifier'
+import type { Ctor } from './dependencyItem'
 import {
   getDependencyByIndex,
   IdentifierUndefinedError,
   setDependency,
 } from './decorators'
-import { DependencyIdentifier } from './dependencyIdentifier'
-import { Ctor, prettyPrintIdentifier } from './dependencyItem'
+import { prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
 import { Quantity } from './types'
 
@@ -12,13 +13,13 @@ export class QuantityCheckError extends RediError {
   constructor(
     id: DependencyIdentifier<any>,
     public readonly quantity: Quantity,
-    public readonly actual: number
+    public readonly actual: number,
   ) {
     let msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
-      id
+      id,
     )}" but get ${actual}.`
 
-    if (actual == 0) {
+    if (actual === 0) {
       msg += ' Did you forget to register it?'
     }
 
@@ -33,11 +34,11 @@ export class QuantityCheckError extends RediError {
 export function checkQuantity(
   id: DependencyIdentifier<any>,
   quantity: Quantity,
-  length: number
+  length: number,
 ): void {
   if (
-    (quantity === Quantity.OPTIONAL && length > 1) ||
-    (quantity === Quantity.REQUIRED && length !== 1)
+    (quantity === Quantity.OPTIONAL && length > 1)
+    || (quantity === Quantity.REQUIRED && length !== 1)
   ) {
     throw new QuantityCheckError(id, quantity, length)
   }
@@ -46,7 +47,8 @@ export function checkQuantity(
 export function retrieveQuantity<T>(quantity: Quantity, arr: T[]): T[] | T {
   if (quantity === Quantity.MANY) {
     return arr
-  } else {
+  }
+  else {
     return arr[0]
   }
 }
@@ -61,7 +63,7 @@ function quantifyDecoratorFactoryProducer(quantity: Quantity) {
     // typescript would remove `this` after transpilation
     // this line just declare the type of `this`
     this: any,
-    id?: DependencyIdentifier<T>
+    id?: DependencyIdentifier<T>,
   ) {
     if (this instanceof decoratorFactory) {
       return this
@@ -70,7 +72,8 @@ function quantifyDecoratorFactoryProducer(quantity: Quantity) {
     return function (registerTarget: Ctor<T>, _key: string, index: number) {
       if (id) {
         setDependency(registerTarget, id, index, quantity)
-      } else {
+      }
+      else {
         if (quantity === Quantity.REQUIRED) {
           throw new IdentifierUndefinedError(registerTarget, index)
         }
@@ -86,7 +89,7 @@ interface ManyDecorator {
   new(): ManyDecorator
 }
 export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
-  Quantity.MANY
+  Quantity.MANY,
 )
 
 interface OptionalDecorator {
@@ -94,7 +97,7 @@ interface OptionalDecorator {
   new(): OptionalDecorator
 }
 export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
-  Quantity.OPTIONAL
+  Quantity.OPTIONAL,
 )
 
 interface InjectDecorator {
@@ -102,5 +105,5 @@ interface InjectDecorator {
   new(): InjectDecorator
 }
 export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(
-  Quantity.REQUIRED
+  Quantity.REQUIRED,
 )

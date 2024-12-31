@@ -2,14 +2,14 @@
   "name": "redi-site",
   "version": "0.0.0",
   "description": "",
+  "author": "Wenzhao Hu <wzhudev@gmail.com>",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "dev": "next",
     "start": "next start",
     "build": "next build"
   },
-  "author": "Wenzhao Hu <wzhudev@gmail.com>",
-  "license": "MIT",
   "dependencies": {
     "@vercel/analytics": "^1.2.2",
     "next": "^14.2.15",

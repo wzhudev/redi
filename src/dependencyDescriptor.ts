@@ -1,5 +1,5 @@
-import { DependencyIdentifier } from './dependencyIdentifier'
-import { FactoryDep, FactoryDepModifier } from './dependencyItem'
+import type { DependencyIdentifier } from './dependencyIdentifier'
+import type { FactoryDep, FactoryDepModifier } from './dependencyItem'
 import { Self, SkipSelf } from './dependencyLookUp'
 import { Many, Optional } from './dependencyQuantity'
 import { WithNew } from './dependencyWithNew'
@@ -30,7 +30,7 @@ export function normalizeFactoryDeps(
   }
 
   return deps.map((dep, index) => {
-    index += startIndex;
+    index += startIndex
 
     if (!Array.isArray(dep)) {
       return {
@@ -44,27 +44,32 @@ export function normalizeFactoryDeps(
     const modifiers = dep.slice(0, dep.length - 1) as FactoryDepModifier[]
     const identifier = dep[dep.length - 1] as DependencyIdentifier<any>
 
-    let lookUp: LookUp | undefined = undefined
+    let lookUp: LookUp | undefined
     let quantity = Quantity.REQUIRED
     let withNew = false
 
       ; (modifiers as FactoryDepModifier[]).forEach(
-        (modifier: FactoryDepModifier) => {
-          if (modifier instanceof Self) {
-            lookUp = LookUp.SELF
-          } else if (modifier instanceof SkipSelf) {
-            lookUp = LookUp.SKIP_SELF
-          } else if (modifier instanceof Optional) {
-            quantity = Quantity.OPTIONAL
-          } else if (modifier instanceof Many) {
-            quantity = Quantity.MANY
-          } else if (modifier instanceof WithNew) {
-            withNew = true
-          } else {
-            throw new RediError(`unknown dep modifier ${modifier}.`)
-          }
+      (modifier: FactoryDepModifier) => {
+        if (modifier instanceof Self) {
+          lookUp = LookUp.SELF
         }
-      )
+        else if (modifier instanceof SkipSelf) {
+          lookUp = LookUp.SKIP_SELF
+        }
+        else if (modifier instanceof Optional) {
+          quantity = Quantity.OPTIONAL
+        }
+        else if (modifier instanceof Many) {
+          quantity = Quantity.MANY
+        }
+        else if (modifier instanceof WithNew) {
+          withNew = true
+        }
+        else {
+          throw new RediError(`unknown dep modifier ${modifier}.`)
+        }
+      },
+    )
 
     return {
       paramIndex: index,

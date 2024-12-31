@@ -1,5 +1,5 @@
 export interface IDisposable {
-  dispose(): void
+  dispose: () => void
 }
 
 export function isDisposable(thing: unknown): thing is IDisposable {

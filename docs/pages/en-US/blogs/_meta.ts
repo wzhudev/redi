@@ -1,3 +1,3 @@
 export default {
-  "di": "Dependency Injection in Frontend"
+  di: 'Dependency Injection in Frontend',
 }

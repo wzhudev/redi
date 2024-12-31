@@ -1,4 +1,4 @@
-import nextra from 'nextra';
+import nextra from 'nextra'
 
 const withNextra = nextra({
   theme: 'nextra-theme-docs',
@@ -7,7 +7,7 @@ const withNextra = nextra({
 
 export default withNextra({
   i18n: {
-    locales: ["zh-CN", "en-US"],
-    defaultLocale: "en-US"
-  }
+    locales: ['zh-CN', 'en-US'],
+    defaultLocale: 'en-US',
+  },
 })

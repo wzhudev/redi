@@ -6,7 +6,7 @@ export class AA {
 
 export interface BB {
   key: string
-  getConstructedTime?(): number
+  getConstructedTime?: () => number
 }
 
 export const bbI = createIdentifier<BB>('bb')

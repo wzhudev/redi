@@ -13,15 +13,15 @@ A dependency library for TypeScript and JavaScript, along with a binding for Rea
 import { Inject } from '@wendellhu/redi'
 
 class AuthService {
-    public getCurrentUserInfo(): UserInfo {}
+  public getCurrentUserInfo(): UserInfo {}
 }
 
 class FileListService {
-    constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
-    public getUserFiles(): Promise<Files> {
-        const currentUser = this.authService.getCurrentUserInfo()
-    }
+  public getUserFiles(): Promise<Files> {
+    const currentUser = this.authService.getCurrentUserInfo()
+  }
 }
 
 const injector = new Injector([[AuthService], [FileListService]])
