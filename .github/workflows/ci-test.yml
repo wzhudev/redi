@@ -46,3 +46,7 @@ jobs:
 
       - name: 🩺 Run test
         run: pnpm run test
+
+      - name: 🌸 Run lint
+        run: pnpm run lint
+
