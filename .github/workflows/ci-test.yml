@@ -49,4 +49,3 @@ jobs:
 
       - name: 🌸 Run lint
         run: pnpm run lint
-
