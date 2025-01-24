@@ -12,7 +12,7 @@ import { Quantity } from './types'
 function mapQuantityToNumber(quantity: Quantity): string {
   switch (quantity) {
     case Quantity.OPTIONAL:
-      return '0'
+      return '0 or 1'
     case Quantity.REQUIRED:
       return '1'
     case Quantity.MANY:
