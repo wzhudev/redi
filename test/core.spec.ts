@@ -829,7 +829,7 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(B),
-        `[redi]: Expect "required" dependency items for id "aI" but get 2.`,
+        `[redi]: Expect 1 dependency item(s) for id "aI" but get 2.`,
       )
     })
   })
@@ -969,7 +969,7 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(A),
-        `[redi]: Expect "required" dependency items for id "A" but get 0. Did you forget to register it?`,
+        `[redi]: Expect 1 dependency item(s) for id "A" but get 0. Did you forget to register it?`,
       )
     })
   })
