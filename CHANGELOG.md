@@ -1,5 +1,12 @@
 
 
+## [0.17.1](https://github.com/wzhudev/redi/compare/v0.17.0...v0.17.1) (2025-01-24)
+
+
+### Features
+
+* map quantify to number ([#35](https://github.com/wzhudev/redi/issues/35)) ([1352b9a](https://github.com/wzhudev/redi/commit/1352b9afcdeb7a77d9ed374c674ae295f322138a))
+
 # [0.17.0](https://github.com/wzhudev/redi/compare/v0.16.2...v0.17.0) (2024-12-31)
 
 
