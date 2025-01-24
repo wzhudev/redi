@@ -9,13 +9,24 @@ import { prettyPrintIdentifier } from './dependencyItem'
 import { RediError } from './error'
 import { Quantity } from './types'
 
+function mapQuantityToNumber(quantity: Quantity): string {
+  switch (quantity) {
+    case Quantity.OPTIONAL:
+      return '0 or 1'
+    case Quantity.REQUIRED:
+      return '1'
+    case Quantity.MANY:
+      return '0 or more'
+  }
+}
+
 export class QuantityCheckError extends RediError {
   constructor(
     id: DependencyIdentifier<any>,
     public readonly quantity: Quantity,
     public readonly actual: number,
   ) {
-    let msg = `Expect "${quantity}" dependency items for id "${prettyPrintIdentifier(
+    let msg = `Expect ${mapQuantityToNumber(quantity)} dependency item(s) for id "${prettyPrintIdentifier(
       id,
     )}" but get ${actual}.`
 

@@ -9,7 +9,7 @@ importers:
   .:
     devDependencies:
       '@antfu/eslint-config':
-        specifier: 3.11.2
+        specifier: ^3.11.2
         version: 3.11.2(@typescript-eslint/utils@8.19.0(eslint@9.16.0)(typescript@5.3.3))(@vue/compiler-sfc@3.5.13)(eslint@9.16.0)(typescript@5.3.3)(vitest@1.5.0(@types/node@20.11.16)(jsdom@19.0.0))
       '@release-it/conventional-changelog':
         specifier: ^8.0.1
@@ -5474,7 +5474,7 @@ snapshots:
     dependencies:
       escape-string-regexp: 4.0.0
       eslint: 9.16.0
-      ignore: 5.3.1
+      ignore: 5.3.2
 
   '@eslint-community/eslint-utils@4.4.1(eslint@9.16.0)':
     dependencies:
@@ -6269,7 +6269,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.19.0
       eslint: 9.16.0
       graphemer: 1.4.0
-      ignore: 5.3.1
+      ignore: 5.3.2
       natural-compare: 1.4.0
       ts-api-utils: 1.4.3(typescript@5.3.3)
       typescript: 5.3.3
@@ -6314,7 +6314,7 @@ snapshots:
       fast-glob: 3.3.2
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.6.2
+      semver: 7.6.3
       ts-api-utils: 1.4.3(typescript@5.3.3)
       typescript: 5.3.3
     transitivePeerDependencies:
@@ -7394,12 +7394,12 @@ snapshots:
   eslint-compat-utils@0.5.1(eslint@9.16.0):
     dependencies:
       eslint: 9.16.0
-      semver: 7.6.2
+      semver: 7.6.3
 
   eslint-compat-utils@0.6.4(eslint@9.16.0):
     dependencies:
       eslint: 9.16.0
-      semver: 7.6.2
+      semver: 7.6.3
 
   eslint-config-flat-gitignore@0.3.0(eslint@9.16.0):
     dependencies:
@@ -8582,7 +8582,7 @@ snapshots:
       acorn: 8.14.0
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1
-      semver: 7.6.2
+      semver: 7.6.3
 
   jsonc-parser@3.2.1: {}
 
@@ -10865,7 +10865,7 @@ snapshots:
       espree: 9.6.1
       esquery: 1.6.0
       lodash: 4.17.21
-      semver: 7.6.2
+      semver: 7.6.3
     transitivePeerDependencies:
       - supports-color
 
@@ -11013,7 +11013,7 @@ snapshots:
   yargs@17.7.2:
     dependencies:
       cliui: 8.0.1
-      escalade: 3.1.2
+      escalade: 3.2.0
       get-caller-file: 2.0.5
       require-directory: 2.1.1
       string-width: 4.2.3
