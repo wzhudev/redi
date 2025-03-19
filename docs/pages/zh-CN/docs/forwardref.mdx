@@ -20,7 +20,7 @@ class Father extends Person {
 const parentInjector = new Injector([[Person], [Father, { useFactory: f => f, deps: [Person] }]])
 const injector = parentInjector.createChild([[Person]]);
 const person = injector.get(Person);
-expect(person.father).toBe(parentInjector.get(Person))
+expect(person.father).toBe(parentInjector.get(Person)); // true
 ```
 
 <Callout>
