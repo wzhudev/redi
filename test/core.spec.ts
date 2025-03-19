@@ -1286,4 +1286,23 @@ describe('core', () => {
       expect(disposed2).toBe(false)
     })
   })
+
+  describe('docs cases', () => {
+    it('person Father', () => {
+      class Person {
+        constructor(
+          @SkipSelf() @Optional(forwardRef(() => Father)) readonly father: Father,
+        ) { }
+      }
+
+      class Father extends Person {
+        changeDiaper(): void { }
+      }
+
+      const parentInjector = new Injector([[Person], [Father, { useFactory: f => f, deps: [Person] }]])
+      const injector = parentInjector.createChild([[Person]])
+      const person = injector.get(Person)
+      expect(person.father).toBe(parentInjector.get(Person))
+    })
+  })
 })

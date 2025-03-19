@@ -4,22 +4,23 @@ import { Callout } from "nextra/components";
 
 在下面的例子当中 `Person` 先于 `Father` 声明，但是又依赖于 `Father`，这种情况下，你需要使用 `forwardRef` 来封装一次 `Father`，否则 redi 在记录依赖关系时， `Father` 的值会是 `undefined`。如果这种情况确实发生了，redi 会报错。
 
-```ts highlight=5,7
-import { Self, SkipSelf } from "@wendellhu/redi";
+```ts highlight=5
+import { Self, SkipSelf, Optional } from "@wendellhu/redi";
 
 class Person {
   constructor(
-    @Self() @Inject(forwardRef(() => Father)) private readonly father: Father,
-    @SkipSelf()
-    @Inject(forwardRef(() => Father))
-    private readonly grandfather: Father,
-  ) {}
+    @SkipSelf() @Optional(forwardRef(() => Father)) readonly father: Father,
+  ) { }
 }
 
-class Man extends Person {}
-class Father extends Man {
-  changeDiaper(): void {}
+class Father extends Person {
+  changeDiaper(): void { }
 }
+
+const parentInjector = new Injector([[Person], [Father, { useFactory: f => f, deps: [Person] }]])
+const injector = parentInjector.createChild([[Person]]);
+const person = injector.get(Person);
+expect(person.father).toBe(parentInjector.get(Person))
 ```
 
 <Callout>
