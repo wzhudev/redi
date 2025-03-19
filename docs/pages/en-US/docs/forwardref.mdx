@@ -4,22 +4,23 @@ import { Callout } from "nextra/components";
 
 In the following example, `Person` is defined before `Father` but relies on `Father`. In this case, you should use `forwardRef` to wrap `Father`. Otherwise redi would receive `undefined` when tries to figure out dependencies of `Person` (and it would throw an error in that case).
 
-```ts highlight=5,7
-import { Self, SkipSelf } from "@wendellhu/redi";
+```ts highlight=5
+import { Self, SkipSelf, Optional } from "@wendellhu/redi";
 
 class Person {
   constructor(
-    @Self() @Inject(forwardRef(() => Father)) private readonly father: Father,
-    @SkipSelf()
-    @Inject(forwardRef(() => Father))
-    private readonly grandfather: Father,
-  ) {}
+    @SkipSelf() @Optional(forwardRef(() => Father)) readonly father: Father,
+  ) { }
 }
 
-class Man extends Person {}
-class Father extends Man {
-  changeDiaper(): void {}
+class Father extends Person {
+  changeDiaper(): void { }
 }
+
+const parentInjector = new Injector([[Person], [Father, { useFactory: f => f, deps: [Person] }]])
+const injector = parentInjector.createChild([[Person]]);
+const person = injector.get(Person);
+expect(person.father).toBe(parentInjector.get(Person)); // true
 ```
 
 <Callout>
