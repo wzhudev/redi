@@ -1,5 +1,17 @@
 
 
+# [0.18.0](https://github.com/wzhudev/redi/compare/v0.17.1...v0.18.0) (2025-04-24)
+
+
+### Bug Fixes
+
+* fix official website example ([cf3f0dd](https://github.com/wzhudev/redi/commit/cf3f0dd25faf31143846562e46352e8be421e88a))
+
+
+### Features
+
+* return cached identifier instead of error ([#36](https://github.com/wzhudev/redi/issues/36)) ([cbe80d5](https://github.com/wzhudev/redi/commit/cbe80d523c3d4426df9fcbace9f782669565beb1))
+
 ## [0.17.1](https://github.com/wzhudev/redi/compare/v0.17.0...v0.17.1) (2025-01-24)
 
 
