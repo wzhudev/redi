@@ -9,9 +9,8 @@ export interface IdentifierDecorator<T> {
   // call signature of an decorator
   (...args: any[]): void
 
-  /**
-   * beautify console
-   */
+  decoratorName: string
+
   toString: () => string
 
   type: T

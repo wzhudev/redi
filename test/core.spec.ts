@@ -23,7 +23,6 @@ import {
 } from '@wendellhu/redi'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
 import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators'
 import { AA, bbI } from './async/async.base'
 import { expectToThrow } from './util/expectToThrow'
@@ -1261,13 +1260,9 @@ describe('core', () => {
     })
   })
 
-  it('should throw error when identifier has been declared before', () => {
-    createIdentifier('a')
-
-    expectToThrow(
-      () => createIdentifier('a'),
-      '[redi]: Identifier "a" already exists.',
-    )
+  it('should return the cached decorator with the same name', () => {
+    const decorator = createIdentifier('a')
+    expect(createIdentifier('a')).toBe(decorator)
   })
 
   describe('test "onDispose" callback', () => {
