@@ -27,8 +27,7 @@ class DependencyDescriptorNotFoundError extends RediError {
 
 export class IdentifierUndefinedError extends RediError {
   constructor(target: Ctor<any>, index: number) {
-    const msg = `It seems that you register "undefined" as dependency on the ${
-      index + 1
+    const msg = `It seems that you register "undefined" as dependency on the ${index + 1
     } parameter of "${prettyPrintIdentifier(
       target,
     )}". Please make sure that there is not cyclic dependency among your TypeScript files, or consider using "forwardRef". For more info please visit our website https://redi.wendell.fun/docs/debug#could-not-find-dependency-registered-on`
@@ -102,6 +101,7 @@ export function setDependency<T, U>(
 }
 
 const knownIdentifiers = new Set<string>()
+const cachedIdentifiers = new Map<string, IdentifierDecorator<any>>()
 
 /**
  * Create a dependency identifier
@@ -111,22 +111,22 @@ const knownIdentifiers = new Set<string>()
  */
 export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
   if (knownIdentifiers.has(id)) {
-    throw new RediError(`Identifier "${id}" already exists.`)
-  }
-  else {
-    knownIdentifiers.add(id)
+    console.error(`Identifier "${id}" already exists. Returning the cached identifier decorator.`)
+    return cachedIdentifiers.get(id)!
   }
 
   const decorator = (<any>(
     function (registerTarget: Ctor<T>, _key: string, index: number): void {
       setDependency(registerTarget, decorator, index)
     }
-  )) as IdentifierDecorator<T> // decorator as an identifier
+  )) as IdentifierDecorator<T>
 
-  // TODO: @wzhudev should assign a name to the function so it would be easy to debug in inspect tools
-  // decorator.name = `[redi]: ${id}`;
-  decorator.toString = () => id
+  decorator.decoratorName = id
+  decorator.toString = () => decorator.decoratorName
   decorator[IdentifierDecoratorSymbol] = true
+
+  knownIdentifiers.add(id)
+  cachedIdentifiers.set(id, decorator)
 
   return decorator
 }
@@ -137,4 +137,5 @@ export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
 /* istanbul ignore next */
 export function TEST_ONLY_clearKnownIdentifiers(): void {
   knownIdentifiers.clear()
+  cachedIdentifiers.clear()
 }
