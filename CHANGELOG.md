@@ -1,5 +1,12 @@
 
 
+## [0.18.1](https://github.com/wzhudev/redi/compare/v0.18.0...v0.18.1) (2025-04-27)
+
+
+### Bug Fixes
+
+* fix useObservable function overload ([#37](https://github.com/wzhudev/redi/issues/37)) ([73892b4](https://github.com/wzhudev/redi/commit/73892b4768bfe1c24348735a6c66e69dafb1e700))
+
 # [0.18.0](https://github.com/wzhudev/redi/compare/v0.17.1...v0.18.0) (2025-04-24)
 
 
