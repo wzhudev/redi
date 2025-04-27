@@ -145,12 +145,12 @@ describe('test legacy rxjs utils', () => {
   })
 
   it('should not trigger unnecessary re-render with useDependencyContext', async () => {
+    let parentRenderCount = 0
     let childRenderCount = 0
 
     class CounterService {
       counter$ = interval(100).pipe(
-        startWith(0),
-        scan(acc => acc + 1),
+        scan(acc => acc === undefined ? 0 : acc + 1),
       )
     }
 
@@ -168,6 +168,8 @@ describe('test legacy rxjs utils', () => {
     function Parent() {
       const counter$ = useCounter$()
       const { Provider: CounterProvider } = useDependencyContext(counter$, 0)
+
+      parentRenderCount += 1
 
       return (
         <CounterProvider>
@@ -187,12 +189,15 @@ describe('test legacy rxjs utils', () => {
 
     const { container } = render(<App />)
     expect(container.firstChild!.textContent).toBe('0')
+    expect(parentRenderCount).toBe(1)
     expect(childRenderCount).toBe(1)
 
     await act(
       () => new Promise<undefined>(res => setTimeout(() => res(void 0), 360)),
     )
+
     expect(childRenderCount).toBe(2)
+    expect(parentRenderCount).toBe(2)
   })
 
   it('should raise error when no ancestor subscribe an observable value', async () => {
