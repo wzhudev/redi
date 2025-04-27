@@ -977,7 +977,7 @@ describe('core', () => {
     it('should throw Error when forwardRef is not used', () => {
       expectToThrow(() => {
         class A {
-          // Intented to throw error.
+          // Intended to throw error.
           // eslint-disable-next-line ts/no-use-before-define
           constructor(@Inject(B) private b: B) { }
 

@@ -57,8 +57,9 @@ function unwrap<T>(o: ObservableOrFn<T>): Observable<T> {
   return o
 }
 
-export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>): T | undefined
+export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>): T
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: T): T
+export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: T | undefined): T | undefined
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: undefined, shouldHaveSyncValue: true, deps?: any[]): T
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue?: undefined, shouldHaveSyncValue?: true, deps?: any[]): T | undefined
 /**
@@ -70,7 +71,12 @@ export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaul
  * @param deps A dependency array to decide if we should re-subscribe when the `observable` is a function.
  * @returns Value or null.
  */
-export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue?: undefined, shouldHaveSyncValue?: true, deps?: any[]): T | undefined {
+export function useObservable<T>(
+  observable: Nullable<ObservableOrFn<T>>,
+  defaultValue?: undefined,
+  shouldHaveSyncValue?: true,
+  deps?: any[],
+): T | undefined {
   if (typeof observable === 'function' && !deps) {
     throw new RediError('Expected deps to be provided when observable is a function!')
   }
@@ -78,7 +84,10 @@ export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaul
   const observableRef = useRef<Observable<T> | null>(null)
   const initializedRef = useRef<boolean>(false)
 
-  const destObservable = useMemo(() => observable, [...(typeof deps !== 'undefined' ? deps : [observable])])
+  const destObservable = useMemo(
+    () => observable,
+    [...(typeof deps !== 'undefined' ? deps : [observable])],
+  )
 
   // This state is only for trigger React to re-render. We do not use `setValue` directly because it may cause
   // memory leaking.
@@ -146,10 +155,8 @@ export function useDependencyContext<T>(
     value: T | undefined
   } {
   const depRef = useRef<Observable<T> | undefined>(undefined)
-  const value = useDependencyValue(depValue$, defaultValue)
-  const Context = useMemo(() => {
-    return createContext<T | undefined>(value)
-  }, [depValue$])
+  const value = useObservable(depValue$, defaultValue)
+  const Context = useMemo(() => createContext<T | undefined>(value), [depValue$])
   const Provider = useCallback(
     (props: { initialState?: T, children: ReactNode }) => {
       return <Context.Provider value={value}>{props.children}</Context.Provider>
