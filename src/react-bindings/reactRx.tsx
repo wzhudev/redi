@@ -59,8 +59,6 @@ function unwrap<T>(o: ObservableOrFn<T>): Observable<T> {
 
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>): T
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: T): T
-export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: T | undefined): T | undefined
-export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: T, shouldHaveSyncValue: true, deps?: any[]): T
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: undefined, shouldHaveSyncValue: true, deps?: any[]): T
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue?: undefined, shouldHaveSyncValue?: true, deps?: any[]): T | undefined
 /**
