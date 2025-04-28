@@ -1,5 +1,12 @@
 
 
+## [0.18.2](https://github.com/wzhudev/redi/compare/v0.18.1...v0.18.2) (2025-04-28)
+
+
+### Bug Fixes
+
+* fix redi type error ([816a3f9](https://github.com/wzhudev/redi/commit/816a3f96449d9d19a9a33ef55d78d259da6cc77a))
+
 ## [0.18.1](https://github.com/wzhudev/redi/compare/v0.18.0...v0.18.1) (2025-04-27)
 
 
