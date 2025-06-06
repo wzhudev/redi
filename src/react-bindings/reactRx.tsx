@@ -1,5 +1,6 @@
 import type {
   Context,
+  JSX,
   ReactNode,
 } from 'react'
 import type { Observable, Subscription } from 'rxjs'
