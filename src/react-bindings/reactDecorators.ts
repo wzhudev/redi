@@ -1,20 +1,14 @@
-import type {
-  DependencyIdentifier,
-  LookUp,
-} from '@wendellhu/redi'
-import type { IRediContext } from './reactContext'
-import {
-  Quantity,
-  RediError,
-} from '@wendellhu/redi'
+import type { DependencyIdentifier, LookUp } from '@wendellhu/redi';
+import type { IRediContext } from './reactContext';
+import { Quantity, RediError } from '@wendellhu/redi';
 
 class ClassComponentNotInRediContextError<T> extends RediError {
   constructor(component: React.Component<T>) {
     super(
-      `You should make "RediContext" as ${component.constructor.name}'s default context type. `
-      + 'If you want to use multiple context, please check this on React doc site. '
-      + 'https://reactjs.org/docs/context.html#classcontexttype',
-    )
+      `You should make "RediContext" as ${component.constructor.name}'s default context type. ` +
+      'If you want to use multiple context, please check this on React doc site. ' +
+      'https://reactjs.org/docs/context.html#classcontexttype',
+    );
   }
 }
 
@@ -26,18 +20,18 @@ export function WithDependency<T>(
   return function () {
     return {
       get(): T | T[] | null {
-        const thisComponent: React.Component<T> = this as any
+        const thisComponent: React.Component<T> = this as any;
 
-        const context = thisComponent.context as IRediContext | null
+        const context = thisComponent.context as IRediContext | null;
         if (!context || !context.injector) {
-          throw new ClassComponentNotInRediContextError(thisComponent)
+          throw new ClassComponentNotInRediContextError(thisComponent);
         }
 
-        const injector = context.injector
-        const thing = injector.get(id, quantity || Quantity.REQUIRED, lookUp)
+        const injector = context.injector;
+        const thing = injector.get(id, quantity || Quantity.REQUIRED, lookUp);
 
-        return thing
+        return thing;
       },
-    }
-  }
+    };
+  };
 }

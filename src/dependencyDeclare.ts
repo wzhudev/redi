@@ -1,6 +1,6 @@
-import type { Ctor, FactoryDep } from './dependencyItem'
-import { setDependency } from './decorators'
-import { normalizeFactoryDeps } from './dependencyDescriptor'
+import type { Ctor, FactoryDep } from './dependencyItem';
+import { setDependency } from './decorators';
+import { normalizeFactoryDeps } from './dependencyDescriptor';
 
 /**
  * Register dependencies on a class.
@@ -15,7 +15,7 @@ export function setDependencies<U>(
   deps: FactoryDep<any>[],
   startIndex = 0,
 ): void {
-  const normalizedDescriptors = normalizeFactoryDeps(deps, startIndex)
+  const normalizedDescriptors = normalizeFactoryDeps(deps, startIndex);
   normalizedDescriptors.forEach((descriptor) => {
     setDependency(
       registerTarget,
@@ -23,6 +23,6 @@ export function setDependencies<U>(
       descriptor.paramIndex,
       descriptor.quantity,
       descriptor.lookUp,
-    )
-  })
+    );
+  });
 }

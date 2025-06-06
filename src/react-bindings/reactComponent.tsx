@@ -1,42 +1,41 @@
-import type { Dependency } from '@wendellhu/redi'
-import { Injector } from '@wendellhu/redi'
-import * as React from 'react'
+import type { Dependency } from '@wendellhu/redi';
+import { Injector } from '@wendellhu/redi';
+import * as React from 'react';
 
-import { RediConsumer, RediProvider } from './reactContext'
+import { RediConsumer, RediProvider } from './reactContext';
 
 function RediInjector(
   props: React.PropsWithChildren<{ dependencies: Dependency[] }>,
 ) {
-  const { children, dependencies } = props
-  const childInjectorRef = React.useRef<Injector | null>(null)
+  const { children, dependencies } = props;
+  const childInjectorRef = React.useRef<Injector | null>(null);
 
   // dispose the injector when the container Injector unmounts
-  React.useEffect(() => () => childInjectorRef.current?.dispose(), [])
+  React.useEffect(() => () => childInjectorRef.current?.dispose(), []);
 
   return (
     <RediConsumer>
       {(context: { injector: Injector | null }) => {
-        let childInjector: Injector
+        let childInjector: Injector;
 
         if (childInjectorRef.current) {
-          childInjector = childInjectorRef.current
-        }
-        else {
+          childInjector = childInjectorRef.current;
+        } else {
           childInjector = context.injector
             ? context.injector.createChild(dependencies)
-            : new Injector(dependencies)
+            : new Injector(dependencies);
 
-          childInjectorRef.current = childInjector
+          childInjectorRef.current = childInjector;
         }
 
         return (
           <RediProvider value={{ injector: childInjector }}>
             {children}
           </RediProvider>
-        )
+        );
       }}
     </RediConsumer>
-  )
+  );
 }
 
 /**
@@ -53,8 +52,8 @@ export function connectInjector<P>(
       <RediProvider value={{ injector }}>
         <Comp {...(props as P & React.JSX.IntrinsicAttributes)} />
       </RediProvider>
-    )
-  }
+    );
+  };
 }
 
 export function connectDependencies<P>(
@@ -66,6 +65,6 @@ export function connectDependencies<P>(
       <RediInjector dependencies={dependencies}>
         <Comp {...(props as P & React.JSX.IntrinsicAttributes)} />
       </RediInjector>
-    )
-  }
+    );
+  };
 }

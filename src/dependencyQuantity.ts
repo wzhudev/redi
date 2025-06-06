@@ -1,22 +1,22 @@
-import type { DependencyIdentifier } from './dependencyIdentifier'
-import type { Ctor } from './dependencyItem'
+import type { DependencyIdentifier } from './dependencyIdentifier';
+import type { Ctor } from './dependencyItem';
 import {
   getDependencyByIndex,
   IdentifierUndefinedError,
   setDependency,
-} from './decorators'
-import { prettyPrintIdentifier } from './dependencyItem'
-import { RediError } from './error'
-import { Quantity } from './types'
+} from './decorators';
+import { prettyPrintIdentifier } from './dependencyItem';
+import { RediError } from './error';
+import { Quantity } from './types';
 
 function mapQuantityToNumber(quantity: Quantity): string {
   switch (quantity) {
     case Quantity.OPTIONAL:
-      return '0 or 1'
+      return '0 or 1';
     case Quantity.REQUIRED:
-      return '1'
+      return '1';
     case Quantity.MANY:
-      return '0 or more'
+      return '0 or more';
   }
 }
 
@@ -28,17 +28,17 @@ export class QuantityCheckError extends RediError {
   ) {
     let msg = `Expect ${mapQuantityToNumber(quantity)} dependency item(s) for id "${prettyPrintIdentifier(
       id,
-    )}" but get ${actual}.`
+    )}" but get ${actual}.`;
 
     if (actual === 0) {
-      msg += ' Did you forget to register it?'
+      msg += ' Did you forget to register it?';
     }
 
     if (actual > 1) {
-      msg += ' You register it more than once.'
+      msg += ' You register it more than once.';
     }
 
-    super(msg)
+    super(msg);
   }
 }
 
@@ -48,25 +48,24 @@ export function checkQuantity(
   length: number,
 ): void {
   if (
-    (quantity === Quantity.OPTIONAL && length > 1)
-    || (quantity === Quantity.REQUIRED && length !== 1)
+    (quantity === Quantity.OPTIONAL && length > 1) ||
+    (quantity === Quantity.REQUIRED && length !== 1)
   ) {
-    throw new QuantityCheckError(id, quantity, length)
+    throw new QuantityCheckError(id, quantity, length);
   }
 }
 
 export function retrieveQuantity<T>(quantity: Quantity, arr: T[]): T[] | T {
   if (quantity === Quantity.MANY) {
-    return arr
-  }
-  else {
-    return arr[0]
+    return arr;
+  } else {
+    return arr[0];
   }
 }
 
 function changeQuantity(target: Ctor<any>, index: number, quantity: Quantity) {
-  const descriptor = getDependencyByIndex(target, index)
-  descriptor.quantity = quantity
+  const descriptor = getDependencyByIndex(target, index);
+  descriptor.quantity = quantity;
 }
 
 function quantifyDecoratorFactoryProducer(quantity: Quantity) {
@@ -77,44 +76,43 @@ function quantifyDecoratorFactoryProducer(quantity: Quantity) {
     id?: DependencyIdentifier<T>,
   ) {
     if (this instanceof decoratorFactory) {
-      return this
+      return this;
     }
 
     return function (registerTarget: Ctor<T>, _key: string, index: number) {
       if (id) {
-        setDependency(registerTarget, id, index, quantity)
-      }
-      else {
+        setDependency(registerTarget, id, index, quantity);
+      } else {
         if (quantity === Quantity.REQUIRED) {
-          throw new IdentifierUndefinedError(registerTarget, index)
+          throw new IdentifierUndefinedError(registerTarget, index);
         }
 
-        changeQuantity(registerTarget, index, quantity)
+        changeQuantity(registerTarget, index, quantity);
       }
-    }
-  } as any
+    };
+  } as any;
 }
 
 interface ManyDecorator {
-  (id?: DependencyIdentifier<any>): any
-  new(): ManyDecorator
+  (id?: DependencyIdentifier<any>): any;
+  new (): ManyDecorator;
 }
 export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
   Quantity.MANY,
-)
+);
 
 interface OptionalDecorator {
-  (id?: DependencyIdentifier<any>): any
-  new(): OptionalDecorator
+  (id?: DependencyIdentifier<any>): any;
+  new (): OptionalDecorator;
 }
 export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
   Quantity.OPTIONAL,
-)
+);
 
 interface InjectDecorator {
-  (id: DependencyIdentifier<any>): any
-  new(): InjectDecorator
+  (id: DependencyIdentifier<any>): any;
+  new (): InjectDecorator;
 }
 export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(
   Quantity.REQUIRED,
-)
+);

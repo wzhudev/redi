@@ -1,24 +1,24 @@
-import type { DependencyIdentifier } from './dependencyIdentifier'
-import type { FactoryDep, FactoryDepModifier } from './dependencyItem'
-import { Self, SkipSelf } from './dependencyLookUp'
-import { Many, Optional } from './dependencyQuantity'
-import { WithNew } from './dependencyWithNew'
-import { RediError } from './error'
-import { LookUp, Quantity } from './types'
+import type { DependencyIdentifier } from './dependencyIdentifier';
+import type { FactoryDep, FactoryDepModifier } from './dependencyItem';
+import { Self, SkipSelf } from './dependencyLookUp';
+import { Many, Optional } from './dependencyQuantity';
+import { WithNew } from './dependencyWithNew';
+import { RediError } from './error';
+import { LookUp, Quantity } from './types';
 
 export interface DependencyDescriptor<T> {
-  paramIndex: number
-  identifier: DependencyIdentifier<T>
-  quantity: Quantity
-  lookUp?: LookUp
-  withNew: boolean
+  paramIndex: number;
+  identifier: DependencyIdentifier<T>;
+  quantity: Quantity;
+  lookUp?: LookUp;
+  withNew: boolean;
 }
 
 /**
  * describes dependencies of a IDependencyItem
  */
 export interface Dependencies {
-  dependencies: DependencyDescriptor<any>[]
+  dependencies: DependencyDescriptor<any>[];
 }
 
 export function normalizeFactoryDeps(
@@ -26,11 +26,11 @@ export function normalizeFactoryDeps(
   startIndex = 0,
 ): DependencyDescriptor<any>[] {
   if (!deps) {
-    return []
+    return [];
   }
 
   return deps.map((dep, index) => {
-    index += startIndex
+    index += startIndex;
 
     if (!Array.isArray(dep)) {
       return {
@@ -38,38 +38,33 @@ export function normalizeFactoryDeps(
         identifier: dep,
         quantity: Quantity.REQUIRED,
         withNew: false,
-      }
+      };
     }
 
-    const modifiers = dep.slice(0, dep.length - 1) as FactoryDepModifier[]
-    const identifier = dep[dep.length - 1] as DependencyIdentifier<any>
+    const modifiers = dep.slice(0, dep.length - 1) as FactoryDepModifier[];
+    const identifier = dep[dep.length - 1] as DependencyIdentifier<any>;
 
-    let lookUp: LookUp | undefined
-    let quantity = Quantity.REQUIRED
-    let withNew = false
+    let lookUp: LookUp | undefined;
+    let quantity = Quantity.REQUIRED;
+    let withNew = false;
 
-      ; (modifiers as FactoryDepModifier[]).forEach(
+    (modifiers as FactoryDepModifier[]).forEach(
       (modifier: FactoryDepModifier) => {
         if (modifier instanceof Self) {
-          lookUp = LookUp.SELF
-        }
-        else if (modifier instanceof SkipSelf) {
-          lookUp = LookUp.SKIP_SELF
-        }
-        else if (modifier instanceof Optional) {
-          quantity = Quantity.OPTIONAL
-        }
-        else if (modifier instanceof Many) {
-          quantity = Quantity.MANY
-        }
-        else if (modifier instanceof WithNew) {
-          withNew = true
-        }
-        else {
-          throw new RediError(`unknown dep modifier ${modifier}.`)
+          lookUp = LookUp.SELF;
+        } else if (modifier instanceof SkipSelf) {
+          lookUp = LookUp.SKIP_SELF;
+        } else if (modifier instanceof Optional) {
+          quantity = Quantity.OPTIONAL;
+        } else if (modifier instanceof Many) {
+          quantity = Quantity.MANY;
+        } else if (modifier instanceof WithNew) {
+          withNew = true;
+        } else {
+          throw new RediError(`unknown dep modifier ${modifier}.`);
         }
       },
-    )
+    );
 
     return {
       paramIndex: index,
@@ -77,6 +72,6 @@ export function normalizeFactoryDeps(
       quantity,
       lookUp,
       withNew,
-    }
-  })
+    };
+  });
 }
