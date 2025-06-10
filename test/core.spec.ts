@@ -1299,7 +1299,7 @@ describe('core', () => {
   });
 
   describe('docs cases', () => {
-    it('person Father', () => {
+    it('person father cases', () => {
       class Person {
         constructor(
           @SkipSelf()
