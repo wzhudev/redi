@@ -10,7 +10,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-
 import { BehaviorSubject } from 'rxjs';
 
 /**

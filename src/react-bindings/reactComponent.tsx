@@ -1,17 +1,16 @@
 import type { Dependency } from '@wendellhu/redi';
 import { Injector } from '@wendellhu/redi';
-import * as React from 'react';
-
+import React, { useEffect, useRef } from 'react';
 import { RediConsumer, RediProvider } from './reactContext';
 
 function RediInjector(
   props: React.PropsWithChildren<{ dependencies: Dependency[] }>,
 ) {
   const { children, dependencies } = props;
-  const childInjectorRef = React.useRef<Injector | null>(null);
+  const childInjectorRef = useRef<Injector | null>(null);
 
   // dispose the injector when the container Injector unmounts
-  React.useEffect(() => () => childInjectorRef.current?.dispose(), []);
+  useEffect(() => () => childInjectorRef.current?.dispose(), []);
 
   return (
     <RediConsumer>

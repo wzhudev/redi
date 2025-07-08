@@ -5,8 +5,7 @@ import type {
   Quantity,
 } from '@wendellhu/redi';
 import { RediError } from '@wendellhu/redi';
-import * as React from 'react';
-
+import { useContext, useMemo } from 'react';
 import { RediContext } from './reactContext';
 
 class HooksNotInRediContextError extends RediError {
@@ -16,7 +15,7 @@ class HooksNotInRediContextError extends RediError {
 }
 
 export function useInjector(): Injector {
-  const injectionContext = React.useContext(RediContext);
+  const injectionContext = useContext(RediContext);
   if (!injectionContext.injector) {
     throw new HooksNotInRediContextError();
   }
@@ -59,7 +58,7 @@ export function useDependency<T>(
   lookUp?: LookUp,
 ): T | T[] | null {
   const injector = useInjector();
-  return React.useMemo(
+  return useMemo(
     () => injector.get<T>(id, quantityOrLookUp, lookUp),
     [id, quantityOrLookUp, lookUp],
   );

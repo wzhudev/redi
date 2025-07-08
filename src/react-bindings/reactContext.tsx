@@ -1,7 +1,7 @@
 /* eslint-disable node/prefer-global/process */
 
 import type { Injector } from '@wendellhu/redi';
-import * as React from 'react';
+import { createContext } from 'react';
 
 const __REDI_CONTEXT_LOCK__ = 'REDI_CONTEXT_LOCK';
 const isNode =
@@ -27,7 +27,7 @@ export interface IRediContext {
   injector: Injector | null;
 }
 
-export const RediContext = React.createContext<IRediContext>({
+export const RediContext = createContext<IRediContext>({
   injector: null,
 });
 RediContext.displayName = 'RediContext';

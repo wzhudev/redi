@@ -2,26 +2,12 @@
   "compilerOptions": {
     "target": "es5",
     "jsx": "react",
-    "lib": [
-      "esnext",
-      "dom"
-    ],
+    "lib": ["esnext", "dom"],
     "isolatedModules": true,
     "experimentalDecorators": true,
     "baseUrl": "./",
     "module": "esnext",
     "moduleResolution": "node",
-    "paths": {
-      "@wendellhu/redi": [
-        "./src/index.ts"
-      ],
-      "@wendellhu/redi/react-bindings": [
-        "./src/react-bindings/index.ts"
-      ]
-    },
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
     "strict": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
@@ -33,11 +19,12 @@
     "noUnusedParameters": true,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "esm",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@wendellhu/redi": ["src/index.ts"],
+      "@wendellhu/redi/*": ["src/*"]
+    }
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }

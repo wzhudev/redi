@@ -1,11 +1,11 @@
 {
   "name": "@wendellhu/redi",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "author": "Evan<wzhudev@gmail.com>",
   "license": "MIT",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "CHANGELOG.md",
@@ -13,14 +13,14 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js"
     },
     "./react-bindings": {
-      "types": "./dist/react-bindings/index.d.ts",
-      "import": "./dist/react-bindings/index.mjs",
-      "require": "./dist/react-bindings/index.js"
+      "types": "./dist/esm/react-bindings/index.d.ts",
+      "import": "./dist/esm/react-bindings/index.mjs",
+      "require": "./dist/cjs/react-bindings/index.js"
     },
     "./package.json": "./package.json"
   },
