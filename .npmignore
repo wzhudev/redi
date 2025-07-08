@@ -32,6 +32,3 @@ node_modules/
 *.temp
 coverage/
 .nyc_output/
-
-# Development documentation
-CHANGELOG.md
