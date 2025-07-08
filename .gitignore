@@ -1,9 +1,11 @@
 .DS_Store
 
+.husky/
+
 # test
 coverage/
 
 # node.js
 node_modules
 
-publish/
+dist/
