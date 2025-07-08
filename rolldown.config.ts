@@ -21,7 +21,7 @@ export default defineConfig([
   },
   {
     input: 'src/react-bindings/index.ts',
-    external: ['@wendellhu/redi'],
+    external: ['@wendellhu/redi', 'react', 'react/jsx-runtime'],
     output: {
       format: 'esm',
       dir: 'dist/react-bindings',
@@ -31,7 +31,7 @@ export default defineConfig([
   },
   {
     input: 'src/react-bindings/index.ts',
-    external: ['@wendellhu/redi'],
+    external: ['@wendellhu/redi', 'react', 'react/jsx-runtime'],
     output: {
       file: 'dist/react-bindings/index.js',
       format: 'cjs',
