@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.19.1](https://github.com/wzhudev/redi/compare/v0.19.0...v0.19.1) (2025-07-08)
+
+### Features
+
+- 0.19.1 ([e1ef3e0](https://github.com/wzhudev/redi/commit/e1ef3e0ca4a09d163e52591d986b012f80111ef6))
+
 # [0.19.0](https://github.com/wzhudev/redi/compare/v0.18.3...v0.19.0) (2025-07-08)
 
 ### Bug Fixes
