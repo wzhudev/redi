@@ -12,18 +12,11 @@
         "!${workspaceFolder}/@vite/**"
       ],
       "runtimeExecutable": "pnpx",
-      "runtimeArgs": [
-        "vitest",
-        "run",
-        "${relativeFile}",
-        "--threads",
-        "false"
-      ],
+      "runtimeArgs": ["vitest", "run", "${relativeFile}", "--threads", "false"],
       "timeout": 10000,
       "smartStep": true,
       "console": "integratedTerminal"
     },
-
     {
       "type": "node",
       "request": "launch",

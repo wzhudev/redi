@@ -1,3 +1,34 @@
+# Development and CI files
+.github/
 .vscode/
-doc/
+.husky/
+.editorconfig
+.prettierrc
+.nvmrc
+.release-it.json
+.gitignore
+
+# Source code (only dist/ should be published)
+src/
 test/
+docs/
+
+# Build and config files
+rolldown.config.ts
+tsconfig.json
+eslint.config.mjs
+vite.config.mts
+mise.toml
+
+# Workspace and dependency files
+pnpm-workspace.yaml
+pnpm-lock.yaml
+node_modules/
+
+# Temporary and cache files
+*.log
+.DS_Store
+*.tmp
+*.temp
+coverage/
+.nyc_output/

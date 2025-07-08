@@ -1,35 +1,35 @@
 /* eslint-disable node/prefer-global/process */
 
 export { createIdentifier } from './decorators';
-export { Dependency, DependencyPair } from './dependencyCollection';
+export type { Dependency, DependencyPair } from './dependencyCollection';
 export { setDependencies } from './dependencyDeclare';
 export { forwardRef } from './dependencyForwardRef';
 export {
-  DependencyIdentifier,
-  IdentifierDecorator,
+  type DependencyIdentifier,
+  type IdentifierDecorator,
 } from './dependencyIdentifier';
 export {
-  AsyncDependencyItem,
-  AsyncHook,
-  ClassDependencyItem,
-  Ctor,
-  DependencyItem,
-  FactoryDependencyItem,
+  type AsyncDependencyItem,
+  type AsyncHook,
+  type ClassDependencyItem,
+  type Ctor,
+  type DependencyItem,
+  type FactoryDependencyItem,
   isAsyncDependencyItem,
   isAsyncHook,
   isClassDependencyItem,
   isCtor,
   isFactoryDependencyItem,
   isValueDependencyItem,
-  SyncDependencyItem,
-  ValueDependencyItem,
+  type SyncDependencyItem,
+  type ValueDependencyItem,
 } from './dependencyItem';
 export { Self, SkipSelf } from './dependencyLookUp';
 export { Inject, Many, Optional } from './dependencyQuantity';
 export { WithNew } from './dependencyWithNew';
-export { IDisposable, isDisposable } from './dispose';
+export { type IDisposable, isDisposable } from './dispose';
 export { RediError } from './error';
-export { IAccessor, Injector } from './injector';
+export { type IAccessor, Injector } from './injector';
 export { LookUp, Quantity } from './types';
 
 const globalObject: any =
