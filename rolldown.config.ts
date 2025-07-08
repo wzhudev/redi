@@ -5,7 +5,6 @@ export default defineConfig([
   {
     input: 'src/index.ts',
     output: {
-      // file: 'dist/index.mjs',
       format: 'esm',
       sourcemap: true,
       dir: 'dist',
@@ -18,20 +17,16 @@ export default defineConfig([
       file: 'dist/index.js',
       format: 'cjs',
       sourcemap: true,
-      // dir: 'dist',
     },
-    // plugins: [dts()],
   },
   {
     input: 'src/react-bindings/index.ts',
     external: ['@wendellhu/redi'],
     output: {
-      // file: 'dist/react-bindings/index.mjs',
       format: 'esm',
       dir: 'dist/react-bindings',
       sourcemap: true,
     },
-
     plugins: [dts()],
   },
   {
