@@ -10,7 +10,7 @@ A dependency library for TypeScript and JavaScript, along with a binding for Rea
 ## Overview
 
 ```typescript
-import { Inject } from '@wendellhu/redi'
+import { Inject } from '@wendellhu/redi';
 
 class AuthService {
   public getCurrentUserInfo(): UserInfo {}
@@ -20,26 +20,30 @@ class FileListService {
   constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   public getUserFiles(): Promise<Files> {
-    const currentUser = this.authService.getCurrentUserInfo()
+    const currentUser = this.authService.getCurrentUserInfo();
   }
 }
 
-const injector = new Injector([[AuthService], [FileListService]])
+const injector = new Injector([[AuthService], [FileListService]]);
 
-injector.get(AuthService)
+injector.get(AuthService);
 ```
 
 **View full documentation on [redi.wzhu.dev](https://redi.wzhu.dev/).**
 
 ## Links
 
--   [Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/) | [source](https://github.com/wzhudev/redi-todomvc)
--   [Scaffold](https://github.com/wzhudev/redi-starter)
+- [Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/) | [source](https://github.com/wzhudev/redi-todomvc)
+- [Scaffold](https://github.com/wzhudev/redi-starter)
 
 ## Users
 
--   [Univer](https://github.com/dream-num/univer)
--   Team Lark at ByteDance
+- [Univer](https://github.com/dream-num/univer)
+- Team Lark at ByteDance
+
+## Contributing
+
+Please read the [contributing guide](./CONTRIBUTING.md) for details on how to contribute to this project.
 
 ## License
 
