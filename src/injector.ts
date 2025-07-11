@@ -352,7 +352,7 @@ export class Injector {
     id: DependencyIdentifier<T>,
     quantityOrLookup?: Quantity | LookUp,
     lookUp?: LookUp,
-    toSelf?: boolean,
+    withNew?: boolean,
   ): T[] | T | AsyncHook<T> | null {
     let quantity: Quantity = Quantity.REQUIRED;
     if (
@@ -365,7 +365,7 @@ export class Injector {
       lookUp = quantityOrLookup as LookUp;
     }
 
-    if (!toSelf) {
+    if (!withNew) {
       // see if the dependency is already resolved, return it and check quantity
       const cachedResult = this.getValue(id, quantity, lookUp);
       if (cachedResult !== NotInstantiatedSymbol) {
@@ -374,7 +374,8 @@ export class Injector {
     }
 
     // see if the dependency can be instantiated by itself or its parent
-    return this.createDependency(id, quantity, lookUp, !toSelf) as
+    const shouldCache = !withNew;
+    return this.createDependency(id, quantity, lookUp, shouldCache) as
       | T[]
       | T
       | AsyncHook<T>

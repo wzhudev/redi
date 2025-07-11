@@ -1095,6 +1095,42 @@ describe('core', () => {
       expect(b1.count).toBe(0);
       expect(b2.count).toBe(1);
     });
+
+    it('should work with "WithNew" - factories requiring new deps', () => {
+      let c = 0;
+
+      class A {
+        readonly count: number;
+
+        constructor() {
+          this.count = c++;
+        }
+      }
+
+      const ICount = createIdentifier<number>('ICount');
+
+      class B {
+        constructor(@WithNew() @Inject(ICount) public readonly count: number) {}
+      }
+
+      const j = new Injector([
+        [B],
+        [
+          ICount,
+          {
+            useFactory: (a: A) => a.count,
+            deps: [[new WithNew(), A]],
+          },
+        ],
+      ]);
+      j.add([A]);
+
+      const b1 = j.createInstance(B);
+      const b2 = j.createInstance(B);
+
+      expect(b1.count).toBe(0);
+      expect(b2.count).toBe(1);
+    });
   });
 
   describe('hooks', () => {

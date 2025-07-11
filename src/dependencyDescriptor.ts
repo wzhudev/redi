@@ -3,7 +3,6 @@ import type { FactoryDep, FactoryDepModifier } from './dependencyItem';
 import { Self, SkipSelf } from './dependencyLookUp';
 import { Many, Optional } from './dependencyQuantity';
 import { WithNew } from './dependencyWithNew';
-import { RediError } from './error';
 import { LookUp, Quantity } from './types';
 
 export interface DependencyDescriptor<T> {
@@ -60,8 +59,6 @@ export function normalizeFactoryDeps(
           quantity = Quantity.MANY;
         } else if (modifier instanceof WithNew) {
           withNew = true;
-        } else {
-          throw new RediError(`unknown dep modifier ${modifier}.`);
         }
       },
     );
