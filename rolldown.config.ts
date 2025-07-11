@@ -22,6 +22,16 @@ export default defineConfig([
     },
   },
   {
+    input: 'src/index.ts',
+    external: ['@wendellhu/redi', 'react', 'react/jsx-runtime', 'rxjs'],
+    output: {
+      file: 'dist/umd/index.js',
+      format: 'umd',
+      name: '@wendellhu/redi',
+      sourcemap: true,
+    },
+  },
+  {
     input: 'src/react-bindings/index.ts',
     external: ['@wendellhu/redi', 'react', 'react/jsx-runtime', 'rxjs'],
     output: {
@@ -38,6 +48,22 @@ export default defineConfig([
       file: 'dist/cjs/react-bindings/index.js',
       format: 'cjs',
       sourcemap: true,
+    },
+  },
+  {
+    input: 'src/react-bindings/index.ts',
+    external: ['@wendellhu/redi', 'react', 'react/jsx-runtime', 'rxjs'],
+    output: {
+      file: 'dist/umd/react-bindings/index.js',
+      format: 'umd',
+      name: '@wendellhu/redi/react-bindings',
+      sourcemap: true,
+      globals: {
+        react: 'React',
+        'react/jsx-runtime': 'React',
+        rxjs: 'rxjs',
+        '@wendellhu/redi': '@wendellhu/redi',
+      },
     },
   },
 ]);
