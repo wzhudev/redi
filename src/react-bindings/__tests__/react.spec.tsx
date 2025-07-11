@@ -17,9 +17,8 @@ import {
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators';
-
-import { expectToThrow } from './util/expectToThrow';
+import { expectToThrow } from '../../__testing__/expectToThrow';
+import { TEST_ONLY_clearKnownIdentifiers } from '../../decorators';
 
 describe('react', () => {
   afterEach(() => {

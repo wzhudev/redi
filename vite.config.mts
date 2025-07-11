@@ -14,7 +14,7 @@ export default defineConfig({
   test: {
     globals: true,
     coverage: {
-      exclude: ['src/**/publicApi.ts'],
+      exclude: ['src/**/publicApi.ts', '**/__tests__/**', '**/__testing__/**'],
       include: ['src/**/*.{ts,tsx}'],
       provider: 'istanbul',
     },

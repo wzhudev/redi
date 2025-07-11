@@ -23,11 +23,21 @@ class DependencyDescriptorNotFoundError extends RediError {
   }
 }
 
+export class RequiredDecoratorMissusedError extends RediError {
+  constructor(target: Ctor<any>, index: number) {
+    const msg = `It seems that you forgot to provide a parameter to @Required() on the ${
+      index
+    }th parameter of "${prettyPrintIdentifier(target)}"`;
+
+    super(msg);
+  }
+}
+
 export class IdentifierUndefinedError extends RediError {
   constructor(target: Ctor<any>, index: number) {
     const msg = `It seems that you register "undefined" as dependency on the ${
-      index + 1
-    } parameter of "${prettyPrintIdentifier(
+      index
+    }th parameter of "${prettyPrintIdentifier(
       target,
     )}". Please make sure that there is not cyclic dependency among your TypeScript files, or consider using "forwardRef". For more info please visit our website https://redi.wendell.fun/docs/debug#could-not-find-dependency-registered-on`;
 

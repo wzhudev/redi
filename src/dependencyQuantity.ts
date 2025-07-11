@@ -2,28 +2,27 @@ import type { DependencyIdentifier } from './dependencyIdentifier';
 import type { Ctor } from './dependencyItem';
 import {
   getDependencyByIndex,
-  IdentifierUndefinedError,
+  RequiredDecoratorMissusedError,
   setDependency,
 } from './decorators';
 import { prettyPrintIdentifier } from './dependencyItem';
 import { RediError } from './error';
 import { Quantity } from './types';
 
-function mapQuantityToNumber(quantity: Quantity): string {
-  switch (quantity) {
-    case Quantity.OPTIONAL:
-      return '0 or 1';
-    case Quantity.REQUIRED:
-      return '1';
-    case Quantity.MANY:
-      return '0 or more';
+function mapQuantityToNumber(
+  quantity: Quantity.OPTIONAL | Quantity.REQUIRED,
+): string {
+  if (quantity === Quantity.OPTIONAL) {
+    return '0 or 1';
+  } else {
+    return '1';
   }
 }
 
 export class QuantityCheckError extends RediError {
   constructor(
     id: DependencyIdentifier<any>,
-    public readonly quantity: Quantity,
+    public readonly quantity: Quantity.OPTIONAL | Quantity.REQUIRED,
     public readonly actual: number,
   ) {
     let msg = `Expect ${mapQuantityToNumber(quantity)} dependency item(s) for id "${prettyPrintIdentifier(
@@ -84,7 +83,7 @@ function quantifyDecoratorFactoryProducer(quantity: Quantity) {
         setDependency(registerTarget, id, index, quantity);
       } else {
         if (quantity === Quantity.REQUIRED) {
-          throw new IdentifierUndefinedError(registerTarget, index);
+          throw new RequiredDecoratorMissusedError(registerTarget, index);
         }
 
         changeQuantity(registerTarget, index, quantity);

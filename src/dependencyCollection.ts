@@ -135,12 +135,6 @@ export class DependencyCollection implements IDisposable {
     return this.dependencyMap.has(id);
   }
 
-  public append(dependencies: Dependency<any>[]): void {
-    this.normalizeDependencies(dependencies).forEach((pair) =>
-      this.add(pair[0], pair[1]),
-    );
-  }
-
   public dispose(): void {
     this.dependencyMap.clear();
   }
@@ -191,14 +185,6 @@ export class ResolvedDependencyCollection implements IDisposable {
 
   public has<T>(id: DependencyIdentifier<T>): boolean {
     return this.resolvedDependencies.has(id);
-  }
-
-  public delete<T>(id: DependencyIdentifier<T>): void {
-    if (this.resolvedDependencies.has(id)) {
-      const things = this.resolvedDependencies.get(id)!;
-      things.forEach((t) => (isDisposable(t) ? t.dispose() : void 0));
-      this.resolvedDependencies.delete(id);
-    }
   }
 
   public get<T>(id: DependencyIdentifier<T>): T;

@@ -2,8 +2,7 @@
 /* eslint-disable ts/no-redeclare */
 
 import type { AsyncHook, IDisposable } from '@wendellhu/redi';
-import type { BB } from './async/async.base';
-
+import type { BB } from '../__testing__/async/async.base';
 import {
   createIdentifier,
   forwardRef,
@@ -18,11 +17,10 @@ import {
   SkipSelf,
   WithNew,
 } from '@wendellhu/redi';
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TEST_ONLY_clearKnownIdentifiers } from '../src/decorators';
-import { AA, bbI } from './async/async.base';
-import { expectToThrow } from './util/expectToThrow';
+import { AA, bbI } from '../__testing__/async/async.base';
+import { expectToThrow } from '../__testing__/expectToThrow';
+import { TEST_ONLY_clearKnownIdentifiers } from '../decorators';
 
 function cleanupTest() {
   TEST_ONLY_clearKnownIdentifiers();
@@ -33,17 +31,21 @@ describe('core', () => {
 
   it('should print the dependencies stack when cannot resolve', () => {
     class A {}
+
     class B {
       constructor(@Inject(A) private a: A) {}
     }
+
     class C {
       constructor(@Inject(B) private b: B) {}
     }
+
     class D {
       constructor(@Inject(C) private c: C) {}
     }
 
     const j = new Injector([[B], [C], [D]]);
+
     expectToThrow(
       () => j.get(D),
       'Cannot find "A" registered by any injector. It is the 0th param of "B".',
@@ -307,6 +309,9 @@ describe('core', () => {
       const j = new Injector([[A]]);
 
       const a = j.invoke((accessor) => {
+        // Can use `has` API to check if a dependency is registered.
+        expect(accessor.has(A)).toBeTruthy();
+
         return accessor.get(A).a;
       });
 
@@ -322,6 +327,29 @@ describe('core', () => {
 
       expect(j.has(A)).toBeTruthy();
       expect(j.has(B)).toBeFalsy();
+    });
+
+    it('should support deleting unresolved dependencies', () => {
+      class A {}
+
+      const injector = new Injector([[A]]);
+      injector.delete(A);
+
+      expectToThrow(() => {
+        injector.get(A);
+      }, '[redi]: Expect 1 dependency item(s) for id "A" but get 0. Did you forget to register it?');
+    });
+
+    it('should throw an error trying to delete a resolved dependency', () => {
+      class A {}
+
+      const injector = new Injector([[A]]);
+
+      injector.get(A);
+
+      expectToThrow(() => {
+        injector.delete(A);
+      }, '[redi]: Cannot delete dependency "A" when it is already resolved.');
     });
   });
 
@@ -451,7 +479,7 @@ describe('core', () => {
         expect(() => {
           setDependencies(A, [B]);
         }).toThrow(
-          '[redi]: It seems that you register "undefined" as dependency on the 1 parameter of "A".',
+          '[redi]: It seems that you register "undefined" as dependency on the 0th parameter of "A".',
         );
 
         B = class {
@@ -564,7 +592,9 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then((module) => module.BBImpl),
+                  import('../__testing__/async/async.item').then(
+                    (module) => module.BBImpl,
+                  ),
               },
             ],
           ]);
@@ -598,7 +628,7 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then(
+                  import('../__testing__/async/async.item').then(
                     (module) => module.BBFactory,
                   ),
               },
@@ -619,7 +649,9 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then((module) => module.BBValue),
+                  import('../__testing__/async/async.item').then(
+                    (module) => module.BBValue,
+                  ),
               },
             ],
           ]);
@@ -663,7 +695,7 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then(
+                  import('../__testing__/async/async.item').then(
                     (module) => module.BBLoader,
                   ),
               },
@@ -687,7 +719,9 @@ describe('core', () => {
             bbI,
             {
               useAsync: () =>
-                import('./async/async.item').then((module) => module.BBFactory),
+                import('../__testing__/async/async.item').then(
+                  (module) => module.BBFactory,
+                ),
             },
           ],
         ]);
@@ -714,7 +748,7 @@ describe('core', () => {
               bbI,
               {
                 useAsync: () =>
-                  import('./async/async.item').then(
+                  import('../__testing__/async/async.item').then(
                     (module) => module.BBFactory,
                   ),
               },
@@ -756,6 +790,15 @@ describe('core', () => {
   });
 
   describe('quantities', () => {
+    it('should throw error when Required is used with no parameter', () => {
+      expectToThrow(() => {
+        class A {
+          // @ts-expect-error for testing purpose
+          constructor(@Inject() private readonly a: any) {}
+        }
+      }, '[redi]: It seems that you forgot to provide a parameter to @Required() on the 0th parameter of "A"');
+    });
+
     it('should support "Many"', () => {
       interface A {
         key: string;
@@ -859,8 +902,17 @@ describe('core', () => {
         }
       }
 
+      class C {
+        constructor(@Optional(aI) private a: A) {}
+
+        get key(): string {
+          return this.a?.key || 'no a' + 'b';
+        }
+      }
+
       const j = new Injector([
         [B],
+        [C],
         [aI, { useValue: { key: 'a1' } }],
         [aI, { useValue: { key: 'a2' } }],
       ]);
@@ -868,6 +920,11 @@ describe('core', () => {
       expectToThrow(
         () => j.get(B),
         `[redi]: Expect 1 dependency item(s) for id "aI" but get 2.`,
+      );
+
+      expectToThrow(
+        () => j.get(C),
+        `[redi]: Expect 0 or 1 dependency item(s) for id "aI" but get 2.`,
       );
     });
   });
@@ -1012,6 +1069,17 @@ describe('core', () => {
         () => j.get(A),
         `[redi]: Expect 1 dependency item(s) for id "A" but get 0. Did you forget to register it?`,
       );
+    });
+
+    it('should support removing a child dependency', () => {});
+
+    it('support removed from parent injector', () => {
+      const j = new Injector();
+      const c = j.createChild();
+      expect((j as any).children.length).toBe(1);
+
+      c.dispose();
+      expect((j as any).children.length).toBe(0);
     });
   });
 

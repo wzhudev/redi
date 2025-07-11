@@ -1,7 +1,7 @@
 # redi
 
 ![Stars](https://badgen.net/github/stars/wzhudev/redi)
-![Downloads](https://badgen.net/npm/dt/@wendellhu/redi)
+![Weekly Downloads](https://badgen.net/npm/dw/@wendellhu/redi)
 ![License](https://badgen.net/github/license/wzhudev/redi)
 [![Codecov](https://img.shields.io/codecov/c/github/wzhudev/redi.svg)](https://codecov.io/gh/wzhudev/redi)
 
@@ -15,6 +15,7 @@ A dependency library for TypeScript and JavaScript, along with a binding for Rea
 - Runs on **Node.js** and **browsers**.
 - Feature-rich:
   - Injecting **class instances** `{ useClass: <ctor> }`, **primitive values** `{ useValue: <value> }`, **factories** `{ useFactory: <factoryFn> }` and **aliases** `{ useExisting: <token> }`.
+  - Injecting **interfaces** with `createIdentifier`.
   - **Lazy instantiation** with `{ useClass: <ctor>, lazy: true }`.
   - **Async dependency** with `{ useAsync: <Promise> }`, `getAsync` and `AsyncHook`.
   - **Optional and multi-injection** with `@Optional()` and `@Many()`.

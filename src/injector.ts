@@ -87,9 +87,9 @@ class AddDependencyAfterResolutionError<T> extends RediError {
 class DeleteDependencyAfterResolutionError<T> extends RediError {
   constructor(id: DependencyIdentifier<T>) {
     super(
-      `Cannot dependency dependency "${prettyPrintIdentifier(
+      `Cannot delete dependency "${prettyPrintIdentifier(
         id,
-      )}" after it is already resolved.`,
+      )}" when it is already resolved.`,
     );
   }
 }
