@@ -169,13 +169,44 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Many(IA) public a: IA[]) {}
+        constructor(@Inject(IA) public a: IA) {}
       }
 
       j.add([IA, { useClass: A }]);
       j.add([B]);
+      j.replace([IA, { useClass: AA }]);
 
-      expect(j.get(B).a.length).toBe(1);
+      expect(j.get(B).a.key.length).toEqual(2);
+    });
+
+    it('should throw an error when replacing an identifier after it has instantiated', () => {
+      const j = new Injector();
+
+      interface IA {
+        key: string;
+      }
+
+      const IA = createIdentifier<IA>('IA');
+
+      class A implements IA {
+        key = 'a';
+      }
+
+      class AA implements IA {
+        key = 'aa';
+      }
+
+      class B {
+        constructor(@Inject(IA) public a: IA) {}
+      }
+
+      j.add([IA, { useClass: A }]);
+      j.add([B]);
+      expect(j.get(B).a.key.length).toEqual(1);
+
+      expectToThrow(() => {
+        j.replace([IA, { useClass: AA }]);
+      }, '[redi]: Cannot add dependency "IA" after it is already resolved.');
     });
 
     it('should "createInstance" work', () => {

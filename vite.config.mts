@@ -14,8 +14,9 @@ export default defineConfig({
   test: {
     globals: true,
     coverage: {
-      provider: 'custom',
-      customProviderModule: '@vitest/coverage-istanbul',
+      exclude: ['src/**/publicApi.ts'],
+      include: ['src/**/*.{ts,tsx}'],
+      provider: 'istanbul',
     },
   },
 })
