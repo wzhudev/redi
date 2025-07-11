@@ -15,8 +15,8 @@ import {
 } from '@wendellhu/redi/react-bindings';
 
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
 
+import { afterEach, describe, expect, it } from 'vitest';
 import { expectToThrow } from '../../__testing__/expectToThrow';
 import { TEST_ONLY_clearKnownIdentifiers } from '../../decorators';
 

@@ -8,9 +8,6 @@ import { act, render, renderHook } from '@testing-library/react';
 import {
   connectDependencies,
   useDependency,
-  useDependencyContext,
-  useDependencyContextValue,
-  useDependencyValue,
   useObservable,
   useUpdateBinder,
 } from '@wendellhu/redi/react-bindings';
@@ -28,7 +25,7 @@ describe('test legacy rxjs utils', () => {
     TEST_ONLY_clearKnownIdentifiers();
   });
 
-  it('should demo works with RxJS', async () => {
+  it('should work with RxJS', async () => {
     class CounterService {
       counter$ = interval(100).pipe(
         startWith(0),
@@ -47,7 +44,7 @@ describe('test legacy rxjs utils', () => {
 
     function Display() {
       const counter = useDependency(CounterService);
-      const value = useDependencyValue(counter!.counter$, 0);
+      const value = useObservable(counter!.counter$, 0);
 
       return <div>{value}</div>;
     }
@@ -87,7 +84,7 @@ describe('test legacy rxjs utils', () => {
 
     function Child() {
       const counterService = useDependency(CounterService);
-      const count = useDependencyValue(counterService.counter$);
+      const count = useObservable(counterService.counter$);
 
       return <div>{count}</div>;
     }
@@ -117,7 +114,7 @@ describe('test legacy rxjs utils', () => {
 
     function Parent() {
       const counterService = useDependency(CounterService);
-      const count = useDependencyValue(counterService.counter$, 0);
+      const count = useObservable(counterService.counter$, 0);
 
       return <Child count={count} />;
     }
@@ -129,99 +126,13 @@ describe('test legacy rxjs utils', () => {
 
     const { container } = render(<App />);
     expect(container.firstChild!.textContent).toBe('0');
-    expect(childRenderCount).toBe(1);
+    expect(childRenderCount).toBe(2);
 
     await act(
       () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
     );
     expect(container.firstChild!.textContent).toBe('3');
-    expect(childRenderCount).toBe(2);
-  });
-
-  it('should not trigger unnecessary re-render with useDependencyContext', async () => {
-    let parentRenderCount = 0;
-    let childRenderCount = 0;
-
-    class CounterService {
-      counter$ = interval(100).pipe(
-        scan((acc) => (acc === undefined ? 0 : acc + 1)),
-      );
-    }
-
-    const App = connectDependencies(() => {
-      return <Parent />;
-    }, [[CounterService]]);
-
-    function useCounter$() {
-      return useDependency(CounterService).counter$;
-    }
-
-    function Parent() {
-      const counter$ = useCounter$();
-      const { Provider: CounterProvider } = useDependencyContext(counter$, 0);
-
-      parentRenderCount += 1;
-
-      return (
-        <CounterProvider>
-          <Child />
-        </CounterProvider>
-      );
-    }
-
-    function Child() {
-      const counter$ = useCounter$();
-      const count = useDependencyContextValue(counter$);
-
-      childRenderCount += 1;
-
-      return <div>{count}</div>;
-    }
-
-    const { container } = render(<App />);
-    expect(container.firstChild!.textContent).toBe('0');
-    expect(parentRenderCount).toBe(1);
-    expect(childRenderCount).toBe(1);
-
-    await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
-    );
-
-    expect(childRenderCount).toBe(2);
-    expect(parentRenderCount).toBe(2);
-  });
-
-  it('should raise error when no ancestor subscribe an observable value', async () => {
-    class CounterService {
-      counter$ = interval(1000).pipe(
-        startWith(0),
-        scan((acc) => acc + 1),
-      );
-    }
-
-    const App = connectDependencies(() => {
-      return <Parent />;
-    }, [[CounterService]]);
-
-    function useCounter$() {
-      return useDependency(CounterService).counter$;
-    }
-
-    function Parent() {
-      return <Child />;
-    }
-
-    function Child() {
-      const counter$ = useCounter$();
-      const count = useDependencyContextValue(counter$);
-
-      return <div>{count}</div>;
-    }
-
-    expectToThrow(
-      () => render(<App />),
-      '[redi]: try to read context value but no ancestor component subscribed it.',
-    );
+    expect(childRenderCount).toBe(3);
   });
 
   it('should update whenever `useUpdateBinder` emits', async () => {
@@ -337,12 +248,25 @@ describe('test "useObservable"', () => {
   });
 
   it('should support a callback function returns an observable', () => {
-    // const { result } = renderHook(() => useObservable(() => of(true)));
-    // This line above would cause infinite look. Pass `deps` to fix the problem.
     const { result } = renderHook(() =>
       useObservable(() => of(true), undefined, true, []),
     );
 
     expect(result.current).toBeTruthy();
+  });
+
+  it('should throw an error when using a function without deps', () => {
+    expectToThrow(
+      () => renderHook(() => useObservable(() => of(true))),
+      '[redi]: Expected deps to be provided when observable is a function!',
+    );
+  });
+
+  it('should throw an error when set shouldHaveSyncValue to true but the observable does not have a sync value', () => {
+    expectToThrow(() => {
+      renderHook(() =>
+        useObservable(() => new Subject<boolean>(), undefined, true, []),
+      );
+    }, '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!');
   });
 });
