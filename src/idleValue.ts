@@ -26,21 +26,25 @@ declare function cancelIdleCallback(handle: number): void;
 
 // use an IIFE to set up runWhenIdle
 (function () {
+  /* istanbul ignore if */
   if (
     typeof requestIdleCallback !== 'undefined' &&
     typeof cancelIdleCallback !== 'undefined'
   ) {
     // use native requestIdleCallback
+    // this API is not available in Node.js, so we need to ignore it in tests
+    /* istanbul ignore next */
     runWhenIdle = (runner, timeout?) => {
       const handle: number = requestIdleCallback(
         runner,
         typeof timeout === 'number' ? { timeout } : undefined,
       );
+
       let disposed = false;
       return () => {
-        if (disposed) {
-          return;
-        }
+        if (disposed)
+return;
+
         disposed = true;
         cancelIdleCallback(handle);
       };
@@ -49,6 +53,7 @@ declare function cancelIdleCallback(handle: number): void;
     // use setTimeout as hack
     const dummyIdle: IdleDeadline = Object.freeze({
       didTimeout: true,
+      /* istanbul ignore next */
       timeRemaining() {
         return 15;
       },
@@ -61,6 +66,7 @@ declare function cancelIdleCallback(handle: number): void;
         if (disposed) {
           return;
         }
+
         disposed = true;
         clearTimeout(handle);
       };
@@ -74,15 +80,15 @@ declare function cancelIdleCallback(handle: number): void;
  * the type of the returned value of the executor would be T
  */
 export class IdleValue<T> implements IDisposable {
-  private readonly selfExecutor: () => void;
-  private readonly disposeCallback: () => void;
+  private readonly executor: () => void;
+  private readonly disposeIdleCallback: () => void;
 
   private didRun = false;
   private value?: T;
   private error?: Error;
 
   constructor(executor: () => T) {
-    this.selfExecutor = () => {
+    this.executor = () => {
       try {
         this.value = executor();
       } catch (err: any) {
@@ -92,7 +98,7 @@ export class IdleValue<T> implements IDisposable {
       }
     };
 
-    this.disposeCallback = runWhenIdle(() => this.selfExecutor());
+    this.disposeIdleCallback = runWhenIdle(() => this.executor());
   }
 
   hasRun(): boolean {
@@ -100,17 +106,18 @@ export class IdleValue<T> implements IDisposable {
   }
 
   dispose(): void {
-    this.disposeCallback();
+    this.disposeIdleCallback();
   }
 
   getValue(): T {
     if (!this.didRun) {
-      this.dispose();
-      this.selfExecutor();
+      this.disposeIdleCallback();
+      this.executor();
     }
-    if (this.error) {
-      throw this.error;
-    }
+
+    if (this.error)
+throw this.error;
+
     return this.value!;
   }
 }
