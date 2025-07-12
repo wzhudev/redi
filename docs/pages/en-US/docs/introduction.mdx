@@ -11,13 +11,7 @@ import { Callout } from "nextra/components";
 
 Inside your project, run the following:
 
-```shell
-pnpm install @wendellhu/redi
-```
-
-or use other package managers such as npm:
-
-```shell
+```shell npm2yarn
 npm install @wendellhu/redi
 ```
 
@@ -99,4 +93,37 @@ Then you get an instance of `FileListService`, and its dependency `AuthService` 
 const authService = injector.get(FileListService);
 ```
 
-Read the next chapter to learn basic concepts in dependency injection.
+Read the [next chapter](/en-US/docs/concepts) to learn basic concepts in dependency injection.
+
+## Using redi with CDN
+
+You can also use redi via CDN if you don't want to use npm or yarn.
+
+Include the following `<script>` tag in your HTML file:
+
+```html
+<script src="https://unpkg.com/@wendellhu/redi/dist/umd/index.js"></script>
+```
+
+Redi will be mounted on the global variable `@wendellhu/redi`, and you can access it via `window["@wendellhu/redi"]`.
+
+<Callout>
+  Here we use [UNPKG](https://unpkg.com) as the CDN service. You can also choose other CDN services that host npm packages, such as [jsDelivr](https://www.jsdelivr.com).
+</Callout>
+
+If you want to use redi with React, you can include the following `<script>` tag:
+
+```html
+<script src="https://unpkg.com/@wendellhu/redi/dist/umd/react-bindings/index.js"></script>
+```
+
+Redi's React API will be mounted on the global variable `@wendellhu/redi/react-bindings`, and you can access it via `window["@wendellhu/redi/react-bindings"]`.
+
+If you are using React 19, you should import the React bindings using [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules):
+
+```html
+<script type="module">
+  import { Inject, Injector } from "https://unpkg.com/@wendellhu/redi/dist/esm/index.js";
+  import { connectDependencies } from "https://unpkg.com/@wendellhu/redi/dist/esm/react-bindings/index.js";
+</script>
+```
