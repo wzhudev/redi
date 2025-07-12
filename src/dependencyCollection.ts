@@ -104,7 +104,7 @@ export class DependencyCollection implements IDisposable {
     this.dependencyMap.delete(id);
   }
 
-  public get<T>(id: DependencyIdentifier<T>): DependencyItem<T>;
+  // public get<T>(id: DependencyIdentifier<T>): DependencyItem<T>;
   public get<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity.REQUIRED,
@@ -123,7 +123,7 @@ export class DependencyCollection implements IDisposable {
   ): DependencyItem<T> | DependencyItem<T>[] | null;
   public get<T>(
     id: DependencyIdentifier<T>,
-    quantity: Quantity = Quantity.REQUIRED,
+    quantity: Quantity,
   ): DependencyItem<T> | DependencyItem<T>[] | null {
     const ret = this.dependencyMap.get(id)!;
 
@@ -187,7 +187,6 @@ export class ResolvedDependencyCollection implements IDisposable {
     return this.resolvedDependencies.has(id);
   }
 
-  public get<T>(id: DependencyIdentifier<T>): T;
   public get<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity.OPTIONAL,
@@ -200,7 +199,7 @@ export class ResolvedDependencyCollection implements IDisposable {
   ): T[] | T | null;
   public get<T>(
     id: DependencyIdentifier<T>,
-    quantity: Quantity = Quantity.REQUIRED,
+    quantity: Quantity,
   ): T | T[] | null {
     const ret = this.resolvedDependencies.get(id);
 

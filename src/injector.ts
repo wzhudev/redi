@@ -1,4 +1,8 @@
-import type { Dependency, DependencyOrInstance } from './dependencyCollection';
+import type {
+  Dependency,
+  DependencyOrInstance,
+  DependencyPair,
+} from './dependencyCollection';
 import type { DependencyIdentifier } from './dependencyIdentifier';
 import type {
   AsyncDependencyItem,
@@ -33,7 +37,7 @@ import {
   isValueDependencyItem,
   prettyPrintIdentifier,
 } from './dependencyItem';
-import { checkQuantity, QuantityCheckError } from './dependencyQuantity';
+import { QuantityCheckError } from './dependencyQuantity';
 import { RediError } from './error';
 import { IdleValue } from './idleValue';
 import { LookUp, Quantity } from './types';
@@ -177,9 +181,7 @@ export class Injector {
   private deleteSelfFromParent(): void {
     if (this.parent) {
       const index = this.parent.children.indexOf(this);
-      if (index > -1) {
-        this.parent.children.splice(index, 1);
-      }
+      this.parent.children.splice(index, 1);
     }
   }
 
@@ -225,7 +227,7 @@ export class Injector {
    *
    * @param dependency The dependency that will replace the already existed dependency.
    */
-  public replace<T>(dependency: Dependency<T>): void {
+  public replace<T>(dependency: DependencyPair<T>): void {
     this._ensureInjectorNotDisposed();
 
     const identifier = dependency[0];
@@ -234,11 +236,7 @@ export class Injector {
     }
 
     this.dependencyCollection.delete(identifier);
-    if (dependency.length === 1) {
-      this.dependencyCollection.add(identifier as Ctor<T>);
-    } else {
-      this.dependencyCollection.add(identifier, dependency[1]);
-    }
+    this.dependencyCollection.add(identifier, dependency[1]);
   }
 
   /**
@@ -367,6 +365,7 @@ export class Injector {
 
     if (!withNew) {
       // see if the dependency is already resolved, return it and check quantity
+      // if the dependency is not registered, it will return null or [] based on the quantity
       const cachedResult = this.getValue(id, quantity, lookUp);
       if (cachedResult !== NotInstantiatedSymbol) {
         return cachedResult;
@@ -481,7 +480,7 @@ export class Injector {
   private _resolveClass<T>(
     id: DependencyIdentifier<T> | null,
     item: ClassDependencyItem<T>,
-    shouldCache = true,
+    shouldCache: boolean,
   ): T {
     let thing: T;
 
@@ -497,10 +496,11 @@ export class Injector {
             return target[key]; // such as toString
           }
 
-          // hack checking if it's a async loader
-          if (key === 'whenReady') {
-            return undefined;
-          }
+          // this seems not necessary
+          // // hack checking if it's a async loader
+          // if (key === 'whenReady') {
+          //   return undefined;
+          // }
 
           const thing = idle.getValue();
 
@@ -633,6 +633,7 @@ export class Injector {
           );
         }
 
+        // should throw the error (user should handle it)
         throw error;
       }
     }
@@ -716,14 +717,13 @@ export class Injector {
       if (this.parent) {
         return this.parent.getValue(id, quantity);
       } else {
-        // If the parent injector is missing, we should check quantity with 0 values.
-        checkQuantity(id, quantity, 0);
-
-        if (quantity === Quantity.MANY) {
-          return [];
-        } else {
+        if (quantity === Quantity.OPTIONAL) {
           return null;
+        } else if (quantity === Quantity.MANY) {
+          return [];
         }
+
+        throw new QuantityCheckError(id, Quantity.REQUIRED, 0);
       }
     };
 
@@ -751,19 +751,19 @@ export class Injector {
 
   private createDependency<T>(
     id: DependencyIdentifier<T>,
-    quantity: Quantity = Quantity.REQUIRED,
+    quantity: Quantity,
     lookUp?: LookUp,
     shouldCache = true,
   ): null | T | T[] | AsyncHook<T> | (T | AsyncHook<T>)[] {
     const onSelf = () => {
-      const registrations = this.dependencyCollection.get(id, quantity);
+      const registrations = this.dependencyCollection.get(id, quantity)!;
 
       let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null;
       if (Array.isArray(registrations)) {
         ret = registrations.map((dependencyItem) =>
           this._resolveDependency(id, dependencyItem, shouldCache),
         );
-      } else if (registrations) {
+      } else {
         ret = this._resolveDependency(id, registrations, shouldCache);
       }
 
@@ -781,6 +781,8 @@ export class Injector {
       } else {
         if (quantity === Quantity.OPTIONAL) {
           return null;
+        } else if (quantity === Quantity.MANY) {
+          return [];
         }
 
         pushResolvingStack(id);

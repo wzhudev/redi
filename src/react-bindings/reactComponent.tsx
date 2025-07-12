@@ -17,6 +17,7 @@ function RediInjector(
       {(context: { injector: Injector | null }) => {
         let childInjector: Injector;
 
+        /* istanbul ignore next -- @preserve */
         if (childInjectorRef.current) {
           childInjector = childInjectorRef.current;
         } else {

@@ -13,5 +13,6 @@ export default antfu({
     'style/operator-linebreak': 'off',
     'style/quote-props': 'off',
     'svelte/indent': 'off',
+    'antfu/if-newline': 'off',
   },
 });

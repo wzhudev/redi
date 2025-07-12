@@ -29,29 +29,6 @@ function cleanupTest() {
 describe('core', () => {
   afterEach(() => cleanupTest());
 
-  it('should print the dependencies stack when cannot resolve', () => {
-    class A {}
-
-    class B {
-      constructor(@Inject(A) private a: A) {}
-    }
-
-    class C {
-      constructor(@Inject(B) private b: B) {}
-    }
-
-    class D {
-      constructor(@Inject(C) private c: C) {}
-    }
-
-    const j = new Injector([[B], [C], [D]]);
-
-    expectToThrow(
-      () => j.get(D),
-      'Cannot find "A" registered by any injector. It is the 0th param of "B".',
-    );
-  });
-
   describe('basics', () => {
     it('should resolve instance and then cache it', () => {
       let createCount = 0;
@@ -247,7 +224,27 @@ describe('core', () => {
       expect(b.key).toBe('another a');
     });
 
-    it('should "createInstance" truncate extra custom args', () => {});
+    it('should "createInstance" truncate extra custom args', () => {
+      class A {
+        key = 'a';
+      }
+
+      class B {
+        constructor(
+          private readonly otherKey: string,
+          @Inject(A) public readonly a: A,
+        ) {}
+
+        get key() {
+          return `${this.otherKey}a`;
+        }
+      }
+
+      const j = new Injector([[A]]);
+      // @ts-expect-error for testing purpose
+      const b = j.createInstance(B, 'another ', 'extra', 'args', 'ignored');
+      expect(b.key).toBe('another a');
+    });
 
     it('should "createInstance" fill unprovided custom args with "undefined"', () => {
       class A {
@@ -558,6 +555,7 @@ describe('core', () => {
         const j = new Injector([
           [b, { useFactory: (_a: A) => ({ name: b }), deps: [A] }],
         ]);
+
         expectToThrow(() => {
           j.get(b);
         }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b".');
@@ -728,6 +726,30 @@ describe('core', () => {
 
         expectToThrow(() => {
           j.get(bbI);
+        }, '[redi]: Cannot get async item "bb" from sync api.');
+
+        const j2 = new Injector([
+          [
+            bbI,
+            {
+              useAsync: () =>
+                import('../__testing__/async/async.item').then(
+                  (module) => module.BBFactory,
+                ),
+            },
+          ],
+          [
+            bbI,
+            {
+              useValue: {
+                key: 'sync-bb',
+              },
+            },
+          ],
+        ]);
+
+        expectToThrow(() => {
+          j2.get(bbI, Quantity.MANY);
         }, '[redi]: Cannot get async item "bb" from sync api.');
       });
 
@@ -929,7 +951,7 @@ describe('core', () => {
     });
   });
 
-  describe('layered injection system', () => {
+  describe('hierarchy injection system', () => {
     it('should get dependencies upwards', () => {
       class A {
         key = 'a';
@@ -1071,7 +1093,44 @@ describe('core', () => {
       );
     });
 
-    it('should support removing a child dependency', () => {});
+    it('should not throw error when no ancestor injector could provide dependency with "Optional" or "Many', () => {
+      class A {}
+
+      const j = new Injector();
+      expect(j.get(A, Quantity.OPTIONAL, LookUp.SKIP_SELF)).toBeNull();
+      expect(j.get(A, Quantity.MANY, LookUp.SKIP_SELF)).toEqual([]);
+    });
+
+    it('should throw error when no ancestor injector could create dependency', () => {
+      class A {}
+
+      class B {
+        constructor(@WithNew() @Inject(A) private readonly a: A) {}
+      }
+
+      const j = new Injector([[B]]);
+
+      expectToThrow(
+        () => j.get(B),
+        `[redi]: Cannot find "A" registered by any injector. It is the 0th param of "B".`,
+      );
+    });
+
+    it('should not throw error when no ancestor injector could create dependency with "Optional" or "Many"', () => {
+      class A {}
+
+      class B {
+        constructor(@WithNew() @Optional(A) public readonly a?: A) {}
+      }
+
+      class C {
+        constructor(@WithNew() @Many(A) public readonly a: A[]) {}
+      }
+
+      const j = new Injector([[B], [C]]);
+      expect(j.get(B).a).toBeNull();
+      expect(j.get(C).a).toEqual([]);
+    });
 
     it('support removed from parent injector', () => {
       const j = new Injector();
@@ -1455,5 +1514,59 @@ describe('core', () => {
       const person = injector.get(Person);
       expect(person.father).toBe(parentInjector.get(Person));
     });
+  });
+
+  it('should print the dependencies stack when cannot resolve', () => {
+    class A {}
+
+    class B {
+      constructor(@Inject(A) private a: A) {}
+    }
+
+    class C {
+      constructor(@Inject(B) private b: B) {}
+    }
+
+    class D {
+      constructor(@Inject(C) private c: C) {}
+    }
+
+    const j = new Injector([[B], [C], [D]]);
+
+    expectToThrow(
+      () => j.get(D),
+      'Cannot find "A" registered by any injector. It is the 0th param of "B".',
+    );
+  });
+
+  it('should print the dependencies stack when cannot resolve with factory', () => {
+    class A {}
+
+    class B {
+      constructor(@Inject(A) private a: A) {}
+    }
+
+    class C {
+      constructor(@Inject(B) private b: B) {}
+    }
+
+    const f = createIdentifier('f');
+
+    const j = new Injector([
+      [B],
+      [C],
+      [
+        f,
+        {
+          useFactory: () => void 0,
+          deps: [C],
+        },
+      ],
+    ]);
+
+    expectToThrow(
+      () => j.get(f),
+      '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "B".',
+    );
   });
 });

@@ -26,14 +26,13 @@ declare function cancelIdleCallback(handle: number): void;
 
 // use an IIFE to set up runWhenIdle
 (function () {
-  /* istanbul ignore if */
+  // this API is not available in Node.js, so we need to ignore it in tests
+  /* istanbul ignore next -- @preserve */
   if (
     typeof requestIdleCallback !== 'undefined' &&
     typeof cancelIdleCallback !== 'undefined'
   ) {
     // use native requestIdleCallback
-    // this API is not available in Node.js, so we need to ignore it in tests
-    /* istanbul ignore next */
     runWhenIdle = (runner, timeout?) => {
       const handle: number = requestIdleCallback(
         runner,
@@ -42,8 +41,7 @@ declare function cancelIdleCallback(handle: number): void;
 
       let disposed = false;
       return () => {
-        if (disposed)
-return;
+        if (disposed) return;
 
         disposed = true;
         cancelIdleCallback(handle);
@@ -115,8 +113,7 @@ export class IdleValue<T> implements IDisposable {
       this.executor();
     }
 
-    if (this.error)
-throw this.error;
+    if (this.error) throw this.error;
 
     return this.value!;
   }

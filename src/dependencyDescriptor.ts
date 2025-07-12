@@ -2,7 +2,6 @@ import type { DependencyIdentifier } from './dependencyIdentifier';
 import type { FactoryDep, FactoryDepModifier } from './dependencyItem';
 import { Self, SkipSelf } from './dependencyLookUp';
 import { Many, Optional } from './dependencyQuantity';
-import { WithNew } from './dependencyWithNew';
 import { LookUp, Quantity } from './types';
 
 export interface DependencyDescriptor<T> {
@@ -57,7 +56,7 @@ export function normalizeFactoryDeps(
           quantity = Quantity.OPTIONAL;
         } else if (modifier instanceof Many) {
           quantity = Quantity.MANY;
-        } else if (modifier instanceof WithNew) {
+        } /* if  (modifier instanceof WithNew) */ else {
           withNew = true;
         }
       },

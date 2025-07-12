@@ -11,14 +11,15 @@ export default defineConfig({
       '@wendellhu/redi/react-bindings': join(__dirname, 'src/react-bindings'),
     },
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      legalComments: 'inline',
+    },
+  },
   test: {
     globals: true,
     coverage: {
-      exclude: [
-        'src/**/publicApi.ts',
-        '**/__tests__/**',
-        '**/__testing__/**',
-      ],
+      exclude: ['src/**/publicApi.ts', '**/__tests__/**', '**/__testing__/**'],
       include: ['src/**/*.{ts,tsx}'],
       provider: 'istanbul',
     },
