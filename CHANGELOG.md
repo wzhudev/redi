@@ -1,5 +1,17 @@
 # Changelog
 
+# [1.0.0-beta.0](https://github.com/wzhudev/redi/compare/v0.19.1...v1.0.0-beta.0) (2025-07-12)
+
+### Bug Fixes
+
+- fix export file name ([5d4efb0](https://github.com/wzhudev/redi/commit/5d4efb079f7f77b04e1134413d7f10be63a394d0))
+
+### Features
+
+- add codecoverage ([a8140d8](https://github.com/wzhudev/redi/commit/a8140d804b2714b286c15e1472cb41a0a9a216a3))
+- release 1.0.0-beta.0 ([5caa5ef](https://github.com/wzhudev/redi/commit/5caa5ef8b149f031e6f72768870e91ad910740f5))
+- remove deprecated API ([4af8ae7](https://github.com/wzhudev/redi/commit/4af8ae7fae6f1499359ce1f552ba90aeca78ed38))
+
 ## [0.19.1](https://github.com/wzhudev/redi/compare/v0.19.0...v0.19.1) (2025-07-08)
 
 ### Features
