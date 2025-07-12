@@ -6,7 +6,7 @@ export default {
   useNextSeoProps() {
     return {
       titleTemplate: '%s – Redi',
-    }
+    };
   },
   logo: (
     <>
@@ -17,13 +17,13 @@ export default {
     <>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta property="og:title" content="Redi" />
-      <meta property="og:description" content="A light-weight dependency injection library" />
+      <meta
+        property="og:description"
+        content="A light-weight dependency injection library"
+      />
     </>
   ),
-  i18n: [
-    { locale: 'en-US', name: 'English' },
-    { locale: 'zh-CN', name: '简体中文' },
-  ],
+  i18n: [{ locale: 'en-US', name: 'English' }],
   toc: {
     title: '',
     backToTop: true,
@@ -32,11 +32,11 @@ export default {
     content: (
       <span>
         MIT
-        {' '}
-        {new Date().getFullYear()}
-        {' '}
-        ©
-        {' '}
+{' '}
+{new Date().getFullYear()}
+{' '}
+©
+{' '}
         <a href="https://wzhu.dev" target="_blank">
           wzhudev
         </a>
@@ -45,4 +45,4 @@ export default {
     ),
   },
   faviconGlyph: '💉',
-}
+};

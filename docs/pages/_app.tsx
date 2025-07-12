@@ -1,13 +1,13 @@
-import type { AppProps } from 'next/app'
-import { Analytics } from '@vercel/analytics/react'
-import '../styles.css'
+import type { AppProps } from 'next/app';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import '../styles.css';
 
 export default function MyApp(props: AppProps) {
-  const { Component, pageProps } = props
+  const { Component, pageProps } = props;
   return (
     <>
-      <Analytics></Analytics>
       <Component {...pageProps} />
+      <GoogleAnalytics gaId="G-6NKSQS3F6L" />
     </>
-  )
+  );
 }

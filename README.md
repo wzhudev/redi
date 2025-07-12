@@ -21,7 +21,7 @@ A dependency library for TypeScript and JavaScript, along with a binding for Rea
   - **Optional and multi-injection** with `@Optional()` and `@Many()`.
   - **Hierarchical injectors** with `@Self()` and `@SkipSelf()`.
 - Provide hooks to integrate with React `useDependency(<token>)`.
-- Sufficiently tested with **90% code coverage**.
+- Sufficiently tested with **100% code coverage**.
 
 ## Installation
 

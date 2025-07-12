@@ -1,6 +1,6 @@
 # Conecpts
 
-A **binding** maps an **identifier** to a **dependency item**.
+A [**binding**](./binding) maps an [**identifier**](./identifier) to a [**dependency item**](./item).
 
 An identifier distinguish a dependency item from others. It could be:
 
@@ -15,3 +15,5 @@ A dependency item is an implementation matching an identifier. It could be:
 - a factory function
 
 An **injector** holds a set of bindings and resolve an identifier by constructing a dependency item.
+
+A dependency item can [declare what dependencies it needs](./relationship).

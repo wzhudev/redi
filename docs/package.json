@@ -11,6 +11,7 @@
     "build": "next build"
   },
   "dependencies": {
+    "@next/third-parties": "^15.3.5",
     "@vercel/analytics": "^1.2.2",
     "next": "^14.2.15",
     "nextra": "^3.1.1",

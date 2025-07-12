@@ -48,7 +48,7 @@ if (globalObject[__REDI_GLOBAL_LOCK__]) {
   if (!isNode) {
     console.error(`[redi]: You are loading scripts of redi more than once! This may cause undesired behavior in your application.
 Maybe your dependencies added redi as its dependency and bundled redi to its dist files. Or you import different versions of redi.
-For more info please visit our website: https://redi.wendell.fun/en-US/docs/debug#import-scripts-of-redi-more-than-once`);
+For more info please visit our website: https://redi.wendell.fun/en-US/docs/faq#import-scripts-of-redi-more-than-once`);
   }
 } else {
   globalObject[__REDI_GLOBAL_LOCK__] = true;

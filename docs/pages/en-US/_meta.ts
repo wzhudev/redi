@@ -1,6 +1,6 @@
 export default {
   index: {
-    title: 'Introduction',
+    title: 'Index',
     type: 'page',
   },
   docs: {
@@ -11,4 +11,4 @@ export default {
     title: 'Blogs',
     type: 'page',
   },
-}
+};
