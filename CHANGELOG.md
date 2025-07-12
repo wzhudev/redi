@@ -1,5 +1,7 @@
 # Changelog
 
+# [1.0.0-beta.1](https://github.com/wzhudev/redi/compare/v1.0.0-beta.0...v1.0.0-beta.1) (2025-07-12)
+
 # [1.0.0-beta.0](https://github.com/wzhudev/redi/compare/v0.19.1...v1.0.0-beta.0) (2025-07-12)
 
 ### Bug Fixes
