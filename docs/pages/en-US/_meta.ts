@@ -1,8 +1,4 @@
 export default {
-  index: {
-    title: 'Index',
-    type: 'page',
-  },
   docs: {
     title: 'Guides',
     type: 'page',
