@@ -8,8 +8,8 @@ import { act, render, renderHook } from '@testing-library/react';
 import {
   connectDependencies,
   useDependency,
-  useObservable,
-  useUpdateBinder,
+  useNeoObservable,
+  useNeoUpdateBinder,
 } from '@wendellhu/redi/react-bindings';
 import React, { Component, useRef, useState } from 'react';
 import { BehaviorSubject, interval, of, Subject } from 'rxjs';
@@ -44,7 +44,7 @@ describe('test legacy rxjs utils', () => {
 
     function Display() {
       const counter = useDependency(CounterService);
-      const value = useObservable(counter!.counter$, 0);
+      const value = useNeoObservable(counter!.counter$, 0);
 
       return <div>{value}</div>;
     }
@@ -84,7 +84,7 @@ describe('test legacy rxjs utils', () => {
 
     function Child() {
       const counterService = useDependency(CounterService);
-      const count = useObservable(counterService.counter$);
+      const count = useNeoObservable(counterService.counter$);
 
       return <div>{count}</div>;
     }
@@ -114,7 +114,7 @@ describe('test legacy rxjs utils', () => {
 
     function Parent() {
       const counterService = useDependency(CounterService);
-      const count = useObservable(counterService.counter$, 0);
+      const count = useNeoObservable(counterService.counter$, 0);
 
       return <Child count={count} />;
     }
@@ -126,13 +126,13 @@ describe('test legacy rxjs utils', () => {
 
     const { container } = render(<App />);
     expect(container.firstChild!.textContent).toBe('0');
-    expect(childRenderCount).toBe(2);
+    expect(childRenderCount).toBe(1);
 
     await act(
       () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
     );
     expect(container.firstChild!.textContent).toBe('3');
-    expect(childRenderCount).toBe(3);
+    expect(childRenderCount).toBe(4);
   });
 
   it('should update whenever `useUpdateBinder` emits', async () => {
@@ -161,7 +161,7 @@ describe('test legacy rxjs utils', () => {
     function Child() {
       const counterService = useDependency(CounterService);
 
-      useUpdateBinder(counterService.updater$);
+      useNeoUpdateBinder(counterService.updater$);
 
       return <div>{counterService.number}</div>;
     }
@@ -176,11 +176,11 @@ describe('test legacy rxjs utils', () => {
   });
 });
 
-describe('test "useObservable"', () => {
+describe('test "useNeoObservable"', () => {
   it('should return undefined when no initial value is provided', () => {
     const observable: Observable<boolean> | undefined = undefined;
 
-    const { result } = renderHook(() => useObservable<boolean>(observable));
+    const { result } = renderHook(() => useNeoObservable<boolean>(observable));
     expect(result.current).toBeUndefined();
   });
 
@@ -188,7 +188,7 @@ describe('test "useObservable"', () => {
     const observable: Observable<boolean> | undefined = undefined;
 
     const { result } = renderHook(() =>
-      useObservable<boolean>(observable, true),
+      useNeoObservable<boolean>(observable, true),
     );
     expect(result.current).toBeTruthy();
   });
@@ -196,13 +196,13 @@ describe('test "useObservable"', () => {
   it('should return the initial value when provided synchronously', () => {
     const observable: Observable<boolean> = of(true);
 
-    const { result } = renderHook(() => useObservable<boolean>(observable));
+    const { result } = renderHook(() => useNeoObservable<boolean>(observable));
     expect(result.current).toBeTruthy();
   });
 
-  function useTestUseObservableBed() {
+  function useTestuseNeoObservableBed() {
     const observable = useRef(new Subject<boolean>());
-    const result = useObservable(observable.current, undefined);
+    const result = useNeoObservable(observable.current, undefined);
 
     return {
       observable: observable.current,
@@ -211,7 +211,7 @@ describe('test "useObservable"', () => {
   }
 
   it('should emit new value when observable emits', () => {
-    const { result } = renderHook(() => useTestUseObservableBed());
+    const { result } = renderHook(() => useTestuseNeoObservableBed());
 
     expect(result.current.result).toBeUndefined();
 
@@ -226,7 +226,7 @@ describe('test "useObservable"', () => {
     const [observable, setObservable] = useState<
       Observable<boolean> | undefined
     >(undefined);
-    const result = useObservable(observable);
+    const result = useNeoObservable(observable);
 
     return {
       result,
@@ -249,7 +249,7 @@ describe('test "useObservable"', () => {
 
   it('should support a callback function returns an observable', () => {
     const { result } = renderHook(() =>
-      useObservable(() => of(true), undefined, true, []),
+      useNeoObservable(() => of(true), undefined, true, []),
     );
 
     expect(result.current).toBeTruthy();
@@ -257,7 +257,7 @@ describe('test "useObservable"', () => {
 
   it('should throw an error when using a function without deps', () => {
     expectToThrow(
-      () => renderHook(() => useObservable(() => of(true))),
+      () => renderHook(() => useNeoObservable(() => of(true))),
       '[redi]: Expected deps to be provided when observable is a function!',
     );
   });
@@ -265,7 +265,7 @@ describe('test "useObservable"', () => {
   it('should throw an error when set shouldHaveSyncValue to true but the observable does not have a sync value', () => {
     expectToThrow(() => {
       renderHook(() =>
-        useObservable(() => new Subject<boolean>(), undefined, true, []),
+        useNeoObservable(() => new Subject<boolean>(), undefined, true, []),
       );
     }, '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!');
   });
