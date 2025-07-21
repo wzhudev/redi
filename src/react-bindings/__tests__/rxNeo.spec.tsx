@@ -269,4 +269,16 @@ describe('test "useNeoObservable"', () => {
       );
     }, '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!');
   });
+
+  it('should support observable become null', () => {
+    const { result } = renderHook(() => useTestSwitchObservableBed());
+
+    expect(result.current.result).toBeUndefined();
+
+    act(() => result.current.setObservable(of(true)));
+    expect(result.current.result).toBeTruthy();
+
+    act(() => result.current.setObservable(undefined));
+    expect(result.current.result).toBeUndefined();
+  });
 });
