@@ -119,6 +119,7 @@ export function useNeoObservable<T>(
   }, []);
 
   // Server snapshot (for SSR)
+  /* istanbul ignore next -- @preserve */
   const getServerSnapshot = useCallback(() => {
     return defaultValue;
   }, [defaultValue]);
@@ -157,6 +158,7 @@ export function useNeoUpdateBinder(update$: Observable<void>): void {
     return counterRef.current;
   }, []);
 
+  /* istanbul ignore next -- @preserve */
   const getServerSnapshot = useCallback(() => {
     return 0;
   }, []);
