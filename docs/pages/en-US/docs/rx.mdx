@@ -1,0 +1,65 @@
+# Use with RxJS
+
+redi provides API to help use DI with [RxJS](https://rxjs.dev/).
+
+## Subscribe to observables
+
+You can subscribe to observables using the `useObservable` hook. This hook allows you to get the latest value from an observable and re-render your component when the value changes.
+
+```ts highlight=2
+import { useObservable } from '@wendellhu/redi/react-bindings';
+
+class CounterService {
+  counter$ = interval(100).pipe(
+    startWith(0),
+    scan((acc) => acc + 1),
+  );
+}
+
+const App = connectDependencies(
+  class extends Component {
+    override render() {
+      return <Display />;
+    }
+  },
+  [[CounterService]],
+);
+
+function Display() {
+  const counter = useDependency(CounterService);
+  const value = useObservable(counter!.counter$, 0);
+
+  return <div>{value}</div>;
+}
+```
+
+## React 18+
+
+If you are using React 18 or later, you can use the `useNeoObservable` hook which is implemented based on the `useSyncExternalStore` API to work in the Strict Mode.
+
+```ts highlight=2
+import { useNeoObservable } from '@wendellhu/redi/react-bindings';
+
+class CounterService {
+  counter$ = interval(100).pipe(
+    startWith(0),
+    scan((acc) => acc + 1),
+  );
+}
+
+const App = connectDependencies(
+  class extends Component {
+    override render() {
+      return <Display />;
+    }
+  },
+  [[CounterService]],
+);
+
+function Display() {
+  const counter = useDependency(CounterService);
+  const value = useNeoObservable(counter!.counter$, 0);
+
+  return <div>{value}</div>;
+}
+```

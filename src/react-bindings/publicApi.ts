@@ -5,6 +5,7 @@ export { RediConsumer, RediContext, RediProvider } from './reactContext';
 export { WithDependency } from './reactDecorators';
 export { useDependency, useInjector } from './reactHooks';
 export * from './reactRx';
+export * from './reactRxNeo';
 
 const __REDI_CONTEXT_LOCK__ = 'REDI_CONTEXT_LOCK';
 const isNode =

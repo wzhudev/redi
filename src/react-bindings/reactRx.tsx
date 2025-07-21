@@ -33,6 +33,8 @@ export function useObservable<T>(
 /**
  * Subscribe to an observable and return its value. The component will re-render when the observable emits a new value.
  *
+ * If you are using React 18+ and want to ensure that the observable is compatible with Strict Mode, consider using `useNeoObservable` instead.
+ *
  * @param observable An observable or a function that returns an observable
  * @param defaultValue The default value of the observable. It the `observable` can omit an initial value, this value will be neglected.
  * @param shouldHaveSyncValue If the observable should have a sync value. If it does not have a sync value, an error will be thrown.
