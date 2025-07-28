@@ -5,7 +5,7 @@ import type {
   Quantity,
 } from '@wendellhu/redi';
 import { RediError } from '@wendellhu/redi';
-import { useContext, useMemo } from 'react';
+import { use, useContext, useMemo } from 'react';
 import { RediContext } from './reactContext';
 
 class HooksNotInRediContextError extends RediError {
@@ -62,4 +62,21 @@ export function useDependency<T>(
     () => injector.get<T>(id, quantityOrLookUp, lookUp),
     [id, quantityOrLookUp, lookUp],
   );
+}
+
+/**
+ * A Suspense-friendly version of useDependency that can handle async dependencies.
+ * When the dependency is async, this hook will suspend the component until the dependency is resolved.
+ * This hook uses React 19's `use` syntax to work with Suspense.
+ *
+ * Note: This hook currently only supports REQUIRED quantity for async dependencies,
+ * as the injector's getAsync method only supports required dependencies.
+ */
+export function useAsyncDependency<T>(id: DependencyIdentifier<T>): T {
+  const injector = useInjector();
+  const promiseOrValue = useMemo(
+    () => injector.getAsync<T>(id),
+    [injector, id],
+  );
+  return use(promiseOrValue);
 }

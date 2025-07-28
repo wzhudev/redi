@@ -5,18 +5,20 @@
 import type { IDisposable } from '@wendellhu/redi';
 import { act, fireEvent, render } from '@testing-library/react';
 import { createIdentifier, Injector } from '@wendellhu/redi';
+
 import {
   connectDependencies,
   connectInjector,
   RediContext,
+  useAsyncDependency,
   useDependency,
   useInjector,
   WithDependency,
 } from '@wendellhu/redi/react-bindings';
 
 import React from 'react';
-
 import { afterEach, describe, expect, it } from 'vitest';
+import { AA, bbI } from '../../__testing__/async/async.base';
 import { expectToThrow } from '../../__testing__/expectToThrow';
 import { TEST_ONLY_clearKnownIdentifiers } from '../../decorators';
 
@@ -176,5 +178,31 @@ describe('react', () => {
     });
 
     expect(disposed).toBe(true);
+  });
+
+  it('should support async dependency in React 19', async () => {
+    const j = new Injector([
+      [AA],
+      [
+        bbI,
+        {
+          useAsync: () =>
+            import('../../__testing__/async/async.item').then(
+              (module) => module.BBFactory,
+            ),
+        },
+      ],
+    ]);
+
+    const App = connectInjector(() => {
+      const bbi = useAsyncDependency(bbI);
+      expect(bbi).not.toBeInstanceOf(Promise);
+
+      return <div>Hello</div>;
+    }, j);
+
+    await act(() => {
+      render(<App />);
+    });
   });
 });
