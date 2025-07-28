@@ -50,3 +50,27 @@ class Dashboard extends React.Component {
   private readonly platformSrv!: PlatformService;
 }
 ```
+
+## Use Async Dependencies in React 19
+
+You can also use async dependencies in function components. You need `useAsyncDependency` hook to get the async dependency.
+
+```ts
+function Dashboard() {
+  const platformService = useAsyncDependency(PlatformService);
+}
+```
+
+It is suggested to use async dependencies with `Suspense`.
+
+```tsx
+function Wrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Dashboard />
+    </Suspense>
+  );
+}
+```
+
+Since `useAsyncDependency` uses React's built-in `use` API, it can only be used in version 19 and above.

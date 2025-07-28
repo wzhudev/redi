@@ -179,7 +179,9 @@ console.log(
 
 ## Async item
 
-Sometimes it is not necessary to get a dependency in a synchronous way. You could use Async Item and `import` function of webpack to lazy load a dependency. To do that, you should provide an object that implements the following interface:
+Sometimes it is not necessary to get a dependency in a synchronous way. For example, you could use Async Item and `import` function of webpack to lazy load a module.
+
+To do that, you should provide an object that implements the following interface:
 
 ```ts
 export interface AsyncDependencyItem<T> {
