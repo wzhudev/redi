@@ -39,7 +39,7 @@ export class IdentifierUndefinedError extends RediError {
       index
     }th parameter of "${prettyPrintIdentifier(
       target,
-    )}". Please make sure that there is not cyclic dependency among your TypeScript files, or consider using "forwardRef". For more info please visit our website https://redi.wendell.fun/docs/faq#could-not-find-dependency-registered-on`;
+    )}". Please make sure that there is not cyclic dependency among your TypeScript files, or consider using "forwardRef". For more info please visit our website https://redi.wzhu.dev/docs/faq#could-not-find-dependency-registered-on`;
 
     super(msg);
   }
