@@ -1,6 +1,6 @@
 import type { Observable, Subscription } from 'rxjs';
 import { RediError } from '@wendellhu/redi';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 type ObservableOrFn<T> = Observable<T> | (() => Observable<T>);
 type Nullable<T> = T | undefined | null;
@@ -52,7 +52,8 @@ export function useObservable<T>(
   }
 
   const observableRef = useRef<Observable<T> | null>(null);
-  const initializedRef = useRef<boolean>(false);
+  const receivedSyncValueRef = useRef<boolean>(false);
+  const subscribedRef = useRef<boolean>(false);
 
   const destObservable = useMemo(
     () => observable,
@@ -68,7 +69,7 @@ export function useObservable<T>(
       let innerDefaultValue: T | undefined;
       if (destObservable) {
         const sub = unwrap(destObservable).subscribe((value) => {
-          initializedRef.current = true;
+          receivedSyncValueRef.current = true;
           innerDefaultValue = value;
         });
 
@@ -79,11 +80,24 @@ export function useObservable<T>(
     })(),
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    subscribedRef.current = false;
+
     let subscription: Subscription | null = null;
+
     if (destObservable) {
       observableRef.current = unwrap(destObservable);
       subscription = observableRef.current.subscribe((value) => {
+        if (
+          receivedSyncValueRef.current &&
+          !subscribedRef.current &&
+          value === valueRef.current
+        ) {
+          subscribedRef.current = true;
+          return;
+        }
+
+        subscribedRef.current = true;
         valueRef.current = value;
         setRenderCounter((prev) => prev + 1);
       });
@@ -92,7 +106,7 @@ export function useObservable<T>(
     return () => subscription?.unsubscribe();
   }, [destObservable]);
 
-  if (shouldHaveSyncValue && !initializedRef.current) {
+  if (shouldHaveSyncValue && !receivedSyncValueRef.current) {
     throw new Error(
       '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!',
     );
