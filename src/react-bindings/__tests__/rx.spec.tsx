@@ -11,7 +11,7 @@ import {
   useObservable,
   useUpdateBinder,
 } from '@wendellhu/redi/react-bindings';
-import React, { Component, useState } from 'react';
+import React, { Component, StrictMode, useState } from 'react';
 import { BehaviorSubject, interval, of, Subject } from 'rxjs';
 
 import { scan, startWith } from 'rxjs/operators';
@@ -126,13 +126,55 @@ describe('test legacy rxjs utils', () => {
 
     const { container } = render(<App />);
     expect(container.firstChild!.textContent).toBe('0');
+
+    expect(childRenderCount).toBe(1);
+
+    await act(
+      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
+    );
+    expect(container.firstChild!.textContent).toBe('3');
+    expect(childRenderCount).toBe(2);
+  });
+
+  it('[strict mode] should not trigger unnecessary re-render when handled correctly', async () => {
+    let childRenderCount = 0;
+
+    class CounterService {
+      counter$ = interval(100).pipe(
+        startWith(0),
+        scan((acc) => acc + 1),
+      );
+    }
+
+    const App = connectDependencies(() => {
+      return <Parent />;
+    }, [[CounterService]]);
+
+    function Parent() {
+      const counterService = useDependency(CounterService);
+      const count = useObservable(counterService.counter$, 0);
+
+      return <Child count={count} />;
+    }
+
+    function Child(props: { count?: number }) {
+      childRenderCount += 1;
+      return <div>{props.count}</div>;
+    }
+
+    const { container } = render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    expect(container.firstChild!.textContent).toBe('0');
     expect(childRenderCount).toBe(2);
 
     await act(
       () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
     );
     expect(container.firstChild!.textContent).toBe('3');
-    expect(childRenderCount).toBe(3);
+    expect(childRenderCount).toBe(4);
   });
 
   it('should update whenever `useUpdateBinder` emits', async () => {
