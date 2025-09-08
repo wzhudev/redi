@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1](https://github.com/wzhudev/redi/compare/v1.0.0-beta.1...v1.0.1) (2025-09-08)
+
+### Performance Improvements
+
+- optimize use observable render and add strict mode test ([#47](https://github.com/wzhudev/redi/issues/47)) ([c51716c](https://github.com/wzhudev/redi/commit/c51716c7031769ceba76c185ac2f5a88718e4d6c))
+
 # [1.0.0-beta.1](https://github.com/wzhudev/redi/compare/v1.0.0-beta.0...v1.0.0-beta.1) (2025-07-12)
 
 # [1.0.0-beta.0](https://github.com/wzhudev/redi/compare/v0.19.1...v1.0.0-beta.0) (2025-07-12)
