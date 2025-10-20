@@ -1,6 +1,6 @@
 import type { Observable, Subscription } from 'rxjs';
 import { RediError } from '@wendellhu/redi';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type ObservableOrFn<T> = Observable<T> | (() => Observable<T>);
 type Nullable<T> = T | undefined | null;
@@ -51,66 +51,46 @@ export function useObservable<T>(
     );
   }
 
-  const observableRef = useRef<Observable<T> | null>(null);
-  const receivedSyncValueRef = useRef<boolean>(false);
-  const subscribedRef = useRef<boolean>(false);
-
   const destObservable = useMemo(
-    () => observable,
+    () => observable ?? null,
     [...(typeof deps !== 'undefined' ? deps : [observable])],
   );
 
-  // This state is only for trigger React to re-render. We do not use `setValue` directly because it may cause
-  // memory leaking.
+  const observableRef = useRef<ObservableOrFn<T> | null>(null);
+  const subscriptionRef = useRef<Subscription | null>(null);
+  const syncReceivedValueRef = useRef<boolean>(false);
+
+  // This state is only for trigger React to re-render. We do not use `setValue`
+  // directly because it may cause memory leaking in React.
   const [_, setRenderCounter] = useState<number>(0);
+  const valueRef = useRef<T | undefined>(defaultValue ?? undefined);
 
-  const valueRef = useRef<T | undefined>(
-    (() => {
-      let innerDefaultValue: T | undefined;
-      if (destObservable) {
-        const sub = unwrap(destObservable).subscribe((value) => {
-          receivedSyncValueRef.current = true;
-          innerDefaultValue = value;
-        });
-
-        sub.unsubscribe();
-      }
-
-      return innerDefaultValue ?? defaultValue;
-    })(),
-  );
-
-  useLayoutEffect(() => {
-    subscribedRef.current = false;
-
-    let subscription: Subscription | null = null;
-
-    if (destObservable) {
-      observableRef.current = unwrap(destObservable);
-      subscription = observableRef.current.subscribe((value) => {
-        if (
-          receivedSyncValueRef.current &&
-          !subscribedRef.current &&
-          value === valueRef.current
-        ) {
-          subscribedRef.current = true;
-          return;
-        }
-
-        subscribedRef.current = true;
-        valueRef.current = value;
-        setRenderCounter((prev) => prev + 1);
-      });
+  if (observableRef.current !== destObservable) {
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
     }
 
-    return () => subscription?.unsubscribe();
-  }, [destObservable]);
+    if (destObservable) {
+      observableRef.current = destObservable;
+      subscriptionRef.current = unwrap(destObservable).subscribe((value) => {
+        valueRef.current = value;
+        if (syncReceivedValueRef.current === false) {
+          syncReceivedValueRef.current = true;
+        } else {
+          setRenderCounter((prev) => (prev + 1) % Number.MAX_SAFE_INTEGER);
+        }
+      });
+    }
+  }
 
-  if (shouldHaveSyncValue && !receivedSyncValueRef.current) {
+  if (shouldHaveSyncValue && !syncReceivedValueRef.current) {
     throw new Error(
       '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!',
     );
   }
+
+  syncReceivedValueRef.current = true;
 
   return valueRef.current;
 }
