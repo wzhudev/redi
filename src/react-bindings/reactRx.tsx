@@ -52,11 +52,11 @@ export function useObservable<T>(
   }
 
   const destObservable = useMemo(
-    () => observable ?? null,
+    () => observable,
     [...(typeof deps !== 'undefined' ? deps : [observable])],
   );
 
-  const observableRef = useRef<ObservableOrFn<T> | null>(null);
+  const observableRef = useRef<Nullable<ObservableOrFn<T>>>(undefined);
   const subscriptionRef = useRef<Subscription | null>(null);
   const syncReceivedValueRef = useRef<boolean>(false);
 
@@ -71,8 +71,9 @@ export function useObservable<T>(
       subscriptionRef.current = null;
     }
 
+    observableRef.current = destObservable;
+
     if (destObservable) {
-      observableRef.current = destObservable;
       subscriptionRef.current = unwrap(destObservable).subscribe((value) => {
         valueRef.current = value;
         if (syncReceivedValueRef.current === false) {
