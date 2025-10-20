@@ -1,6 +1,6 @@
 {
   "name": "@wendellhu/redi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "author": "Evan<wzhudev@gmail.com>",
   "license": "MIT",
