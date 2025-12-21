@@ -1,13 +1,9 @@
 import nextra from 'nextra'
 
 const withNextra = nextra({
-  theme: 'nextra-theme-docs',
-  themeConfig: './theme.config.tsx',
+  // No longer needs theme/themeConfig here in Nextra 4
 })
 
 export default withNextra({
-  i18n: {
-    locales: ['en-US'],
-    defaultLocale: 'en-US',
-  },
+  // Removed i18n - handled differently in App Router
 })
