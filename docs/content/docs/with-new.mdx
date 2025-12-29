@@ -1,51 +1,51 @@
-# Creating a new instance for every injection
+import { Callout } from "nextra/components";
 
-You can use `WithNew` to inject a new instance every time, which only makes sense when the dependency is a class or a factory.
+# @WithNew
 
-When the injection item is a class:
+By default, dependencies are singletons — the same instance is returned each time. Use `@WithNew()` to create a **new instance** on every injection.
+
+## Basic Usage
 
 ```ts
-let c = 0
-
 class A {
-    count = c++
+  id = Math.random();
 }
 
 class B {
-    constructor(@WithNew() @Inject(A) private readonly a: A) {}
+  constructor(@WithNew() @Inject(A) private a: A) {}
 
-    get(): number {
-        return this.a.count
-    }
+  getAId() {
+    return this.a.id;
+  }
 }
 
-const j = new Injector([[A], [B]])
-const b1 = j.createInstance(B)
-const b2 = j.createInstance(B)
+const injector = new Injector([[A], [B]]);
 
-expect(b1.get()).toBe(0)
-expect(b2.get()).toBe(1)
-})
+const b1 = injector.createInstance(B);
+const b2 = injector.createInstance(B);
+
+b1.getAId() !== b2.getAId(); // true - different instances
 ```
 
-When the injection item is a factory:
+## With Factory Items
 
 ```ts
-let c = 0;
+let counter = 0;
+const ICounter = createIdentifier<number>("counter");
 
-const ICount = createIdentifier<number>("ICount");
-
-class B {
-  constructor(@WithNew() @Inject(ICount) public readonly count: number) {}
+class MyService {
+  constructor(@WithNew() @Inject(ICounter) public count: number) {}
 }
 
-const j = new Injector([[B], [ICount, { useFactory: () => c++ }]]);
+const injector = new Injector([
+  [MyService],
+  [ICounter, { useFactory: () => counter++ }],
+]);
 
-const b1 = j.createInstance(B);
-const b2 = j.createInstance(B);
-
-expect(b1.count).toBe(0);
-expect(b2.count).toBe(1);
+injector.createInstance(MyService).count; // 0
+injector.createInstance(MyService).count; // 1
 ```
 
-Note that redi would not cache the instance so you need to dispose the instance by yourself.
+<Callout type="warning">
+  Instances created with `@WithNew()` are **not cached** by the injector. You are responsible for disposing them when no longer needed.
+</Callout>

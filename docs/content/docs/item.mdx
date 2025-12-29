@@ -2,250 +2,130 @@ import { Callout } from "nextra/components";
 
 # Dependency Item
 
+A dependency item is the actual implementation that will be injected. There are several types of dependency items.
+
 ## Class Item
 
-Class could be a dependency item directly and registered in an injector. In this case, the class is the identifier as well.
+The most common type. The injector will instantiate the class when needed.
 
 ```ts
-class AuthService {}
-
+// Simple: class is both identifier and item
 const injector = new Injector([[AuthService]]);
-```
 
-You could also use an `IdentifierDecorator` as identifier. In this case, the dependency item is an object that implements `ClassDependencyItem`:
-
-```ts
-export interface ClassDependencyItem<T> {
-  useClass: Ctor<T>;
-  lazy?: boolean;
-}
-```
-
-An example:
-
-```ts
-interface IAuthService {}
-
-const IAuthService = createIdentifier<IAuthService>("auth");
-
-class AuthService implements IAuthService {}
-
+// With separate identifier
 const injector = new Injector([
-  [IAuthService, { useClass: AuthService, lazy: true }],
+  [IAuthService, { useClass: AuthService }],
 ]);
 ```
 
-### Lazy instantiation
+### Lazy Instantiation
 
-You could set `true` to indicate the inject not to instantiate the dependency item when it is required but when its property or method is actually accessed or CPU is idle:
+Use `lazy: true` to defer instantiation until the dependency is actually used:
 
-```ts highlight=21
-interface IHttpInterceptor {
-  intercept(): void;
-}
-
-class AuthHttpInterceptor implements IHttpInterceptor {
-  intercept(): void {}
-}
-
-class FileListService {
-  constructor(
-    @Inject(IHttpInterceptor) private readonly httpI: IHttpInterceptor,
-  ) {}
-
-  request() {
-    this.httIp.intercept();
-  }
-}
-
+```ts
 const injector = new Injector([
-  [FileListService],
   [IHttpInterceptor, { useClass: AuthHttpInterceptor, lazy: true }],
 ]);
 ```
 
-In this case, `FileListService` depends on `AuthHttpInterceptor`. When you get `FileListService` it would be constructed but nor `AuthHttpInterceptor`.
-
-```ts
-const fileListService = injector.get(FileListService);
-```
-
-When you access `intercept` of `AuthHttpInterceptor` it would be constructed:
-
-```ts
-fileListService.request();
-```
-
-By postponing instantiation of some dependencies, start-up performance could get optimized.
-
 <Callout>
-  Please be careful to check if there is any side effect in constructors. The
-  application may not work as you expect in that case.
+  Lazy instantiation can improve startup performance by deferring work until it's needed.
 </Callout>
 
-## Value item
+## Value Item
 
-You could provide an object that implements `ValueDependencyItem` as a value item:
+Inject a constant value directly:
 
 ```ts
-export interface ValueDependencyItem<T> {
-  useValue: T;
-}
+const injector = new Injector([
+  [IConfig, { useValue: { apiUrl: 'https://api.example.com', debug: true } }],
+]);
 ```
 
-The value would directly injected into its dependents.
+## Factory Item
 
-## Factory item
-
-The factory item give back the control of instantiation back to you, and it could declare its dependencies like a class item.
-
-It should implements te following interface:
+Use a function to create the dependency. The factory can have its own dependencies:
 
 ```ts
-export interface FactoryDependencyItem<T> {
-  useFactory: (...deps: any[]) => T;
-  deps?: FactoryDep<any>[];
-}
-```
-
-An example:
-
-```ts
-interface I18NNumberTranspiler {
-  transpile(num: number): string
-}
-const I18NNumberTranspiler = createIdentifier<I18NNumberTranspiler>(
-  'i18n-number'
-)
-
-class ChineseNumberTranspiler implements I18NNumberTranspiler {}
-class EnglishNumberTranspiler implements I18NNumberTranspiler {}
-
-class I18NService {
-  isChinese(): boolean
-}
-
 const injector = new Injector([
   [I18NService],
   [
-    I18NNumberTranspiler,
+    INumberFormatter,
     {
-      useFactory: (i18nService: I18NService) => {
-        return i18nService.isChinese()
-          ? new ChineseNumberTranspiler()
-          : new EnglishNumberTranspiler()
+      useFactory: (i18n: I18NService) => {
+        return i18n.isChinese()
+          ? new ChineseFormatter()
+          : new EnglishFormatter();
       },
-      deps: [I18NService]
+      deps: [I18NService],
     },
   ],
-]
+]);
 ```
 
-## Existing item
+## Existing Item (Alias)
 
-You could use an existing dependency item as a dependency item. In another word, you can give an existing dependency item an alias. In this case, the dependency item is an object that implements `ExistingDependencyItem`:
-
-```ts
-export interface ExistingDependencyItem<T> {
-  useExisting: DependencyIdentifier<T>;
-}
-```
-
-An example:
+Create an alias for an existing dependency:
 
 ```ts
-interface IHttpInterceptor {
-  intercept(): void;
-}
-const IHttpInterceptor = createIdentifier<IHttpInterceptor>("http-interceptor");
-
-class AuthHttpInterceptor implements IHttpInterceptor {
-  intercept(): void {}
-}
-
-const INetworkInterceptor = createIdentifier<IHttpInterceptor>(
-  "network-interceptor",
-);
-
 const injector = new Injector([
-  [IHttpInterceptor, { useClass: AuthHttpInterceptor, lazy: true }],
-  [INetworkInterceptor, { useExisting: IHttpInterceptor }],
+  [IHttpInterceptor, { useClass: AuthHttpInterceptor }],
+  [INetworkInterceptor, { useExisting: IHttpInterceptor }],  // alias
 ]);
 
-console.log(
-  injector.get(IHttpInterceptor) === injector.get(INetworkInterceptor),
-); // true
+// Both return the same instance
+injector.get(IHttpInterceptor) === injector.get(INetworkInterceptor); // true
 ```
 
-## Async item
+## Async Item
 
-Sometimes it is not necessary to get a dependency in a synchronous way. You could use Async Item and `import` function of webpack to lazy load a dependency. To do that, you should provide an object that implements the following interface:
+Lazy-load a dependency asynchronously (useful for code splitting):
 
 ```ts
-export interface AsyncDependencyItem<T> {
-  useAsync: () => Promise<
-    T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]
-  >;
-}
-```
-
-`useAsync` function must return an dependency item except for async item.
-
-An example:
-
-```ts highlight=10-11,16,25
-// index.ts
-
-interface IReportService {
-  report(msg: string): void
-}
-const IReportService = createIdentifier<IReportService>('report')
-
-class OrderService {
-  constructor(
-    @Inject(IReportService)
-    private readonly reportSrvLoader: AsyncHook<IReportService>
-  )
-
-  public order(): void {
-    // ...
-    this.reportSrvLoader.whenReady().then((reportSrv) => reportSrv.report(''))
-  }
-}
-
 const injector = new Injector([
-  [OrderService],
   [
     IReportService,
     {
       useAsync: () => import('./reportService'),
     },
   ],
-])
-```
+]);
 
-```ts
-// reportService.ts
-export default class ReportService {
-  report(msg: string): void;
+// In consumer class
+class OrderService {
+  constructor(
+    @Inject(IReportService) private reportLoader: AsyncHook<IReportService>
+  ) {}
+
+  async order() {
+    const reportService = await this.reportLoader.whenReady();
+    reportService.report('Order completed');
+  }
 }
 ```
 
-## `onInstantiation` hook
+## Summary
 
-For `ClassDependencyItem` and `FactoryDependencyItem`, if you want to do something immediately after the dependency is instantiated, you can pass an `onInstantiation` hook.
+| Type | Syntax | Use Case |
+|------|--------|----------|
+| Class | `{ useClass: MyClass }` | Standard service classes |
+| Value | `{ useValue: obj }` | Configuration, constants |
+| Factory | `{ useFactory: fn, deps: [...] }` | Dynamic creation, conditional logic |
+| Existing | `{ useExisting: OtherId }` | Aliases |
+| Async | `{ useAsync: () => import(...) }` | Code splitting, lazy loading |
 
-```ts highlight=6
-const configService = [
-  IConfigService,
-  {
-    useClass: ConfigService,
-    lazy: true,
-    onInstantiation: (s: IConfigService) => {
-      s.setConfig();
+## `onInstantiation` Hook
+
+For class and factory items, you can run code right after instantiation:
+
+```ts
+const injector = new Injector([
+  [
+    IConfigService,
+    {
+      useClass: ConfigService,
+      onInstantiation: (service) => service.initialize(),
     },
-  },
-];
+  ],
+]);
 ```
-
-This function will be called immediately after the constructor or factory is executed. If a `ClassDependencyItem` is lazily instantiated, it will be called immediately after lazy instantiation.

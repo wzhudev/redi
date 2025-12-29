@@ -2,90 +2,75 @@ import { Callout } from "nextra/components";
 
 # Declare Dependency
 
-After creating identifiers and dependency items, you need to declare dependency relationship among dependencies. There are two types of dependency items that could dependent on others: class items and factory function items.
+Once you have identifiers and dependency items, you need to declare the relationships between them.
 
-## On a class
+## On a Class
 
-To declare dependencies of a class, you could use the `Injector` decorator:
+Use the `@Inject` decorator on constructor parameters:
 
-```ts highlight=3
+```ts
 class MapService {
   constructor(
-    @Inject(SatelliteService) private readonly satellite: SatelliteService,
+    @Inject(SatelliteService) private readonly satellite: SatelliteService
   ) {}
 }
 ```
 
-or an `IdentifierDecorator`:
+You can also use an `IdentifierDecorator` directly:
 
-```ts highlight=7
+```ts
 interface IPlatformService {}
-
 const IPlatformService = createIdentifier<IPlatformService>("platform");
 
 class DialogService {
   constructor(
-    @IPlatformService private readonly platformSrc: IPlatformService,
+    @IPlatformService private readonly platform: IPlatformService
   ) {}
 }
 ```
 
-## On a factory
+## On a Factory
 
-You should list all its dependencies in the `deps` property:
+List dependencies in the `deps` array:
 
-```ts highlight=9
-const item = [
-  I18NNumberTranspiler,
-  {
-    useFactory: (i18nService: I18NService) => {
-      return i18nService.isChinese()
-        ? new ChineseNumberTranspiler()
-        : new EnglishNumberTranspiler();
+```ts
+const injector = new Injector([
+  [I18NService],
+  [
+    IFormatter,
+    {
+      useFactory: (i18n: I18NService) => {
+        return i18n.isChinese() ? new ChineseFormatter() : new EnglishFormatter();
+      },
+      deps: [I18NService],
     },
-    deps: [I18NService],
-  },
-];
+  ],
+]);
 ```
 
-## Optional
+## Optional Dependencies
 
-When a dependency is not held by an injector, the injector would throw an error when you want to get that dependency.
+By default, missing dependencies throw an error. Use `@Optional` to allow `null`:
 
-```ts highlight=3,8
+```ts
 class MapService {
   constructor(
-    @Inject(SatelliteService) private readonly satellite: SatelliteService,
+    @Optional(SatelliteService) private readonly satellite?: SatelliteService
   ) {}
 }
 
 const injector = new Injector([[MapService]]);
-injector.get(MapService); // ERROR!
+injector.get(MapService); // Works! satellite is undefined
 ```
 
-You could use `Optional` instead `Inject`, to mark `SatelliteService` as an optional dependency not a required one.
+## Multiple Instances
 
-```ts highlight=3,8
+Use `@Many` to inject all registered instances as an array:
+
+```ts
 class MapService {
   constructor(
-    @Optional(SatelliteService) private readonly satellite?: SatelliteService,
-  ) {}
-}
-
-const injector = new Injector([MapService]);
-injector.get(MapService);
-```
-
-In this case, `MapService` could construct, but its property `satellite` would be undefined.
-
-## Multiple
-
-Similarly, you could use `Many` to mark the dependency could be injected with multiple instances:
-
-```ts highlight=3,9-10
-class MapService {
-  constructor(
-    @Many(ISatelliteService) private readonly satellites: ISatelliteService[],
+    @Many(ISatelliteService) private readonly satellites: ISatelliteService[]
   ) {}
 }
 
@@ -94,5 +79,6 @@ const injector = new Injector([
   [ISatelliteService, { useClass: GPSSatellite }],
   [ISatelliteService, { useClass: BeidouSatellite }],
 ]);
-injector.get(MapService);
+
+// satellites array contains both GPS and Beidou instances
 ```

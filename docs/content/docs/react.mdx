@@ -1,52 +1,133 @@
-# Use in React
+import { Callout } from "nextra/components";
 
-redi provides API to help use DI in React.
+# React Integration
 
-## Component provides dependencies
+redi provides hooks and utilities for seamless React integration.
 
-Component could connect with an array of dependencies. As a result, the connected component would create a `RediContext` to provide an injector.
+## Providing Dependencies
 
-```ts
+### Using `connectDependencies`
+
+Creates a new injector when the component mounts:
+
+```tsx
+import { connectDependencies } from "@anthropic/redi/react-bindings";
+
 const App = connectDependencies(
   function AppImpl() {
-    //...
+    // Your component
   },
-  [[PlatformService]],
+  [[PlatformService], [AuthService]]
 );
 ```
 
-Component could also be connected to an injector.
+### Using `connectInjector`
 
-```ts
+Uses an existing injector:
+
+```tsx
+import { connectInjector } from "@anthropic/redi/react-bindings";
+
 const injector = new Injector([[PlatformService]]);
 
 const App = connectInjector(function AppImpl() {
-  //...
+  // Your component
 }, injector);
 ```
 
-The difference between `connectDependencies` and `connectInjector` is: `connectDependencies` would always create a new injector when the connected components mounts. However, `connectInjector` would never create an injector but use the created injector.
+<Callout>
+  When components connected with `connectDependencies` are nested, their injectors automatically form a parent-child relationship.
+</Callout>
 
-When two components that are connected to dependencies become ancestor and child components, the injectors would become parent child injector as well.
+## Consuming Dependencies
 
-## Component consumes dependencies
+### Function Components (Hooks)
 
-Use the following Hooks to get an injector or a dependency:
+```tsx
+import { useInjector, useDependency } from "@anthropic/redi/react-bindings";
 
-```ts highlight=2,3
 function Dashboard() {
+  // Get the injector
   const injector = useInjector();
+
+  // Get a specific dependency
   const platformService = useDependency(PlatformService);
+
+  return <div>{platformService.getPlatformName()}</div>;
 }
 ```
 
-Use `WithDependency` to get dependency in class components:
+### Class Components
 
-```tsx highlight=2
+```tsx
+import { RediContext, WithDependency } from "@anthropic/redi/react-bindings";
+
 class Dashboard extends React.Component {
   static contextType = RediContext;
 
   @WithDependency(PlatformService)
-  private readonly platformSrv!: PlatformService;
+  private readonly platformService!: PlatformService;
+
+  render() {
+    return <div>{this.platformService.getPlatformName()}</div>;
+  }
+}
+```
+
+## RxJS Support
+
+redi provides hooks for integrating RxJS observables with React components.
+
+### `useObservable`
+
+Subscribe to an observable and automatically re-render when it emits:
+
+```tsx
+import { useObservable } from "@wendellhu/redi/react-bindings";
+
+function UserProfile() {
+  const userService = useDependency(UserService);
+  
+  // Subscribe to user$ observable, re-renders on new values
+  const user = useObservable(userService.user$);
+  
+  // With default value
+  const count = useObservable(userService.count$, 0);
+  
+  return <div>{user?.name ?? 'Loading...'}</div>;
+}
+```
+
+When passing a function that returns an observable, provide a dependency array:
+
+```tsx
+function SearchResults({ query }: { query: string }) {
+  const searchService = useDependency(SearchService);
+  
+  const results = useObservable(
+    () => searchService.search(query),
+    [],           // default value
+    undefined,    // shouldHaveSyncValue
+    [query]       // deps - re-subscribe when query changes
+  );
+  
+  return <ul>{results.map(r => <li key={r.id}>{r.title}</li>)}</ul>;
+}
+```
+
+### `useUpdateBinder`
+
+Trigger a re-render when an observable emits, without using the value:
+
+```tsx
+import { useUpdateBinder } from "@wendellhu/redi/react-bindings";
+
+function StatusIndicator() {
+  const statusService = useDependency(StatusService);
+  
+  // Re-render whenever status changes
+  useUpdateBinder(statusService.statusChanged$);
+  
+  return <div>{statusService.getCurrentStatus()}</div>;
 }
 ```

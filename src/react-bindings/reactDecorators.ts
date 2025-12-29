@@ -12,6 +12,36 @@ class ClassComponentNotInRediContextError<T> extends RediError {
   }
 }
 
+/**
+ * A property decorator for React class components that injects a dependency.
+ *
+ * This decorator creates a getter that lazily retrieves the dependency
+ * from the component's context. The component must have `RediContext`
+ * set as its `contextType`.
+ *
+ * For functional components, use the `useDependency` hook instead.
+ *
+ * @param id - The dependency identifier.
+ * @param quantity - Optional quantity (REQUIRED, OPTIONAL, or MANY).
+ * @param lookUp - Optional lookup strategy (SELF or SKIP_SELF).
+ *
+ * @example
+ * ```tsx
+ * class MyComponent extends React.Component {
+ *   static contextType = RediContext;
+ *
+ *   @WithDependency(UserService)
+ *   private userService!: UserService;
+ *
+ *   @WithDependency(ICache, Quantity.OPTIONAL)
+ *   private cache!: ICache | null;
+ *
+ *   render() {
+ *     return <div>{this.userService.getCurrentUser().name}</div>;
+ *   }
+ * }
+ * ```
+ */
 export function WithDependency<T>(
   id: DependencyIdentifier<T>,
   quantity?: Quantity,

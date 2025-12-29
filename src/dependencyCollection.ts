@@ -8,9 +8,45 @@ import { isDisposable } from './dispose';
 import { RediError } from './error';
 import { Quantity } from './types';
 
+/**
+ * A tuple representing a dependency registration with an identifier and configuration.
+ *
+ * @template T - The type of the dependency.
+ *
+ * @example
+ * ```typescript
+ * const pair: DependencyPair<ILogger> = [ILogger, { useClass: ConsoleLogger }];
+ * ```
+ */
 export type DependencyPair<T> = [DependencyIdentifier<T>, DependencyItem<T>];
+
+/**
+ * A tuple representing a class registered as its own identifier.
+ *
+ * @template T - The type of the class instance.
+ */
 export type DependencyClass<T> = [Ctor<T>];
+
+/**
+ * A dependency registration that can be passed to an Injector.
+ *
+ * Can be either:
+ * - `[ClassName]` - A class registered as its own identifier
+ * - `[Identifier, DependencyItem]` - An identifier with its configuration
+ *
+ * @template T - The type of the dependency.
+ *
+ * @example
+ * ```typescript
+ * const injector = new Injector([
+ *   [MyService],                                    // DependencyClass
+ *   [ILogger, { useClass: ConsoleLogger }],        // DependencyPair
+ *   ['API_URL', { useValue: 'https://...' }],      // DependencyPair with string
+ * ]);
+ * ```
+ */
 export type Dependency<T = any> = DependencyPair<T> | DependencyClass<T>;
+
 export type DependencyWithInstance<T = any> = [
   Ctor<T> | DependencyIdentifier<T>,
   T,

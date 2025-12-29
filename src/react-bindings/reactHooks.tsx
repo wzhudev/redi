@@ -14,6 +14,30 @@ class HooksNotInRediContextError extends RediError {
   }
 }
 
+/**
+ * A React hook that returns the current Injector from the RediContext.
+ *
+ * Use this hook when you need direct access to the injector for
+ * dynamic dependency resolution or advanced use cases.
+ *
+ * @returns The current Injector instance.
+ * @throws {HooksNotInRediContextError} If used outside of a RediContext.
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const injector = useInjector();
+ *
+ *   const handleClick = () => {
+ *     // Dynamic resolution
+ *     const service = injector.get(SomeService);
+ *     service.doSomething();
+ *   };
+ *
+ *   return <button onClick={handleClick}>Click</button>;
+ * }
+ * ```
+ */
 export function useInjector(): Injector {
   const injectionContext = useContext(RediContext);
   if (!injectionContext.injector) {
@@ -23,6 +47,35 @@ export function useInjector(): Injector {
   return injectionContext.injector;
 }
 
+/**
+ * A React hook that retrieves a dependency from the current Injector.
+ *
+ * This is the primary way to access dependencies in functional React components.
+ * The dependency is memoized and will only be re-resolved if the parameters change.
+ *
+ * @param id - The dependency identifier (class, string, or identifier created by `createIdentifier`).
+ * @param quantityOrLookUp - Either a {@link Quantity} or {@link LookUp} option.
+ * @param lookUp - A {@link LookUp} option (if first param is Quantity).
+ * @returns The dependency instance, array of instances, or null depending on the quantity.
+ *
+ * @throws {HooksNotInRediContextError} If used outside of a RediContext.
+ *
+ * @example
+ * ```tsx
+ * function UserProfile() {
+ *   // Required dependency
+ *   const userService = useDependency(UserService);
+ *
+ *   // Optional dependency
+ *   const analytics = useDependency(IAnalytics, Quantity.OPTIONAL);
+ *
+ *   // Multiple implementations
+ *   const validators = useDependency(IValidator, Quantity.MANY);
+ *
+ *   return <div>{userService.getCurrentUser().name}</div>;
+ * }
+ * ```
+ */
 export function useDependency<T>(
   id: DependencyIdentifier<T>,
   lookUp?: LookUp,

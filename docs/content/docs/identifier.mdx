@@ -2,86 +2,67 @@ import { Callout } from "nextra/components";
 
 # Identifier
 
-There are two ways to create an identifier.
+An identifier is a unique token used to look up a dependency from the injector.
 
-## Class as identifier
+## Using a Class as Identifier
 
-A class could be the identifier of iteself:
-
-```typescript
-class ClassDependency {}
-
-const injector = new Injector([[ClassDependency]]);
-```
-
-So you can get the dependency from the injector directly:
+The simplest approach is to use the class itself as the identifier:
 
 ```ts
-const classDependency = injector.get(ClassDependency);
+class AuthService {}
+
+const injector = new Injector([[AuthService]]);
+const auth = injector.get(AuthService);
 ```
 
-However, this approach leave abstraction aside and hence is less flexible.
+This is convenient but couples your code to the concrete implementation.
 
-## `IdentifierDecorator`
+## Using `createIdentifier` (Recommended)
 
-The recommended way is to create an identifier with `IdentifierDecorator`, which allows a module to depend on an interface instead of a concrete class.
+For better abstraction, use `createIdentifier` to create an identifier for an interface:
 
-For example, our code needs to depend on a clipboard service to read data from the system clipboard. We can create an interface `IClipboardInterfaceService` and its corresponding identifier:
-
-```ts highlight=1, 5
-export interface IClipboardInterfaceService {
+```ts
+// 1. Define the interface and create an identifier
+interface IClipboardService {
   readText(): string | undefined;
 }
 
-export const IClipboardInterfaceService =
-  createIdentifier<IClipboardInterfaceService>("clipboard-interface");
+const IClipboardService = createIdentifier<IClipboardService>("clipboard");
 ```
 
 <Callout>
-  In TypeScript, type variables and value variables are in different namespaces,
-  so it is legal to have an interface and a value with the same name
-  `IClipboardInterfaceService`. This trick can combine the interface and the
-  identifier, reducing the developer's cognitive burden.
+  In TypeScript, type names and value names are in different namespaces. This allows us to use the same name `IClipboardService` for both the interface and the identifier.
 </Callout>
 
-Then when providing the dependency corresponding to this interface, we can inject different classes in different runtime environments. For example, we can inject an implementation for the native browser API in the browser:
-
-```ts highlight=1, 7
-class WebClipboardInterfaceService implements IClipboardInterfaceService {
+```ts
+// 2. Create different implementations
+class WebClipboardService implements IClipboardService {
   readText() {
     return navigator.clipboard.readText();
   }
 }
 
-const injector = new Injector([
-  [IClipboardInterfaceService, { useClass: WebClipboardInterfaceService }],
-]);
-```
-
-And use a bridge to implement in the mobile environment:
-
-```ts highlight=1, 7
-class MobileClipboardInterfaceService implements IClipboardInterfaceService {
+class MobileClipboardService implements IClipboardService {
   readText() {
     return bridge.readText();
   }
 }
 
+// 3. Inject different implementations based on environment
 const injector = new Injector([
-  [IClipboardInterfaceService, { useClass: MobileClipboardInterfaceService }],
+  [IClipboardService, { useClass: WebClipboardService }],  // for web
+  // or
+  [IClipboardService, { useClass: MobileClipboardService }], // for mobile
 ]);
+
+// 4. Get the dependency - same code works in both environments
+const clipboard = injector.get(IClipboardService);
 ```
 
-Then you can get the dependency by the identifier:
+## Benefits of Using Identifiers
 
-```ts
-const clipboardService = injector.get(IClipboardInterfaceService);
-```
-
-<Callout>
-  If your application supports multiple environments, you probably have
-  different bundles for each environment. Please make sure that you only include
-  the implementation that is needed in that bundle.
-</Callout>
-
-This way, you can easily switch the implementation of the clipboard service in different environments without changing the code that uses the service.
+| Benefit | Description |
+|---------|-------------|
+| **Loose coupling** | Your code depends on interfaces, not implementations |
+| **Easy testing** | Swap real services with mocks easily |
+| **Flexibility** | Switch implementations without changing consumer code |

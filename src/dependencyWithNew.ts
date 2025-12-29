@@ -24,7 +24,22 @@ interface ToSelfDecorator {
 }
 
 /**
- * Always initialize a new instance of that dependency instead of getting the
- * cached instance from the injector.
+ * A parameter decorator that instructs the injector to always create
+ * a new instance of the dependency instead of returning the cached singleton.
+ *
+ * By default, dependencies are singletons within an injector. Using `@WithNew()`
+ * will create a fresh instance each time it's injected.
+ *
+ * @example
+ * ```typescript
+ * class RequestHandler {
+ *   constructor(
+ *     // Each RequestHandler gets its own RequestContext
+ *     @WithNew() @Inject(RequestContext) private context: RequestContext
+ *   ) {}
+ * }
+ *
+ * // Without @WithNew, all RequestHandlers would share the same context
+ * ```
  */
 export const WithNew: ToSelfDecorator = withNewDecoratorFactoryProducer(true);

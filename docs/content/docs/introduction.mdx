@@ -1,23 +1,22 @@
-import { Callout } from "nextra/components";
+import { Callout, Cards } from "nextra/components";
 
-# Getting started
+# Getting Started
+
+redi is a lightweight dependency injection library for TypeScript and JavaScript applications.
 
 <Callout>
-  It is highly recommended to learn a thing or two about dependency injection
-  before moving on.
+  New to dependency injection? Check out the [Concepts](/docs/concepts) page first to understand the core ideas.
 </Callout>
 
 ## Installation
-
-Inside your project, run the following:
 
 ```shell npm2yarn
 npm install @wendellhu/redi
 ```
 
-After installation, you should enable `experimentalDecorators` in the tsconfig.json file:
+Enable decorators in your `tsconfig.json`:
 
-```json highlight=3
+```json
 {
   "compilerOptions": {
     "experimentalDecorators": true
@@ -25,79 +24,41 @@ After installation, you should enable `experimentalDecorators` in the tsconfig.j
 }
 ```
 
-## Basic usage
+## Quick Example
 
-Let's get started with an example:
+Here's a simple example showing how to use redi:
 
-```tsx
+```ts
+import { Inject, Injector } from "@wendellhu/redi";
+
+// 1. Define your services
 class AuthService {
-  public static getCurrentUserInfo(): UserInfo {
-    // your implementation here...
+  getCurrentUserInfo(): UserInfo {
+    // your implementation
   }
 }
 
 class FileListService {
-  constructor() {}
+  constructor(
+    @Inject(AuthService) private readonly authService: AuthService
+  ) {}
 
-  public getUserFiles(): Promise<Files> {
-    const currentUser = AuthService.getCurrentUserInfo();
-    // ...
-  }
-}
-```
-
-Obviously `FileListService` depends on `AuthService`. Let's see how we can make this piece of code dependency injection flavour.
-
-**Step One. Declare dependency relationship.**
-
-```typescript highlight=1,4,10,13
-import { Inject } from "@wendellhu/redi";
-
-class AuthService {
-  public getCurrentUserInfo(): UserInfo {
-    // your implementation here...
-  }
-}
-
-class FileListService {
-  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
-
-  public getUserFiles(): Promise<Files> {
+  getUserFiles(): Promise<Files> {
     const currentUser = this.authService.getCurrentUserInfo();
     // ...
   }
 }
-```
 
-Use the decorator `Inject` to declare on the constructor of `FileListService` that `AuthService` is one of its dependencies.
-
-**Step Two: Provide dependencies.**
-
-```typescript
-import { Injector } from "@wendellhu/redi";
-
+// 2. Create an injector with your dependencies
 const injector = new Injector([[FileListService], [AuthService]]);
-```
 
-All your have to do is pass them into the constructor of `Injector`.
-
-**Step Three. Wire up.**
-
-```typescript
+// 3. Get your service - dependencies are automatically resolved
 const fileListService = injector.get(FileListService);
 ```
 
-Then you get an instance of `FileListService`, and its dependency `AuthService` is also constructed and cached in the `Injector.
+That's it! The `Injector` automatically creates `AuthService` and injects it into `FileListService`.
 
-```typescript
-const authService = injector.get(FileListService);
-```
-
-Read the [next chapter](/docs/concepts) to learn basic concepts in dependency injection.
-
-## Using redi with CDN
-
-You can also use redi via CDN if you don't want to use npm or yarn.
+## CDN Usage
 
 Include the following `<script>` tag in your HTML file:
 
@@ -127,3 +88,10 @@ If you are using React 19, you should import the React bindings using [JavaScrip
   import { connectDependencies } from "https://unpkg.com/@wendellhu/redi/dist/esm/react-bindings/index.js";
 </script>
 ```
+
+## What's Next?
+
+- **[Concepts](/docs/concepts)** - Learn the core concepts: Identifier, Dependency Item, and Binding
+- **[Identifier](/docs/identifier)** - Learn how to create identifiers for your dependencies
+- **[Decorators](/docs/decorators)** - See all available decorators at a glance
+- **[React Integration](/docs/react)** - Using redi with React applications

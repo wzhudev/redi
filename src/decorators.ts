@@ -23,7 +23,7 @@ class DependencyDescriptorNotFoundError extends RediError {
   }
 }
 
-export class RequiredDecoratorMissusedError extends RediError {
+export class RequiredDecoratorMisusedError extends RediError {
   constructor(target: Ctor<any>, index: number) {
     const msg = `It seems that you forgot to provide a parameter to @Required() on the ${
       index
@@ -112,10 +112,37 @@ const knownIdentifiers = new Set<string>();
 const cachedIdentifiers = new Map<string, IdentifierDecorator<any>>();
 
 /**
- * Create a dependency identifier
+ * Create a dependency identifier for interface-based injection.
  *
- * @param id name of the identifier
- * @returns Identifier that could also be used as a decorator
+ * Since TypeScript interfaces are erased at runtime, you cannot use them directly
+ * as injection tokens. This function creates a unique identifier that can be used
+ * to register and retrieve dependencies that implement an interface.
+ *
+ * The returned identifier can also be used as a decorator.
+ *
+ * @param id - A unique string name for the identifier. Should be unique across your application.
+ * @returns An identifier that can be used both as a dependency token and as a parameter decorator.
+ *
+ * @example
+ * ```typescript
+ * interface ILogger {
+ *   log(message: string): void;
+ * }
+ *
+ * const ILogger = createIdentifier<ILogger>('ILogger');
+ *
+ * class ConsoleLogger implements ILogger {
+ *   log(message: string) { console.log(message); }
+ * }
+ *
+ * // Use as decorator
+ * class MyService {
+ *   constructor(@ILogger private logger: ILogger) {}
+ * }
+ *
+ * // Register in injector
+ * const injector = new Injector([[ILogger, { useClass: ConsoleLogger }]]);
+ * ```
  */
 export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
   if (knownIdentifiers.has(id)) {

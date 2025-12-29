@@ -97,9 +97,25 @@ export function useObservable<T>(
 }
 
 /**
- * subscribe to a signal that emits whenever data updates and re-render
+ * A React hook that re-renders the component when an Observable emits.
  *
- * @param update$ a signal that the data the functional component depends has updated
+ * This is useful when you have external state managed by RxJS and want
+ * to trigger a re-render whenever that state changes, without using
+ * the emitted value directly.
+ *
+ * @param update$ - An Observable that emits when the component should re-render.
+ *
+ * @example
+ * ```tsx
+ * function StatusIndicator() {
+ *   const statusService = useDependency(StatusService);
+ *
+ *   // Re-render whenever status changes
+ *   useUpdateBinder(statusService.statusChanged$);
+ *
+ *   return <div>{statusService.getCurrentStatus()}</div>;
+ * }
+ * ```
  */
 export function useUpdateBinder(update$: Observable<void>): void {
   const [, dumpSet] = useState(0);

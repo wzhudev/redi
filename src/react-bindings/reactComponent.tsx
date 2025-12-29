@@ -39,9 +39,27 @@ function RediInjector(
 }
 
 /**
- * @param Comp
- * @param injector
- * @returns A component type that can be rendered.
+ * Connect a React component to a specific Injector instance.
+ *
+ * Wraps the component with a RediProvider, making the injector available
+ * to all child components via `useDependency` and `useInjector` hooks.
+ *
+ * Use this when you have an existing Injector instance that you want
+ * to make available to a React component tree.
+ *
+ * @param Comp - The React component to wrap.
+ * @param injector - The Injector instance to provide.
+ * @returns A new component that provides the injector via context.
+ *
+ * @example
+ * ```tsx
+ * const injector = new Injector([[UserService], [ILogger, { useClass: ConsoleLogger }]]);
+ *
+ * const App = connectInjector(MyApp, injector);
+ *
+ * // Now MyApp and all its children can use useDependency
+ * ReactDOM.render(<App />, document.getElementById('root'));
+ * ```
  */
 export function connectInjector<P>(
   Comp: React.ComponentType<P>,
@@ -56,6 +74,33 @@ export function connectInjector<P>(
   };
 }
 
+/**
+ * Connect a React component with a set of dependencies.
+ *
+ * Creates a new Injector (or child injector if inside an existing context)
+ * with the specified dependencies, and provides it to the component tree.
+ *
+ * The injector is automatically disposed when the component unmounts.
+ *
+ * @param Comp - The React component to wrap.
+ * @param dependencies - An array of dependencies to register.
+ * @returns A new component that provides the dependencies via context.
+ *
+ * @example
+ * ```tsx
+ * const App = connectDependencies(MyApp, [
+ *   [UserService],
+ *   [ILogger, { useClass: ConsoleLogger }],
+ *   [IConfig, { useValue: { apiUrl: 'https://api.example.com' } }],
+ * ]);
+ *
+ * // MyApp and children can now use these dependencies
+ * function MyApp() {
+ *   const userService = useDependency(UserService);
+ *   return <div>{userService.getCurrentUser().name}</div>;
+ * }
+ * ```
+ */
 export function connectDependencies<P>(
   Comp: React.ComponentType<P>,
   dependencies: Dependency[],

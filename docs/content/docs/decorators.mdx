@@ -1,0 +1,37 @@
+import { Callout } from "nextra/components";
+
+# Decorators Overview
+
+redi provides parameter decorators to declare and configure dependencies. Here's a quick reference.
+
+## Injection Decorators
+
+Declare what dependencies should be injected. See [Declare Dependency](/docs/declare-dependency) for details.
+
+| Decorator | Description |
+|-----------|-------------|
+| [`@Inject(id)`](/docs/declare-dependency) | Inject a required dependency |
+| [`@Optional(id?)`](/docs/declare-dependency) | Inject an optional dependency (returns `null` if not found) |
+| [`@Many(id?)`](/docs/declare-dependency) | Inject all instances as an array |
+
+## Lookup Decorators
+
+Control where dependencies are resolved. See [Hierarchy Injection](/docs/hierarchy) for details.
+
+| Decorator | Description |
+|-----------|-------------|
+| [`@Self()`](/docs/hierarchy) | Only look in current injector |
+| [`@SkipSelf()`](/docs/hierarchy) | Skip current, look in parent |
+| [`@InjectSelf()`](/docs/inject-self) | Inject the Injector itself |
+
+## Behavior Decorators
+
+Modify how dependencies are resolved.
+
+| Decorator | Description |
+|-----------|-------------|
+| [`@WithNew()`](/docs/with-new) | Create a new instance (skip singleton cache) |
+
+<Callout>
+  Most decorators can be combined. For example: `@SkipSelf() @Optional(IConfig)` looks for an optional dependency only in parent injectors.
+</Callout>

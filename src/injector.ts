@@ -98,11 +98,60 @@ class DeleteDependencyAfterResolutionError<T> extends RediError {
   }
 }
 
+/**
+ * An accessor object that provides limited access to the injector.
+ *
+ * This interface is passed to the callback in `injector.invoke()`, providing
+ * a safe way to access dependencies without exposing the full injector API.
+ *
+ * @example
+ * ```typescript
+ * injector.invoke((accessor) => {
+ *   const logger = accessor.get(ILogger);
+ *   const hasCache = accessor.has(ICacheService);
+ * });
+ * ```
+ */
 export interface IAccessor {
+  /** Get a dependency by its identifier. */
   get: Injector['get'];
+  /** Check if a dependency is available. */
   has: Injector['has'];
 }
 
+/**
+ * The dependency injection container that manages dependency registration and resolution.
+ *
+ * The Injector is the core of redi's dependency injection system. It stores
+ * dependency registrations and creates instances when requested.
+ *
+ * Features:
+ * - **Hierarchical injection**: Child injectors can inherit from parent injectors
+ * - **Lazy instantiation**: Dependencies are created only when first requested
+ * - **Singleton by default**: Each dependency is instantiated once per injector
+ * - **Lifecycle management**: Automatically disposes dependencies implementing IDisposable
+ *
+ * @example
+ * ```typescript
+ * // Basic usage
+ * const injector = new Injector([
+ *   [AuthService],
+ *   [ILogger, { useClass: ConsoleLogger }],
+ *   ['API_URL', { useValue: 'https://api.example.com' }],
+ * ]);
+ *
+ * const auth = injector.get(AuthService);
+ * const logger = injector.get(ILogger);
+ *
+ * // Hierarchical injectors
+ * const childInjector = injector.createChild([
+ *   [ILogger, { useClass: FileLogger }], // Override parent's logger
+ * ]);
+ *
+ * // Clean up when done
+ * injector.dispose();
+ * ```
+ */
 export class Injector {
   private readonly dependencyCollection: DependencyCollection;
   private readonly resolvedDependencyCollection: ResolvedDependencyCollection;
@@ -116,9 +165,29 @@ export class Injector {
   private disposed = false;
 
   /**
-   * Create a new `Injector` instance
-   * @param dependencies Dependencies that should be resolved by this injector instance.
-   * @param parent Optional parent injector.
+   * Create a new `Injector` instance.
+   *
+   * @param dependencies - An array of dependencies to register with this injector.
+   *   Each dependency can be:
+   *   - `[ClassName]` - Register a class as its own identifier
+   *   - `[Identifier, DependencyItem]` - Register with a specific identifier and configuration
+   * @param parent - Optional parent injector for hierarchical injection.
+   *   Child injectors inherit dependencies from their parent.
+   *
+   * @example
+   * ```typescript
+   * // Root injector
+   * const rootInjector = new Injector([
+   *   [AuthService],
+   *   [ILogger, { useClass: ConsoleLogger }],
+   * ]);
+   *
+   * // Child injector with parent
+   * const childInjector = new Injector(
+   *   [[ICache, { useClass: MemoryCache }]],
+   *   rootInjector
+   * );
+   * ```
    */
   constructor(
     dependencies?: Dependency[],
@@ -133,13 +202,26 @@ export class Injector {
   }
 
   /**
-   * Add a callback function that will be triggered when the Injector is disposed.
-   * Please note that when you callback is invoked, the injector is already disposed and
-   * you will not be able to interact with this Injector any more.
+   * Register a callback to be called when this injector is disposed.
    *
-   * @param {() => void} callback The callback function that will be invoked when
-   * the Injector is disposed.
-   * @returns A disposable that will remove the callback.
+   * Use this to perform cleanup tasks or release external resources
+   * when the injector lifecycle ends.
+   *
+   * **Note:** When your callback is invoked, the injector is already disposed
+   * and you cannot interact with it anymore.
+   *
+   * @param callback - The function to call when the injector is disposed.
+   * @returns A disposable that removes the callback when disposed.
+   *
+   * @example
+   * ```typescript
+   * const cleanup = injector.onDispose(() => {
+   *   console.log('Injector disposed, cleaning up...');
+   * });
+   *
+   * // Later, remove the callback if no longer needed
+   * cleanup.dispose();
+   * ```
    */
   public onDispose(callback: () => void): IDisposable {
     this.disposingCallbacks.add(callback);
@@ -147,9 +229,28 @@ export class Injector {
   }
 
   /**
-   * Create a child inject with a set of dependencies.
-   * @param dependencies Dependencies that should be resolved by the newly created child injector.
-   * @returns The child injector.
+   * Create a child injector that inherits from this injector.
+   *
+   * The child injector can:
+   * - Access all dependencies registered in parent injectors
+   * - Override parent dependencies with its own registrations
+   * - Have its own scoped dependencies
+   *
+   * When the parent injector is disposed, all child injectors are disposed first.
+   *
+   * @param dependencies - Dependencies to register with the child injector.
+   * @returns The newly created child injector.
+   *
+   * @example
+   * ```typescript
+   * const rootInjector = new Injector([[ILogger, { useClass: ConsoleLogger }]]);
+   *
+   * const requestInjector = rootInjector.createChild([
+   *   [RequestContext, { useClass: RequestContext }],
+   * ]);
+   *
+   * // requestInjector can access both RequestContext and ILogger
+   * ```
    */
   public createChild(dependencies?: Dependency[]): Injector {
     this._ensureInjectorNotDisposed();
@@ -158,7 +259,25 @@ export class Injector {
   }
 
   /**
-   * Dispose the injector and all dependencies held by this injector. Note that its child injectors will dispose first.
+   * Dispose the injector and release all resources.
+   *
+   * This method:
+   * 1. Recursively disposes all child injectors first
+   * 2. Calls `dispose()` on all instantiated dependencies that implement `IDisposable`
+   * 3. Clears all internal collections
+   * 4. Detaches from parent injector
+   * 5. Invokes all registered `onDispose` callbacks
+   *
+   * After disposal, the injector cannot be used anymore.
+   *
+   * @example
+   * ```typescript
+   * const injector = new Injector([[DatabaseService]]);
+   * const db = injector.get(DatabaseService);
+   *
+   * // When done with the injector
+   * injector.dispose(); // DatabaseService.dispose() is called automatically
+   * ```
    */
   public dispose(): void {
     // Dispose child injectors first.
@@ -186,10 +305,32 @@ export class Injector {
   }
 
   /**
-   * Add a dependency or its instance into injector. It would throw an error if the dependency
-   * has already been instantiated.
+   * Add a dependency or pre-created instance to the injector at runtime.
    *
-   * @param dependency The dependency or an instance that would be add in the injector.
+   * This allows dynamic registration of dependencies after the injector is created.
+   * Throws an error if the dependency has already been instantiated.
+   *
+   * @param dependency - A tuple containing:
+   *   - `[Ctor]` - A class to register as its own identifier
+   *   - `[Identifier, DependencyItem]` - An identifier with its configuration
+   *   - `[Identifier, Instance]` - An identifier with a pre-created instance
+   *
+   * @throws {AddDependencyAfterResolutionError} If the dependency is already resolved.
+   *
+   * @example
+   * ```typescript
+   * const injector = new Injector();
+   *
+   * // Add a class
+   * injector.add([MyService]);
+   *
+   * // Add with configuration
+   * injector.add([ILogger, { useClass: ConsoleLogger }]);
+   *
+   * // Add a pre-created instance
+   * const config = { apiUrl: 'https://api.example.com' };
+   * injector.add([IConfig, config]);
+   * ```
    */
   public add<T>(dependency: DependencyOrInstance<T>): void {
     this._ensureInjectorNotDisposed();
@@ -222,10 +363,20 @@ export class Injector {
   }
 
   /**
-   * Replace an injection mapping for interface-based injection. It would throw an error if the dependency
-   * has already been instantiated.
+   * Replace an existing dependency registration.
    *
-   * @param dependency The dependency that will replace the already existed dependency.
+   * Use this to swap out an implementation, typically for testing purposes.
+   * Throws an error if the dependency has already been instantiated.
+   *
+   * @param dependency - A tuple of `[Identifier, DependencyItem]` to replace the existing registration.
+   *
+   * @throws {AddDependencyAfterResolutionError} If the dependency is already resolved.
+   *
+   * @example
+   * ```typescript
+   * // In tests, replace a real service with a mock
+   * injector.replace([IHttpClient, { useClass: MockHttpClient }]);
+   * ```
    */
   public replace<T>(dependency: DependencyPair<T>): void {
     this._ensureInjectorNotDisposed();
@@ -240,10 +391,18 @@ export class Injector {
   }
 
   /**
-   * Delete a dependency from an injector. It would throw an error when the deleted dependency
-   * has already been instantiated.
+   * Remove a dependency registration from the injector.
    *
-   * @param identifier The identifier of the dependency that is supposed to be deleted.
+   * Throws an error if the dependency has already been instantiated.
+   *
+   * @param identifier - The identifier of the dependency to remove.
+   *
+   * @throws {DeleteDependencyAfterResolutionError} If the dependency is already resolved.
+   *
+   * @example
+   * ```typescript
+   * injector.delete(ITemporaryService);
+   * ```
    */
   public delete<T>(identifier: DependencyIdentifier<T>): void {
     this._ensureInjectorNotDisposed();
@@ -256,12 +415,23 @@ export class Injector {
   }
 
   /**
-   * Invoke a function with dependencies injected. The function could only get dependency from the injector
-   * and other methods are not accessible for the function.
+   * Execute a function with controlled access to the injector.
    *
-   * @param cb the function to be executed
-   * @param args arguments to be passed into the function
-   * @returns the return value of the function
+   * The callback receives an `IAccessor` that provides limited access to
+   * the injector's `get` and `has` methods. This is useful for service locator
+   * patterns or when you need to resolve dependencies dynamically.
+   *
+   * @param cb - The function to execute. Receives an accessor and any additional arguments.
+   * @param args - Additional arguments to pass to the callback.
+   * @returns The return value of the callback function.
+   *
+   * @example
+   * ```typescript
+   * const result = injector.invoke((accessor, multiplier) => {
+   *   const calc = accessor.get(ICalculator);
+   *   return calc.compute() * multiplier;
+   * }, 2);
+   * ```
    */
   invoke<T, P extends any[] = []>(
     cb: (accessor: IAccessor, ...args: P) => T,
@@ -287,9 +457,18 @@ export class Injector {
   }
 
   /**
-   * Check if the injector could initialize a dependency.
+   * Check if a dependency is registered in this injector or any parent injector.
    *
-   * @param id Identifier of the dependency
+   * @param id - The identifier of the dependency to check.
+   * @returns `true` if the dependency is registered, `false` otherwise.
+   *
+   * @example
+   * ```typescript
+   * if (injector.has(IOptionalFeature)) {
+   *   const feature = injector.get(IOptionalFeature);
+   *   feature.enable();
+   * }
+   * ```
    */
   public has<T>(id: DependencyIdentifier<T>): boolean {
     return this.dependencyCollection.has(id) || this.parent?.has(id) || false;
@@ -322,11 +501,35 @@ export class Injector {
     lookUp?: LookUp,
   ): T[] | T | null;
   /**
-   * Get dependency instance(s).
+   * Retrieve a dependency instance from the injector.
    *
-   * @param id Identifier of the dependency
-   * @param quantityOrLookup @link{Quantity} or @link{LookUp}
-   * @param lookUp @link{LookUp}
+   * The dependency will be instantiated on first access and cached for subsequent requests.
+   * If the dependency is not found and not optional, an error is thrown.
+   *
+   * @param id - The identifier of the dependency to retrieve.
+   * @param quantityOrLookup - Either a {@link Quantity} specifying how many instances to get,
+   *   or a {@link LookUp} specifying where to search.
+   * @param lookUp - A {@link LookUp} specifying where to search (if first param is Quantity).
+   * @returns The dependency instance, an array of instances (for `Quantity.MANY`),
+   *   or `null` (for `Quantity.OPTIONAL` when not found).
+   *
+   * @throws {DependencyNotFoundError} If the dependency is not registered and not optional.
+   * @throws {GetAsyncItemFromSyncApiError} If trying to get an async dependency synchronously.
+   *
+   * @example
+   * ```typescript
+   * // Get a required dependency
+   * const logger = injector.get(ILogger);
+   *
+   * // Get an optional dependency
+   * const cache = injector.get(ICache, Quantity.OPTIONAL);
+   *
+   * // Get all registered handlers
+   * const handlers = injector.get(IHandler, Quantity.MANY);
+   *
+   * // Only search current injector
+   * const localService = injector.get(IService, LookUp.SELF);
+   * ```
    */
   public get<T>(
     id: DependencyIdentifier<T>,
@@ -401,7 +604,28 @@ export class Injector {
   }
 
   /**
-   * Instantiate a class. The created instance would not be held by the injector.
+   * Create an instance of a class with its dependencies injected.
+   *
+   * Unlike `get()`, the created instance is NOT cached by the injector.
+   * Each call creates a new instance. You can also pass custom arguments
+   * that will be passed before the injected dependencies.
+   *
+   * @param ctor - The class constructor to instantiate.
+   * @param customArgs - Custom arguments to pass before injected dependencies.
+   * @returns A new instance of the class.
+   *
+   * @example
+   * ```typescript
+   * class RequestHandler {
+   *   constructor(
+   *     requestId: string,           // Custom arg
+   *     @Inject(ILogger) logger: ILogger  // Injected
+   *   ) {}
+   * }
+   *
+   * // Create instance with custom requestId
+   * const handler = injector.createInstance(RequestHandler, 'req-123');
+   * ```
    */
   public createInstance<T extends unknown[], U extends unknown[], C>(
     ctor: new (...args: [...T, ...U]) => C,

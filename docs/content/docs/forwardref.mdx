@@ -2,28 +2,44 @@ import { Callout } from "nextra/components";
 
 # forwardRef
 
-In the following example, `Person` is defined before `Father` but relies on `Father`. In this case, you should use `forwardRef` to wrap `Father`. Otherwise redi would receive `undefined` when tries to figure out dependencies of `Person` (and it would throw an error in that case).
+Use `forwardRef` to reference a class that is defined **after** the class that depends on it.
 
-```ts highlight=5
-import { Self, SkipSelf, Optional } from "@wendellhu/redi";
+## The Problem
 
+TypeScript/JavaScript evaluates code top-to-bottom. If class `A` depends on class `B`, but `B` is defined after `A`, the dependency will be `undefined`:
+
+```ts
+// ❌ This won't work - Father is undefined when Person is evaluated
+class Person {
+  constructor(@Inject(Father) readonly father: Father) {}
+}
+
+class Father extends Person {}
+```
+
+## The Solution
+
+Wrap the dependency in `forwardRef`:
+
+```ts
+// ✅ This works
 class Person {
   constructor(
-    @SkipSelf() @Optional(forwardRef(() => Father)) readonly father: Father,
-  ) { }
+    @SkipSelf() @Optional(forwardRef(() => Father)) readonly father: Father
+  ) {}
 }
 
 class Father extends Person {
-  changeDiaper(): void { }
+  changeDiaper(): void {}
 }
-
-const parentInjector = new Injector([[Person], [Father, { useFactory: f => f, deps: [Person] }]])
-const injector = parentInjector.createChild([[Person]]);
-const person = injector.get(Person);
-expect(person.father).toBe(parentInjector.get(Person)); // true
 ```
 
 <Callout>
-  This is not related to redi itself but how TypeScript is transpiled into
-  JavaScript.
+  This is a JavaScript/TypeScript behavior, not specific to redi. The same pattern exists in Angular and other DI frameworks.
 </Callout>
+
+## When to Use
+
+- Circular class references
+- Classes defined after their dependents
+- Mutual dependencies between files

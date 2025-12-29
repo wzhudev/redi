@@ -1,36 +1,53 @@
+import { Callout } from "nextra/components";
+
 # Binding
 
-After declaring identifiers and dependencies, it is necessary to establish a binding relationship between the identifiers and dependencies, and register these bindings in the injector. The injector can only return dependencies based on identifiers when it knows a set of bindings.
+A binding connects an identifier to a dependency item. The injector uses bindings to know what to provide when a dependency is requested.
 
-There are two ways to register bindings on the injector:
+## Registering Bindings
 
-- As parameters of the injector constructor
-- By calling the `add` method of the injector
+### In the Constructor
 
-## As parameters of the injector constructor
-
-The first parameter of the `Injector` constructor is a set of bindings. You have seen a lot of code like this in the previous section:
+The most common way is to pass bindings when creating the injector:
 
 ```ts
 const injector = new Injector([
-  [SomeClass],
-  [IdentifierA, { useClass: SomeClass }],
-  [IdentifierB, { useValue: SomeValue }],
-  [IdentifierC, { useFactory: SomeFactory }],
-  [IdentifierD, { useAsync: SomeAsyncFunction }],
+  [AuthService],                              // Class as both identifier and item
+  [ILogger, { useClass: ConsoleLogger }],     // Interface → Class
+  [IConfig, { useValue: { debug: true } }],   // Interface → Value
+  [IFactory, { useFactory: () => create() }], // Interface → Factory
 ]);
 ```
 
-## By calling the `add` method of the injector
+### Using the `add` Method
+
+You can also add bindings later:
 
 ```ts
-injector.add([SomeClass]);
-injector.add([IdentifierA, { useClass: SomeClass }]);
-injector.add([IdentifierB, { useValue: SomeValue }]);
+const injector = new Injector();
+
+injector.add([AuthService]);
+injector.add([ILogger, { useClass: ConsoleLogger }]);
 ```
 
-This approach is more flexible because it does not restrict when you can register bindings. However, this type of binding can be a double-edged sword as it may not have been registered by the time you retrieve dependencies through the injector. Therefore, we recommend using the first method as a priority unless you can ensure the correct order of registration and retrieval.
+<Callout>
+  Be careful with `add` — make sure bindings are registered before they are requested, or you'll get an error.
+</Callout>
 
-## Replacing or deleting bindings
+## Modifying Bindings
 
-Before an identifier is resolved, it is possible to replace or delete the binding of the identifier. This can be done by calling the `replace` or `delete` methods of the injector.
+### Replace a Binding
+
+```ts
+injector.replace([ILogger, { useClass: FileLogger }]);
+```
+
+### Delete a Binding
+
+```ts
+injector.delete(ILogger);
+```
+
+<Callout type="warning">
+  You can only replace or delete bindings **before** they are resolved. Once a dependency has been created, changes won't take effect.
+</Callout>

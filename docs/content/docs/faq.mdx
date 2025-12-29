@@ -2,51 +2,52 @@ import { Callout } from "nextra/components";
 
 # FAQ
 
-## Import scripts of redi more than once
+## "Loading scripts of redi more than once"
 
-<Callout>
+<Callout type="error">
   [redi]: You are loading scripts of redi more than once! This may cause
   undesired behavior in your application. Maybe your dependencies added redi as
   its dependency and bundled redi to its dist files. Or you import different
   versions of redi.
 </Callout>
 
-This error happens when you import scripts of redi more than once. This usually happens when
+**Common causes:**
 
-1. Some dependency in your workspace uses redi as well. However, it don't declare redi as an external dependency.
-2. Some dependency in your project uses a different version of redi from yours.
-3. You are working on a monorepo and repos uses different versions of redi.
+1. A dependency bundles its own copy of redi instead of declaring it as external
+2. Multiple versions of redi in your project
+3. Monorepo with inconsistent redi versions
 
-redi use `Symbol` and `instanceof` internally. So things may not work when you import redi more than once. To fix this problem:
+**Solutions:**
 
-1. Contact the maintainer of these dependencies and ask them set redi as an external dependency.
-2. The dependency may re-exports API of redi. In such case you should use these re-exported API instead of using redi directly.
-3. Use the same version of redi across your monorepo.
+1. Ask dependency maintainers to set redi as external
+2. If a dependency re-exports redi APIs, use those instead of importing redi directly
+3. Ensure consistent redi version across your monorepo
 
-## Could not find dependency registered on
+## "Could not find dependency registered on"
 
-<Callout>
+<Callout type="error">
   [redi]: It seems that you register "undefined" as dependency on the X
   parameter of "XXX". Please make sure that there is not cyclic dependency among
   your TypeScript files, or consider using "forwardRef".
 </Callout>
 
-This errors happens when redi is trying to figure out what dependencies `XXX` relies on but a dependency is resolved to `undefined`.
+This happens when redi tries to register a dependency that evaluates to `undefined`.
 
-Let's assume that the dependency resolved to `undefined` is `YYY`.
+**Common causes:**
 
-1. `YYY` must be a class type dependency.
-2. Due to how TypeScript is transpiled into JavaScript. `YYY` is declared first and later assigned to the constructor function of `YYY`.
-3. There is cycle dependency among your TypeScript files that leads to `YYY` being evaluated as `undefined` when `Inject` decorator is trying to register `YYY` as a dependency on `XXX`.
+- Circular file dependencies causing a class to be `undefined` when evaluated
+- Referencing a class before it's defined
 
-To fix this problem, you can use `forwardRef`
+**Solutions:**
+
+1. Use [`forwardRef`](/docs/forwardref) to wrap the dependency:
 
 ```ts
-import { Inject, forwardRef } from "@wendellhu/redi";
+import { Inject, forwardRef } from "@anthropic/redi";
 
 class XXX {
-  constructor(@Inject(forwardRef(() => YYY)) private readonly _yyy: YYY) {}
+  constructor(@Inject(forwardRef(() => YYY)) private yyy: YYY) {}
 }
 ```
 
-... or fix cycle dependency in your codebase. We recommend using [dpdm](https://www.npmjs.com/package/dpdm) to find cycle dependency in your codebase. You could traverse the dependency tree staring from the file that contains `XXX`, and break cycles those contains the file.
+2. Fix circular dependencies in your codebase. Use [dpdm](https://www.npmjs.com/package/dpdm) to find cycles.

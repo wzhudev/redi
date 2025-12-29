@@ -30,6 +30,7 @@ export { WithNew } from './dependencyWithNew';
 export { type IDisposable, isDisposable } from './dispose';
 export { RediError } from './error';
 export { type IAccessor, Injector } from './injector';
+export { InjectSelf } from './injectSelf';
 export { LookUp, Quantity } from './types';
 
 const globalObject: any =

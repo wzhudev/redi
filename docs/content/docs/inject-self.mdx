@@ -1,0 +1,56 @@
+# @InjectSelf
+
+The `@InjectSelf()` decorator injects the current `Injector` instance itself into a class.
+
+## When to Use
+
+- Dynamically resolve dependencies at runtime
+- Create child injectors for scoped contexts
+- Implement factory patterns
+
+## Basic Usage
+
+```ts
+import { Injector, InjectSelf } from "@anthropic/redi";
+
+class ServiceFactory {
+  constructor(@InjectSelf() private injector: Injector) {}
+
+  createService<T>(id: DependencyIdentifier<T>): T {
+    return this.injector.createInstance(id);
+  }
+
+  createScope(deps: Dependency[]): Injector {
+    return this.injector.createChild(deps);
+  }
+}
+```
+
+## Examples
+
+### Dynamic Resolution
+
+```ts
+class PluginManager {
+  constructor(@InjectSelf() private injector: Injector) {}
+
+  loadPlugin(pluginId: DependencyIdentifier<Plugin>): Plugin {
+    return this.injector.get(pluginId);
+  }
+}
+```
+
+### Creating Scoped Injectors
+
+```ts
+class RequestHandler {
+  constructor(@InjectSelf() private injector: Injector) {}
+
+  handleRequest(requestData: any) {
+    const scope = this.injector.createChild([
+      [IRequestData, { useValue: requestData }],
+    ]);
+    return scope.get(IRequestProcessor).process();
+  }
+}
+```

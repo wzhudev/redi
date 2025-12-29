@@ -23,8 +23,23 @@ interface SkipSelfDecorator {
   (): any;
   new (): SkipSelfDecorator;
 }
+
 /**
- * when resolving this dependency, skip the current injector
+ * A parameter decorator that instructs the injector to skip the current
+ * injector when resolving this dependency, and start the lookup from
+ * the parent injector.
+ *
+ * This is useful when you want to get a dependency from a parent injector
+ * even if the current injector has the same dependency registered.
+ *
+ * @example
+ * ```typescript
+ * class ChildService {
+ *   constructor(
+ *     @SkipSelf() @Inject(IConfig) private parentConfig: IConfig
+ *   ) {}
+ * }
+ * ```
  */
 export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(
   LookUp.SKIP_SELF,
@@ -34,7 +49,28 @@ interface SelfDecorator {
   (): any;
   new (): SelfDecorator;
 }
+
 /**
- * when resolving this dependency, only search the current injector
+ * A parameter decorator that instructs the injector to only look for
+ * this dependency in the current injector, without searching parent injectors.
+ *
+ * If the dependency is not found in the current injector, an error will be thrown
+ * (or `null` will be returned if used with `@Optional()`).
+ *
+ * @example
+ * ```typescript
+ * class MyService {
+ *   constructor(
+ *     @Self() @Inject(ILocalConfig) private localConfig: ILocalConfig
+ *   ) {}
+ * }
+ *
+ * // With optional - returns null if not found locally
+ * class MyService {
+ *   constructor(
+ *     @Self() @Optional(ILocalCache) private cache: ILocalCache | null
+ *   ) {}
+ * }
+ * ```
  */
 export const Self: SelfDecorator = lookupDecoratorFactoryProducer(LookUp.SELF);

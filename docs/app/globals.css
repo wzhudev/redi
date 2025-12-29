@@ -1,0 +1,18 @@
+/* Custom styles for redi docs */
+
+/* Code block font */
+code,
+pre,
+pre code,
+.nextra-code,
+[data-rehype-pretty-code-figure] code,
+[data-rehype-pretty-code-figure] pre {
+  font-family: 'Ioskeley Mono', 'Fira Code', 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-feature-settings: 'liga' 1, 'calt' 1; /* Enable ligatures */
+}
+
+/* Inline code */
+:not(pre) > code {
+  font-family: 'Ioskeley Mono','Fira Code', 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.875em;
+}

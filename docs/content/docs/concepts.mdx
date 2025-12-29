@@ -1,19 +1,81 @@
-# Conecpts
+import { Callout } from "nextra/components";
 
-A [**binding**](./binding) maps an [**identifier**](./identifier) to a [**dependency item**](./item).
+# Concepts
 
-An identifier distinguish a dependency item from others. It could be:
+Understanding three core concepts is key to using redi effectively.
 
-- a value returned from `createIdentifier`
-- a class
+## Overview
 
-A dependency item is an implementation matching an identifier. It could be:
+```
+┌─────────────┐      binds to       ┌─────────────────┐
+│  Identifier │ ──────────────────▶│ Dependency Item │
+└─────────────┘                     └─────────────────┘
+       │                                   │
+       └───────────── Binding ─────────────┘
+                         │
+                         ▼
+                  ┌─────────────┐
+                  │   Injector  │
+                  └─────────────┘
+```
 
-- a class
-- a class dependency item
-- a js primitive type value or object
-- a factory function
+## Identifier
 
-An **injector** holds a set of bindings and resolve an identifier by constructing a dependency item.
+An **identifier** is a unique token that distinguishes one dependency from another. It answers the question: "What do I want to inject?"
 
-A dependency item can [declare what dependencies it needs](./relationship).
+There are two types of identifiers:
+
+| Type | When to Use | Example |
+|------|-------------|---------|
+| **Class** | Simple cases where the class is the implementation | `AuthService` |
+| **IdentifierDecorator** | When you want to program to an interface | `createIdentifier<IAuthService>('auth')` |
+
+👉 Learn more: [Identifier](/docs/identifier)
+
+## Dependency Item
+
+A **dependency item** is the actual implementation that will be injected. It answers the question: "What should be provided?"
+
+| Type | Description | Example |
+|------|-------------|---------|
+| **Class** | A class to be instantiated | `{ useClass: AuthService }` |
+| **Value** | A constant value | `{ useValue: { apiUrl: '...' } }` |
+| **Factory** | A function that creates the dependency | `{ useFactory: () => new Service() }` |
+
+👉 Learn more: [Dependency Item](/docs/item)
+
+## Binding
+
+A **binding** connects an identifier to a dependency item. It tells the injector: "When someone asks for X, provide Y."
+
+```ts
+const injector = new Injector([
+  [AuthService],                                    // Class as both identifier and item
+  [ILogger, { useClass: ConsoleLogger }],           // Interface → Class
+  [IConfig, { useValue: { debug: true } }],         // Interface → Value
+]);
+```
+
+👉 Learn more: [Binding](/docs/binding)
+
+## Injector
+
+The **injector** holds all bindings and resolves dependencies. When you call `injector.get(SomeService)`, it:
+
+1. Finds the binding for the identifier
+2. Creates the dependency item (if not already created)
+3. Recursively resolves any nested dependencies
+4. Returns the instance
+
+<Callout>
+  By default, dependencies are **singletons** within an injector. The same instance is returned for subsequent requests.
+</Callout>
+
+## What's Next?
+
+Now that you understand the concepts, dive deeper into each topic:
+
+1. **[Identifier](/docs/identifier)** - Learn different ways to create identifiers
+2. **[Dependency Item](/docs/item)** - Explore class, value, and factory items
+3. **[Binding](/docs/binding)** - Understand how to register bindings
+4. **[Declare Dependency](/docs/declare-dependency)** - Learn to declare dependencies between classes

@@ -8,6 +8,7 @@ import {
   forwardRef,
   Inject,
   Injector,
+  InjectSelf,
   LookUp,
   Many,
   Optional,
@@ -807,6 +808,21 @@ describe('core', () => {
         // totally verbose for real use case, but to show this works
         expect(j.get(Injector)).toBe(j);
         expect(j.get(Injector).get(aI).key).toBe('a');
+      });
+
+      it('should support InjectSelf decorator to inject the current injector', () => {
+        class A {
+          constructor(@InjectSelf() public readonly injector: Injector) {}
+        }
+
+        const parentInjector = new Injector();
+        const childInjector = parentInjector.createChild([[A]]);
+
+        const a = childInjector.get(A);
+
+        // InjectSelf should inject the current (child) injector, not the parent
+        expect(a.injector).toBe(childInjector);
+        expect(a.injector).not.toBe(parentInjector);
       });
     });
   });
