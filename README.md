@@ -1,117 +1,90 @@
 # redi
 
-![Stars](https://badgen.net/github/stars/wzhudev/redi)
-![Weekly Downloads](https://badgen.net/npm/dw/@wendellhu/redi)
-![License](https://badgen.net/github/license/wzhudev/redi)
-[![Codecov](https://img.shields.io/codecov/c/github/wzhudev/redi.svg)](https://codecov.io/gh/wzhudev/redi)
+<p className="flex h-6">
+  <img
+    alt="stars"
+    src="https://badgen.net/github/stars/wzhudev/redi"
+    style={{ display: "inline-block", marginRight: "0.5rem" }}
+  />
+  <img
+    alt="downloads"
+    src="https://badgen.net/npm/dw/@wendellhu/redi"
+    style={{ display: "inline-block", marginRight: "0.5rem" }}
+  />
+  <img
+    alt="license"
+    src="https://badgen.net/github/license/wzhudev/redi"
+    style={{ display: "inline-block", marginRight: "0.5rem" }}
+  />
+  <img
+    alt="coverage"
+    src="https://img.shields.io/codecov/c/github/wzhudev/redi.svg"
+    style={{ display: "inline-block" }}
+  />
+</p>
 
-A dependency library for TypeScript and JavaScript, along with a binding for React.
+**redi** (pronounced 'ready') is a lightweight dependency injection library for TypeScript and JavaScript, with React bindings included.
 
-## Highlights
+## Why redi?
 
-- Zero dependencies, lightweight and fast.
-- No `emitDecoratorMetadata` required, works in both TypeScript and [**JavaScript**](https://redi.wzhu.dev/en-US/docs/env#using-redi-without-decorators). **[esbuild](https://esbuild.github.io/) friendly.**
-- Written in **TypeScript** with type definitions included.
-- Runs on **Node.js** and **browsers**.
-- Feature-rich:
-  - Injecting **class instances** `{ useClass: <ctor> }`, **primitive values** `{ useValue: <value> }`, **factories** `{ useFactory: <factoryFn> }` and **aliases** `{ useExisting: <token> }`.
-  - Injecting **interfaces** with `createIdentifier`.
-  - **Lazy instantiation** with `{ useClass: <ctor>, lazy: true }`.
-  - **Async dependency** with `{ useAsync: <Promise> }`, `getAsync` and `AsyncHook`.
-  - **Optional and multi-injection** with `@Optional()` and `@Many()`.
-  - **Hierarchical injectors** with `@Self()` and `@SkipSelf()`.
-- Provide hooks to integrate with React `useDependency(<token>)`.
-- Sufficiently tested with **100% code coverage**.
+| Feature                 | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| 🪶 **Lightweight**      | Zero dependencies, small bundle size            |
+| 🔧 **esbuild friendly** | No `emitDecoratorMetadata` required             |
+| 📦 **Feature-rich**     | Class, value, factory, async injection and more |
+| ⚛️ **React ready**      | Built-in hooks for React integration            |
+| ✅ **Well tested**      | 100% code coverage                              |
 
-## Installation
+## Quick Start
 
-Use your favorite package manager:
-
-```bash
+```bash npm2yarn
 npm install @wendellhu/redi
 ```
 
-## Usage (TypeScript)
-
-Enable experimental decorators in your `tsconfig.json`:
-
-```diff
-{
-  "compilerOptions": {
-+   "experimentalDecorators": true,
-  }
-}
-```
-
-Then you can use decorators to define dependencies:
-
-```typescript
-import { Inject } from '@wendellhu/redi';
+```ts
+import { Inject, Injector } from '@wendellhu/redi';
 
 class AuthService {
-  public getCurrentUserInfo(): UserInfo {}
+  getCurrentUserInfo(): UserInfo {
+    /* ... */
+  }
 }
 
 class FileListService {
-  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private authService: AuthService) {}
 
-  public getUserFiles(): Promise<Files> {
-    const currentUser = this.authService.getCurrentUserInfo();
+  getUserFiles(): Promise<Files> {
+    const user = this.authService.getCurrentUserInfo();
+    // ...
   }
 }
-```
-
-Register the services in an injector and retrieve them:
-
-```typescript
-import { Injector } from '@wendellhu/redi';
 
 const injector = new Injector([[AuthService], [FileListService]]);
-injector.get(AuthService);
+const fileList = injector.get(FileListService);
 ```
 
-### With React
+**[Getting started](https://redi.wzhu.dev/docs/introduction)**.
 
-Near the root of your React application, you can connect the dependencies to the React context using `connectDependencies`:
+## Features
 
-```typescript
-import { connectDependencies } from '@wendellhu/redi/react';
-import React from 'react';
-import { PlatformService } from './services/PlatformService';
+- **[Dependency Items](https://redi.wzhu.dev/docs/item)**: Class `{ useClass }`, Value `{ useValue }`, Factory `{ useFactory }`, Async `{ useAsync }`
+- **[Interface Injection](https://redi.wzhu.dev/docs/identifier)**: Use `createIdentifier` for interface-based injection
+- **[Lazy Instantiation](https://redi.wzhu.dev/docs/item)**: Defer creation with `{ lazy: true }`
+- **[Hierarchy Injection](https://redi.wzhu.dev/docs/hierarchy)**: Parent-child injectors with `@Self()` and `@SkipSelf()`
+- **[Optional & Many](https://redi.wzhu.dev/docs/declare-dependency)**: `@Optional()` and `@Many()` decorators
+- **[React Integration](https://redi.wzhu.dev/docs/react)**: `useDependency`, `connectDependencies` and more hooks
+- **[RxJS Support](https://redi.wzhu.dev/docs/react)**: `useObservable` and `useUpdateBinder` for reactive programming
 
-const App = connectDependencies(() => {
-  // ...
-}, [[PlatformService]]);
-```
-
-In your child components, you can use the `useDependency` hook to access them:
-
-```typescript
-import { useDependency } from '@wendellhu/redi';
-import React from 'react';
-import { PlatformService } from './services/PlatformService';
-
-const MyComponent: React.FC = () => {
-  const platformService = useDependency(PlatformService);
-
-  // ...
-};
-```
-
-## Links
-
-- [Documentation](https://redi.wzhu.dev/en-US/)
-- [Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/), and its [source code](https://github.com/wzhudev/redi-todomvc)
-- [Scaffold](https://github.com/wzhudev/redi-starter) to quickly start a new project with redi
-
-## Who is using?
+## Who's Using redi?
 
 - [Univer](https://github.com/dream-num/univer)
 - ByteDance
 
-## Contributing
+## Links
 
-Please read the [contributing guide](./CONTRIBUTING.md) for details on how to contribute to this project.
+- [Demo TodoMVC](https://wzhudev.github.io/redi-todomvc/) ([source](https://github.com/wzhudev/redi-todomvc))
+- [Starter Template](https://github.com/wzhudev/redi-starter)
+- [Contributing Guide](https://github.com/wzhudev/redi/blob/main/CONTRIBUTING.md)
 
 ## License
 
