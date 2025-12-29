@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/check-param-names */
+
 import type {
   DependencyIdentifier,
   Injector,
