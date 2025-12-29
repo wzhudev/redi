@@ -1,5 +1,18 @@
 # Changelog
 
+# [1.1.0](https://github.com/wzhudev/redi/compare/v1.0.2...v1.1.0) (2025-12-29)
+
+### Bug Fixes
+
+- fix style import ([a69c275](https://github.com/wzhudev/redi/commit/a69c2753c0b4dad37291bb55c179a9d46318320c))
+- lint ignore agent files ([883d815](https://github.com/wzhudev/redi/commit/883d815eaf1b089721dc7da0f86b66ef7126b21a))
+
+### Features
+
+- add CLAUDE.md ([b100a50](https://github.com/wzhudev/redi/commit/b100a5003b56e543b428d911587aa688f0f8b754))
+- add InjectSelf decorator ([4ce2627](https://github.com/wzhudev/redi/commit/4ce262780571d81e7ae0e58b8e39cc510bab69a1))
+- upgrade nextra ([743aec6](https://github.com/wzhudev/redi/commit/743aec6ea1880a54d0af7cddccc6954a96f5af99))
+
 ## [1.0.2](https://github.com/wzhudev/redi/compare/v1.0.1...v1.0.2) (2025-10-20)
 
 ## [1.0.1](https://github.com/wzhudev/redi/compare/v1.0.0-beta.1...v1.0.1) (2025-09-08)
