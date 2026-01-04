@@ -24,6 +24,17 @@ export {
 export { Self, SkipSelf } from './dependencyLookUp';
 export { Inject, Many, Optional } from './dependencyQuantity';
 export { WithNew } from './dependencyWithNew';
+export {
+  type DevtoolsDependencyGraphSnapshot,
+  type DevtoolsEdgeSnapshot,
+  type DevtoolsInjectorSnapshot,
+  type DevtoolsTokenSnapshot,
+  type InjectorDevtoolsHook,
+  REDI_DEVTOOLS_GLOBAL,
+  REDI_DEVTOOLS_SNAPSHOT,
+  setInjectorDevtoolsHook,
+  snapshotDependencyGraph,
+} from './devtools';
 export { type IDisposable, isDisposable } from './dispose';
 export { RediError } from './error';
 export { type IAccessor, Injector } from './injector';

@@ -10,6 +10,7 @@ import type {
   FactoryDependencyItem,
   ValueDependencyItem,
 } from './dependencyItem';
+import type {DevtoolsDependencyGraphSnapshot} from './devtools';
 import type { IDisposable } from './dispose';
 import { getDependencies } from './decorators';
 import {
@@ -35,6 +36,11 @@ import {
   prettyPrintIdentifier,
 } from './dependencyItem';
 import { QuantityCheckError } from './dependencyQuantity';
+import {
+  notifyInjectorCreated,
+  notifyInjectorDisposed,
+  REDI_DEVTOOLS_SNAPSHOT,
+} from './devtools';
 import { RediError } from './error';
 import { IdleValue } from './idleValue';
 import { LookUp, Quantity } from './types';
@@ -188,6 +194,15 @@ export class Injector {
   private _disposed = false;
 
   /**
+   * A stable (process-lifetime) identifier for devtools and diagnostics.
+   *
+   * It is not intended to be parsed.
+   */
+  public get debugKey(): string {
+    return Injector._getInjectorKey(this);
+  }
+
+  /**
    * Create a new `Injector` instance.
    *
    * @param dependencies - An array of dependencies to register with this injector.
@@ -226,6 +241,8 @@ export class Injector {
     if (this._parent) {
       this._parent._children.push(this);
     }
+
+    notifyInjectorCreated(this, this._parent);
   }
 
   /**
@@ -320,8 +337,104 @@ export class Injector {
 
     this._disposed = true;
 
+    notifyInjectorDisposed(this);
+
     this._disposingCallbacks.forEach((callback) => callback());
     this._disposingCallbacks.clear();
+  }
+
+  public [REDI_DEVTOOLS_SNAPSHOT](): DevtoolsDependencyGraphSnapshot {
+    const injectors: Array<{ injector: Injector; depth: number; parentId: string | null }> = [];
+
+    const visit = (injector: Injector, depth: number, parentId: string | null) => {
+      injectors.push({ injector, depth, parentId });
+      injector._children.forEach((child) => visit(child, depth + 1, Injector._getInjectorKey(injector)));
+    };
+
+    visit(this, 0, this._parent ? Injector._getInjectorKey(this._parent) : null);
+
+    const injectorSnapshots = injectors.map(({ injector, depth, parentId }) => ({
+      id: Injector._getInjectorKey(injector),
+      name: injector.name,
+      parentId,
+      depth,
+    }));
+
+    const tokenNodes: GraphTokenNode[] = [];
+    const tokenSnapshots: DevtoolsDependencyGraphSnapshot['tokens'] = [];
+    const seenTokenKeys = new Set<string>();
+
+    for (const { injector } of injectors) {
+      const injectorId = Injector._getInjectorKey(injector);
+
+      const registeredIds = injector._dependencyCollection.keys();
+      const resolvedMap: Map<DependencyIdentifier<any>, any[]> | undefined = (injector
+        ._resolvedDependencyCollection as any)._resolvedDependencies;
+      const resolvedIds = resolvedMap ? Array.from(resolvedMap.keys()) : [];
+
+      const ids: DependencyIdentifier<any>[] = [];
+      ids.push(...registeredIds);
+      for (const id of resolvedIds) {
+        if (!injector._dependencyCollection.has(id)) {
+          ids.push(id);
+        }
+      }
+
+      for (const id of ids) {
+        const key = Injector._makeNodeKey(injector, id);
+        if (seenTokenKeys.has(key)) {
+          continue;
+        }
+        seenTokenKeys.add(key);
+
+        tokenNodes.push({ owner: injector, id, key });
+        tokenSnapshots.push({
+          key,
+          injectorId,
+          tokenId: Injector._getTokenKey(id),
+          label: prettyPrintIdentifier(id),
+          instantiated: injector._resolvedDependencyCollection.has(id),
+        });
+      }
+    }
+
+    const edges: DevtoolsDependencyGraphSnapshot['edges'] = [];
+    const seenEdges = new Set<string>();
+
+    for (const node of tokenNodes) {
+      const deps = this._getTokenDependencies(node);
+      for (const dep of deps) {
+        if (dep.withNew) {
+          continue;
+        }
+
+        const depId = normalizeForwardRef(dep.identifier);
+        if (depId === Injector) {
+          continue;
+        }
+
+        const provider = node.owner._findProviderInjector(depId, dep.lookUp);
+        if (!provider) {
+          continue;
+        }
+
+        const from = node.key;
+        const to = Injector._makeNodeKey(provider, depId);
+        const edgeKey = `${from}->${to}`;
+        if (seenEdges.has(edgeKey)) {
+          continue;
+        }
+
+        seenEdges.add(edgeKey);
+        edges.push({ from, to });
+      }
+    }
+
+    return {
+      injectors: injectorSnapshots,
+      tokens: tokenSnapshots,
+      edges,
+    };
   }
 
   private _deleteSelfFromParent(): void {
