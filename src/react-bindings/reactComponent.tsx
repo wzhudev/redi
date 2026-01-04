@@ -3,9 +3,7 @@ import { Injector } from '@wendellhu/redi';
 import React, { useEffect, useRef } from 'react';
 import { RediConsumer, RediProvider } from './reactContext';
 
-function RediInjector(
-  props: React.PropsWithChildren<{ dependencies: Dependency[] }>,
-) {
+function RediInjector(props: React.PropsWithChildren<{ dependencies: Dependency[] }>) {
   const { children, dependencies } = props;
   const childInjectorRef = useRef<Injector | null>(null);
 
@@ -21,18 +19,12 @@ function RediInjector(
         if (childInjectorRef.current) {
           childInjector = childInjectorRef.current;
         } else {
-          childInjector = context.injector
-            ? context.injector.createChild(dependencies)
-            : new Injector(dependencies);
+          childInjector = context.injector ? context.injector.createChild(dependencies) : new Injector(dependencies);
 
           childInjectorRef.current = childInjector;
         }
 
-        return (
-          <RediProvider value={{ injector: childInjector }}>
-            {children}
-          </RediProvider>
-        );
+        return <RediProvider value={{ injector: childInjector }}>{children}</RediProvider>;
       }}
     </RediConsumer>
   );
@@ -61,10 +53,7 @@ function RediInjector(
  * ReactDOM.render(<App />, document.getElementById('root'));
  * ```
  */
-export function connectInjector<P>(
-  Comp: React.ComponentType<P>,
-  injector: Injector,
-): React.ComponentType<P> {
+export function connectInjector<P>(Comp: React.ComponentType<P>, injector: Injector): React.ComponentType<P> {
   return function ComponentWithInjector(props: P) {
     return (
       <RediProvider value={{ injector }}>

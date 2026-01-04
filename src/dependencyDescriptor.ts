@@ -19,10 +19,7 @@ export interface Dependencies {
   dependencies: DependencyDescriptor<any>[];
 }
 
-export function normalizeFactoryDeps(
-  deps?: FactoryDep<any>[],
-  startIndex = 0,
-): DependencyDescriptor<any>[] {
+export function normalizeFactoryDeps(deps?: FactoryDep<any>[], startIndex = 0): DependencyDescriptor<any>[] {
   if (!deps) {
     return [];
   }
@@ -46,21 +43,19 @@ export function normalizeFactoryDeps(
     let quantity = Quantity.REQUIRED;
     let withNew = false;
 
-    (modifiers as FactoryDepModifier[]).forEach(
-      (modifier: FactoryDepModifier) => {
-        if (modifier instanceof Self) {
-          lookUp = LookUp.SELF;
-        } else if (modifier instanceof SkipSelf) {
-          lookUp = LookUp.SKIP_SELF;
-        } else if (modifier instanceof Optional) {
-          quantity = Quantity.OPTIONAL;
-        } else if (modifier instanceof Many) {
-          quantity = Quantity.MANY;
-        } /* if  (modifier instanceof WithNew) */ else {
-          withNew = true;
-        }
-      },
-    );
+    (modifiers as FactoryDepModifier[]).forEach((modifier: FactoryDepModifier) => {
+      if (modifier instanceof Self) {
+        lookUp = LookUp.SELF;
+      } else if (modifier instanceof SkipSelf) {
+        lookUp = LookUp.SKIP_SELF;
+      } else if (modifier instanceof Optional) {
+        quantity = Quantity.OPTIONAL;
+      } else if (modifier instanceof Many) {
+        quantity = Quantity.MANY;
+      } /* if  (modifier instanceof WithNew) */ else {
+        withNew = true;
+      }
+    });
 
     return {
       paramIndex: index,

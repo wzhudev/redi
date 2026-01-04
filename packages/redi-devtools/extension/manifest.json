@@ -1,0 +1,7 @@
+{
+  "manifest_version": 3,
+  "name": "redi devtools",
+  "version": "0.0.0",
+  "description": "Visualize redi injector graphs",
+  "devtools_page": "extension/devtools.html"
+}
