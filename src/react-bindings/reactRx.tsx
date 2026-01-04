@@ -14,10 +14,7 @@ function unwrap<T>(o: ObservableOrFn<T>): Observable<T> {
 }
 
 export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>): T;
-export function useObservable<T>(
-  observable: Nullable<ObservableOrFn<T>>,
-  defaultValue: T,
-): T;
+export function useObservable<T>(observable: Nullable<ObservableOrFn<T>>, defaultValue: T): T;
 export function useObservable<T>(
   observable: Nullable<ObservableOrFn<T>>,
   defaultValue: undefined,
@@ -46,15 +43,10 @@ export function useObservable<T>(
   deps?: any[],
 ): T | undefined {
   if (typeof observable === 'function' && !deps) {
-    throw new RediError(
-      'Expected deps to be provided when observable is a function!',
-    );
+    throw new RediError('Expected deps to be provided when observable is a function!');
   }
 
-  const destObservable = useMemo(
-    () => observable,
-    [...(typeof deps !== 'undefined' ? deps : [observable])],
-  );
+  const destObservable = useMemo(() => observable, [...(typeof deps !== 'undefined' ? deps : [observable])]);
 
   const observableRef = useRef<Nullable<ObservableOrFn<T>>>(undefined);
   const subscriptionRef = useRef<Subscription | null>(null);
@@ -86,9 +78,7 @@ export function useObservable<T>(
   }
 
   if (shouldHaveSyncValue && !syncReceivedValueRef.current) {
-    throw new Error(
-      '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!',
-    );
+    throw new Error('[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!');
   }
 
   syncReceivedValueRef.current = true;

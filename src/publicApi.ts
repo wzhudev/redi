@@ -4,10 +4,7 @@ export { createIdentifier } from './decorators';
 export type { Dependency, DependencyPair } from './dependencyCollection';
 export { setDependencies } from './dependencyDeclare';
 export { forwardRef } from './dependencyForwardRef';
-export {
-  type DependencyIdentifier,
-  type IdentifierDecorator,
-} from './dependencyIdentifier';
+export { type DependencyIdentifier, type IdentifierDecorator } from './dependencyIdentifier';
 export {
   type AsyncDependencyItem,
   type AsyncHook,
@@ -40,10 +37,7 @@ const globalObject: any =
   (typeof global !== 'undefined' && global);
 
 const __REDI_GLOBAL_LOCK__ = 'REDI_GLOBAL_LOCK';
-const isNode =
-  typeof process !== 'undefined' &&
-  process.versions != null &&
-  process.versions.node != null;
+const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 if (globalObject[__REDI_GLOBAL_LOCK__]) {
   if (!isNode) {

@@ -28,19 +28,9 @@ import { normalizeFactoryDeps } from './dependencyDescriptor';
  * setDependencies(MyService, [[Optional, CacheService], LoggerService], 1);
  * ```
  */
-export function setDependencies<U>(
-  registerTarget: Ctor<U>,
-  deps: FactoryDep<any>[],
-  startIndex = 0,
-): void {
+export function setDependencies<U>(registerTarget: Ctor<U>, deps: FactoryDep<any>[], startIndex = 0): void {
   const normalizedDescriptors = normalizeFactoryDeps(deps, startIndex);
   normalizedDescriptors.forEach((descriptor) => {
-    setDependency(
-      registerTarget,
-      descriptor.identifier,
-      descriptor.paramIndex,
-      descriptor.quantity,
-      descriptor.lookUp,
-    );
+    setDependency(registerTarget, descriptor.identifier, descriptor.paramIndex, descriptor.quantity, descriptor.lookUp);
   });
 }

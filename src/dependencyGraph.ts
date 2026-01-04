@@ -87,11 +87,7 @@ export class Graph<T> {
     return undefined;
   }
 
-  private _findCycleFromNode(
-    node: GraphNode<T>,
-    seen: Set<string>,
-    path: string[],
-  ): string[] | undefined {
+  private _findCycleFromNode(node: GraphNode<T>, seen: Set<string>, path: string[]): string[] | undefined {
     const outgoingEntries: Array<[string, GraphNode<T>]> = [];
     node.outgoing.forEach((value, key) => outgoingEntries.push([key, value]));
 

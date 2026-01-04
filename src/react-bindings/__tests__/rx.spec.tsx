@@ -5,12 +5,7 @@
 import type { IDisposable } from '@wendellhu/redi';
 import type { Observable } from 'rxjs';
 import { act, render, renderHook } from '@testing-library/react';
-import {
-  connectDependencies,
-  useDependency,
-  useObservable,
-  useUpdateBinder,
-} from '@wendellhu/redi/react-bindings';
+import { connectDependencies, useDependency, useObservable, useUpdateBinder } from '@wendellhu/redi/react-bindings';
 import React, { Component, StrictMode, useState } from 'react';
 import { BehaviorSubject, interval, of, Subject } from 'rxjs';
 
@@ -52,9 +47,7 @@ describe('test legacy rxjs utils', () => {
     const { container } = render(<App />);
     expect(container.firstChild!.textContent).toBe('0');
 
-    await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
-    );
+    await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)));
     expect(container.firstChild!.textContent).toBe('3');
   });
 
@@ -92,9 +85,7 @@ describe('test legacy rxjs utils', () => {
     const { container } = render(<App />);
     expect(container.firstChild!.textContent).toBe('5');
 
-    await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 320)),
-    );
+    await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 320)));
     expect(container.firstChild!.textContent).toBe('8');
   });
 
@@ -129,9 +120,7 @@ describe('test legacy rxjs utils', () => {
 
     expect(childRenderCount).toBe(1);
 
-    await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
-    );
+    await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)));
     expect(container.firstChild!.textContent).toBe('3');
     expect(childRenderCount).toBe(2);
   });
@@ -170,9 +159,7 @@ describe('test legacy rxjs utils', () => {
     expect(container.firstChild!.textContent).toBe('0');
     expect(childRenderCount).toBe(2);
 
-    await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)),
-    );
+    await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 360)));
     expect(container.firstChild!.textContent).toBe('3');
     expect(childRenderCount).toBe(4);
   });
@@ -211,9 +198,7 @@ describe('test legacy rxjs utils', () => {
     const { container } = render(<App />);
     expect(container.firstChild!.textContent).toBe('0');
 
-    await act(
-      () => new Promise<undefined>((res) => setTimeout(() => res(void 0), 310)),
-    );
+    await act(() => new Promise<undefined>((res) => setTimeout(() => res(void 0), 310)));
     expect(container.firstChild!.textContent).toBe('3');
   });
 });
@@ -229,9 +214,7 @@ describe('test "useObservable"', () => {
   it('should return the initial value when provided', () => {
     const observable: Observable<boolean> | undefined = undefined;
 
-    const { result } = renderHook(() =>
-      useObservable<boolean>(observable, true),
-    );
+    const { result } = renderHook(() => useObservable<boolean>(observable, true));
     expect(result.current).toBeTruthy();
   });
 
@@ -265,9 +248,7 @@ describe('test "useObservable"', () => {
   });
 
   function useTestSwitchObservableBed() {
-    const [observable, setObservable] = useState<
-      Observable<boolean> | undefined
-    >(undefined);
+    const [observable, setObservable] = useState<Observable<boolean> | undefined>(undefined);
     const result = useObservable(observable);
 
     return {
@@ -290,9 +271,7 @@ describe('test "useObservable"', () => {
   });
 
   it('should support a callback function returns an observable', () => {
-    const { result } = renderHook(() =>
-      useObservable(() => of(true), undefined, true, []),
-    );
+    const { result } = renderHook(() => useObservable(() => of(true), undefined, true, []));
 
     expect(result.current).toBeTruthy();
   });
@@ -306,9 +285,7 @@ describe('test "useObservable"', () => {
 
   it('should throw an error when set shouldHaveSyncValue to true but the observable does not have a sync value', () => {
     expectToThrow(() => {
-      renderHook(() =>
-        useObservable(() => new Subject<boolean>(), undefined, true, []),
-      );
+      renderHook(() => useObservable(() => new Subject<boolean>(), undefined, true, []));
     }, '[redi]: Expect `shouldHaveSyncValue` but not getting a sync value!');
   });
 });

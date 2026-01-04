@@ -75,6 +75,39 @@ const fileList = injector.get(FileListService);
 - **[React Integration](https://redi.wzhu.dev/docs/react)**: `useDependency`, `connectDependencies` and more hooks
 - **[RxJS Support](https://redi.wzhu.dev/docs/react)**: `useObservable` and `useUpdateBinder` for reactive programming
 
+## Visualize Dependency Graph (DAG)
+
+redi can export a dependency graph snapshot after (or before) instantiation.
+
+```ts
+import { Inject, Injector } from '@wendellhu/redi';
+
+class C {}
+class B {
+  constructor(@Inject(C) public readonly c: C) {}
+}
+class A {
+  constructor(@Inject(B) public readonly b: B) {}
+}
+
+const injector = new Injector([[A], [B], [C]]);
+
+// Create instances (optional). The snapshot marks instantiated nodes.
+injector.get(A);
+
+// 1) JSON snapshot (for custom renderers / tooling)
+const graph = injector.snapshotDependencyGraph({ roots: [A] });
+console.log(graph.nodes, graph.edges);
+
+// 2) Graphviz DOT output (copy/paste to Graphviz / vscode-graphviz / web viewers)
+console.log(injector.toDependencyGraphDot({ roots: [A] }));
+```
+
+Notes:
+
+- Edge direction is `from -> to` meaning "from depends on to".
+- For hierarchical injectors, the graph points to the provider injector node.
+
 ## Who's Using redi?
 
 - [Univer](https://github.com/dream-num/univer)

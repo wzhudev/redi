@@ -293,10 +293,7 @@ describe('core', () => {
         [bI, { useClass: B }],
       ]);
 
-      expectToThrow(
-        () => j.get(aI),
-        `[redi]: Detecting cyclic dependency: "aI -> bI -> aI".`,
-      );
+      expectToThrow(() => j.get(aI), `[redi]: Detecting cyclic dependency: "aI -> bI -> aI".`);
     });
 
     it('should "invoke" work', () => {
@@ -465,9 +462,7 @@ describe('core', () => {
           constructor(private _b: typeof B) {}
 
           get key(): string {
-            return typeof this._b === 'undefined'
-              ? 'undefined'
-              : `a${this._b.key}`;
+            return typeof this._b === 'undefined' ? 'undefined' : `a${this._b.key}`;
           }
         }
 
@@ -476,9 +471,7 @@ describe('core', () => {
 
         expect(() => {
           setDependencies(A, [B]);
-        }).toThrow(
-          '[redi]: It seems that you register "undefined" as dependency on the 0th parameter of "A".',
-        );
+        }).toThrow('[redi]: It seems that you register "undefined" as dependency on the 0th parameter of "A".');
 
         B = class {
           key = 'b';
@@ -498,9 +491,7 @@ describe('core', () => {
         const j = new Injector([[B]]);
         expect(() => {
           j.get(B);
-        }).toThrow(
-          '[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".',
-        );
+        }).toThrow('[redi]: Cannot find "A" registered by any injector. It is the 1th param of "B".');
       });
     });
 
@@ -553,13 +544,16 @@ describe('core', () => {
 
         const b = createIdentifier<IB>('b');
 
-        const j = new Injector([
-          [b, { useFactory: (_a: A) => ({ name: b }), deps: [A] }],
-        ]);
+        const j = new Injector(
+          [[b, { useFactory: (_a: A) => ({ name: b }), deps: [A] }]],
+          undefined,
+          { name: 'test-injector' },
+        );
 
         expectToThrow(() => {
           j.get(b);
         }, '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "b".');
+        expect(j.name).toBe('test-injector');
       });
     });
 
@@ -590,10 +584,7 @@ describe('core', () => {
             [
               bbI,
               {
-                useAsync: () =>
-                  import('../__testing__/async/async.item').then(
-                    (module) => module.BBImpl,
-                  ),
+                useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBImpl),
               },
             ],
           ]);
@@ -626,10 +617,7 @@ describe('core', () => {
             [
               bbI,
               {
-                useAsync: () =>
-                  import('../__testing__/async/async.item').then(
-                    (module) => module.BBFactory,
-                  ),
+                useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBFactory),
               },
             ],
           ]);
@@ -647,10 +635,7 @@ describe('core', () => {
             [
               bbI,
               {
-                useAsync: () =>
-                  import('../__testing__/async/async.item').then(
-                    (module) => module.BBValue,
-                  ),
+                useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBValue),
               },
             ],
           ]);
@@ -693,10 +678,7 @@ describe('core', () => {
             [
               bbI,
               {
-                useAsync: () =>
-                  import('../__testing__/async/async.item').then(
-                    (module) => module.BBLoader,
-                  ),
+                useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBLoader),
               },
             ],
           ]);
@@ -717,10 +699,7 @@ describe('core', () => {
           [
             bbI,
             {
-              useAsync: () =>
-                import('../__testing__/async/async.item').then(
-                  (module) => module.BBFactory,
-                ),
+              useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBFactory),
             },
           ],
         ]);
@@ -733,10 +712,7 @@ describe('core', () => {
           [
             bbI,
             {
-              useAsync: () =>
-                import('../__testing__/async/async.item').then(
-                  (module) => module.BBFactory,
-                ),
+              useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBFactory),
             },
           ],
           [
@@ -770,10 +746,7 @@ describe('core', () => {
             [
               bbI,
               {
-                useAsync: () =>
-                  import('../__testing__/async/async.item').then(
-                    (module) => module.BBFactory,
-                  ),
+                useAsync: () => import('../__testing__/async/async.item').then((module) => module.BBFactory),
               },
             ],
           ]);
@@ -948,22 +921,11 @@ describe('core', () => {
         }
       }
 
-      const j = new Injector([
-        [B],
-        [C],
-        [aI, { useValue: { key: 'a1' } }],
-        [aI, { useValue: { key: 'a2' } }],
-      ]);
+      const j = new Injector([[B], [C], [aI, { useValue: { key: 'a1' } }], [aI, { useValue: { key: 'a2' } }]]);
 
-      expectToThrow(
-        () => j.get(B),
-        `[redi]: Expect 1 dependency item(s) for id "aI" but get 2.`,
-      );
+      expectToThrow(() => j.get(B), `[redi]: Expect 1 dependency item(s) for id "aI" but get 2.`);
 
-      expectToThrow(
-        () => j.get(C),
-        `[redi]: Expect 0 or 1 dependency item(s) for id "aI" but get 2.`,
-      );
+      expectToThrow(() => j.get(C), `[redi]: Expect 0 or 1 dependency item(s) for id "aI" but get 2.`);
     });
   });
 
@@ -1126,10 +1088,7 @@ describe('core', () => {
 
       const j = new Injector([[B]]);
 
-      expectToThrow(
-        () => j.get(B),
-        `[redi]: Cannot find "A" registered by any injector. It is the 0th param of "B".`,
-      );
+      expectToThrow(() => j.get(B), `[redi]: Cannot find "A" registered by any injector. It is the 0th param of "B".`);
     });
 
     it('should not throw error when no ancestor injector could create dependency with "Optional" or "Many"', () => {
@@ -1167,9 +1126,7 @@ describe('core', () => {
           constructor(@Inject(B) private _b: B) {}
 
           get key(): string {
-            return typeof this._b === 'undefined'
-              ? 'undefined'
-              : `a${this._b.key}`;
+            return typeof this._b === 'undefined' ? 'undefined' : `a${this._b.key}`;
           }
         }
 
@@ -1184,9 +1141,7 @@ describe('core', () => {
         constructor(@Inject(forwardRef(() => B)) private _b: B) {}
 
         get key(): string {
-          return typeof this._b === 'undefined'
-            ? 'undefined'
-            : `a${this._b.key}`;
+          return typeof this._b === 'undefined' ? 'undefined' : `a${this._b.key}`;
         }
       }
 
@@ -1468,10 +1423,7 @@ describe('core', () => {
       const j = new Injector();
       j.dispose();
 
-      expectToThrow(
-        () => j.get(A),
-        'Injector cannot be accessed after it was disposed.',
-      );
+      expectToThrow(() => j.get(A), 'Injector cannot be accessed after it was disposed.');
     });
   });
 
@@ -1482,9 +1434,7 @@ describe('core', () => {
       const parentInjector = new Injector();
       const childInjector = parentInjector.createChild([[A]]);
 
-      expect(
-        childInjector.get(A, Quantity.OPTIONAL, LookUp.SKIP_SELF),
-      ).toBeNull();
+      expect(childInjector.get(A, Quantity.OPTIONAL, LookUp.SKIP_SELF)).toBeNull();
     });
   });
 
@@ -1524,10 +1474,7 @@ describe('core', () => {
         changeDiaper(): void {}
       }
 
-      const parentInjector = new Injector([
-        [Person],
-        [Father, { useFactory: (f) => f, deps: [Person] }],
-      ]);
+      const parentInjector = new Injector([[Person], [Father, { useFactory: (f) => f, deps: [Person] }]]);
       const injector = parentInjector.createChild([[Person]]);
       const person = injector.get(Person);
       expect(person.father).toBe(parentInjector.get(Person));
@@ -1551,10 +1498,7 @@ describe('core', () => {
 
     const j = new Injector([[B], [C], [D]]);
 
-    expectToThrow(
-      () => j.get(D),
-      'Cannot find "A" registered by any injector. It is the 0th param of "B".',
-    );
+    expectToThrow(() => j.get(D), 'Cannot find "A" registered by any injector. It is the 0th param of "B".');
   });
 
   it('should print the dependencies stack when cannot resolve with factory', () => {
@@ -1582,9 +1526,6 @@ describe('core', () => {
       ],
     ]);
 
-    expectToThrow(
-      () => j.get(f),
-      '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "B".',
-    );
+    expectToThrow(() => j.get(f), '[redi]: Cannot find "A" registered by any injector. It is the 0th param of "B".');
   });
 });
