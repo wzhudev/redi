@@ -211,12 +211,12 @@ describe('core', () => {
 
       class B {
         constructor(
-          private readonly otherKey: string,
+          private readonly _otherKey: string,
           @Inject(A) public readonly a: A,
         ) {}
 
         get key() {
-          return `${this.otherKey}a`;
+          return `${this._otherKey}a`;
         }
       }
 
@@ -232,12 +232,12 @@ describe('core', () => {
 
       class B {
         constructor(
-          private readonly otherKey: string,
+          private readonly _otherKey: string,
           @Inject(A) public readonly a: A,
         ) {}
 
         get key() {
-          return `${this.otherKey}a`;
+          return `${this._otherKey}a`;
         }
       }
 
@@ -254,13 +254,13 @@ describe('core', () => {
 
       class B {
         constructor(
-          private readonly otherKey: string,
-          private readonly secondKey: string,
+          private readonly _otherKey: string,
+          private readonly _secondKey: string,
           @Inject(A) public readonly a: A,
         ) {}
 
         get key() {
-          return `${this.otherKey + this.secondKey} ${this.a.key}`;
+          return `${this._otherKey + this._secondKey} ${this.a.key}`;
         }
       }
 
@@ -281,11 +281,11 @@ describe('core', () => {
       const bI = createIdentifier('bI');
 
       class A {
-        constructor(@Inject(bI) private readonly b: any) {}
+        constructor(@Inject(bI) private readonly _b: any) {}
       }
 
       class B {
-        constructor(@Inject(aI) private readonly a: any) {}
+        constructor(@Inject(aI) private readonly _a: any) {}
       }
 
       const j = new Injector([
@@ -295,7 +295,7 @@ describe('core', () => {
 
       expectToThrow(
         () => j.get(aI),
-        `[redi]: Detecting cyclic dependency. The last identifier is "B".`,
+        `[redi]: Detecting cyclic dependency: "aI -> bI -> aI".`,
       );
     });
 
@@ -412,18 +412,18 @@ describe('core', () => {
         }
 
         class B {
-          constructor(@Inject(aI) private a: A) {}
+          constructor(@Inject(aI) private _a: A) {}
 
           get key(): string {
-            return `${this.a.key}b`;
+            return `${this._a.key}b`;
           }
 
           getAnotherKey(): string {
-            return `${this.a.getAnotherKey()}b`;
+            return `${this._a.getAnotherKey()}b`;
           }
 
           setKey(): void {
-            this.a.key = 'changed ';
+            this._a.key = 'changed ';
           }
         }
 
@@ -462,12 +462,12 @@ describe('core', () => {
 
       it('should warn use when a dependency is missing', () => {
         class A {
-          constructor(private b: typeof B) {}
+          constructor(private _b: typeof B) {}
 
           get key(): string {
-            return typeof this.b === 'undefined'
+            return typeof this._b === 'undefined'
               ? 'undefined'
-              : `a${this.b.key}`;
+              : `a${this._b.key}`;
           }
         }
 
@@ -757,10 +757,10 @@ describe('core', () => {
       it('should "AsyncHook" work', () =>
         new Promise<void>((done) => {
           class A {
-            constructor(@Inject(bbI) private bbILoader: AsyncHook<BB>) {}
+            constructor(@Inject(bbI) private _bbILoader: AsyncHook<BB>) {}
 
             public readKey(): Promise<string> {
-              return this.bbILoader.whenReady().then((bb) => bb.key);
+              return this._bbILoader.whenReady().then((bb) => bb.key);
             }
           }
 
@@ -832,7 +832,7 @@ describe('core', () => {
       expectToThrow(() => {
         class A {
           // @ts-expect-error for testing purpose
-          constructor(@Inject() private readonly a: any) {}
+          constructor(@Inject() private readonly _a: any) {}
         }
       }, '[redi]: It seems that you forgot to provide a parameter to @Required() on the 0th parameter of "A"');
     });
@@ -853,10 +853,10 @@ describe('core', () => {
       const aI = createIdentifier<A>('aI');
 
       class B {
-        constructor(@Many(aI) private aS: A[]) {}
+        constructor(@Many(aI) private _aS: A[]) {}
 
         get key(): string {
-          return `${this.aS.map((a) => a.key).join('')}b`;
+          return `${this._aS.map((a) => a.key).join('')}b`;
         }
       }
 
@@ -889,10 +889,10 @@ describe('core', () => {
       const aI = createIdentifier<A>('aI');
 
       class B {
-        constructor(@Optional() @aI private a?: A) {}
+        constructor(@Optional() @aI private _a?: A) {}
 
         get key(): string {
-          return this.a?.key || 'no a' + 'b';
+          return this._a?.key || 'no a' + 'b';
         }
       }
 
@@ -933,18 +933,18 @@ describe('core', () => {
       const aI = createIdentifier<A>('aI');
 
       class B {
-        constructor(@aI private a: A) {}
+        constructor(@aI private _a: A) {}
 
         get key(): string {
-          return this.a?.key || 'no a' + 'b';
+          return this._a?.key || 'no a' + 'b';
         }
       }
 
       class C {
-        constructor(@Optional(aI) private a: A) {}
+        constructor(@Optional(aI) private _a: A) {}
 
         get key(): string {
-          return this.a?.key || 'no a' + 'b';
+          return this._a?.key || 'no a' + 'b';
         }
       }
 
@@ -981,12 +981,12 @@ describe('core', () => {
 
       class B {
         constructor(
-          @Inject(A) private a: A,
-          @Inject(cI) private c: C,
+          @Inject(A) private _a: A,
+          @Inject(cI) private _c: C,
         ) {}
 
         get key() {
-          return `${this.a.key}b${this.c.key}`;
+          return `${this._a.key}b${this._c.key}`;
         }
       }
 
@@ -1030,10 +1030,10 @@ describe('core', () => {
       }
 
       class D {
-        constructor(@SkipSelf() @cI private readonly c: C) {}
+        constructor(@SkipSelf() @cI private readonly _c: C) {}
 
         get key(): string {
-          return `${this.c.key}d`;
+          return `${this._c.key}d`;
         }
       }
 
@@ -1121,7 +1121,7 @@ describe('core', () => {
       class A {}
 
       class B {
-        constructor(@WithNew() @Inject(A) private readonly a: A) {}
+        constructor(@WithNew() @Inject(A) private readonly _a: A) {}
       }
 
       const j = new Injector([[B]]);
@@ -1151,10 +1151,10 @@ describe('core', () => {
     it('support removed from parent injector', () => {
       const j = new Injector();
       const c = j.createChild();
-      expect((j as any).children.length).toBe(1);
+      expect((j as any)._children.length).toBe(1);
 
       c.dispose();
-      expect((j as any).children.length).toBe(0);
+      expect((j as any)._children.length).toBe(0);
     });
   });
 
@@ -1162,14 +1162,14 @@ describe('core', () => {
     it('should throw Error when forwardRef is not used', () => {
       expectToThrow(() => {
         class A {
-          // Intended to throw error.
+          // @ts-expect-error for testing purpose
           // eslint-disable-next-line ts/no-use-before-define
-          constructor(@Inject(B) private b: B) {}
+          constructor(@Inject(B) private _b: B) {}
 
           get key(): string {
-            return typeof this.b === 'undefined'
+            return typeof this._b === 'undefined'
               ? 'undefined'
-              : `a${this.b.key}`;
+              : `a${this._b.key}`;
           }
         }
 
@@ -1181,10 +1181,12 @@ describe('core', () => {
 
     it('should work when "forwardRef" is used', () => {
       class A {
-        constructor(@Inject(forwardRef(() => B)) private b: B) {}
+        constructor(@Inject(forwardRef(() => B)) private _b: B) {}
 
         get key(): string {
-          return typeof this.b === 'undefined' ? 'undefined' : `a${this.b.key}`;
+          return typeof this._b === 'undefined'
+            ? 'undefined'
+            : `a${this._b.key}`;
         }
       }
 
@@ -1206,10 +1208,10 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@WithNew() @Inject(A) private readonly a: A) {}
+        constructor(@WithNew() @Inject(A) private readonly _a: A) {}
 
         get(): number {
-          return this.a.count;
+          return this._a.count;
         }
       }
 
@@ -1301,18 +1303,18 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(aI) private a: A) {}
+        constructor(@Inject(aI) private _a: A) {}
 
         get key(): string {
-          return `${this.a.key}b`;
+          return `${this._a.key}b`;
         }
 
         getAnotherKey(): string {
-          return `${this.a.getAnotherKey()}b`;
+          return `${this._a.getAnotherKey()}b`;
         }
 
         setKey(): void {
-          this.a.key = 'changed ';
+          this._a.key = 'changed ';
         }
       }
 
@@ -1367,18 +1369,18 @@ describe('core', () => {
       }
 
       class B {
-        constructor(@Inject(aI) private a: A) {}
+        constructor(@Inject(aI) private _a: A) {}
 
         get key(): string {
-          return `${this.a.key}b`;
+          return `${this._a.key}b`;
         }
 
         getAnotherKey(): string {
-          return `${this.a.getAnotherKey()}b`;
+          return `${this._a.getAnotherKey()}b`;
         }
 
         setKey(): void {
-          this.a.key = 'changed ';
+          this._a.key = 'changed ';
         }
       }
 
@@ -1441,10 +1443,10 @@ describe('core', () => {
       }
 
       class B implements IDisposable {
-        constructor(@Inject(A) private readonly a: A) {}
+        constructor(@Inject(A) private readonly _a: A) {}
 
         get key(): string {
-          return `${this.a.key}b`;
+          return `${this._a.key}b`;
         }
 
         dispose() {
@@ -1536,15 +1538,15 @@ describe('core', () => {
     class A {}
 
     class B {
-      constructor(@Inject(A) private a: A) {}
+      constructor(@Inject(A) private _a: A) {}
     }
 
     class C {
-      constructor(@Inject(B) private b: B) {}
+      constructor(@Inject(B) private _b: B) {}
     }
 
     class D {
-      constructor(@Inject(C) private c: C) {}
+      constructor(@Inject(C) private _c: C) {}
     }
 
     const j = new Injector([[B], [C], [D]]);
@@ -1559,11 +1561,11 @@ describe('core', () => {
     class A {}
 
     class B {
-      constructor(@Inject(A) private a: A) {}
+      constructor(@Inject(A) private _a: A) {}
     }
 
     class C {
-      constructor(@Inject(B) private b: B) {}
+      constructor(@Inject(B) private _b: B) {}
     }
 
     const f = createIdentifier('f');

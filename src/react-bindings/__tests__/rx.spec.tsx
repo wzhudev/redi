@@ -61,20 +61,20 @@ describe('test legacy rxjs utils', () => {
   it('should use default value in BehaviorSubject', async () => {
     class CounterService implements IDisposable {
       public counter$: BehaviorSubject<number>;
-      private number: number;
-      private readonly loop?: number;
+      private _number: number;
+      private readonly _loop?: number;
 
       constructor() {
-        this.number = 5;
-        this.counter$ = new BehaviorSubject(this.number);
-        this.loop = setInterval(() => {
-          this.number += 1;
-          this.counter$.next(this.number);
+        this._number = 5;
+        this.counter$ = new BehaviorSubject(this._number);
+        this._loop = setInterval(() => {
+          this._number += 1;
+          this.counter$.next(this._number);
         }, 100) as any as number;
       }
 
       dispose(): void {
-        clearTimeout(this.loop!);
+        clearTimeout(this._loop!);
       }
     }
 
@@ -182,17 +182,17 @@ describe('test legacy rxjs utils', () => {
       public number = 0;
       public updater$ = new Subject<void>();
 
-      private loop?: number;
+      private _loop?: number;
 
       constructor() {
-        this.loop = setInterval(() => {
+        this._loop = setInterval(() => {
           this.number += 1;
           this.updater$.next();
         }, 100) as any as number;
       }
 
       dispose(): void {
-        clearTimeout(this.loop!);
+        clearTimeout(this._loop!);
       }
     }
 

@@ -4,6 +4,8 @@ export default antfu({
   ignores: [
     'AGENTS.md',
     'CLAUDE.md',
+    '.claude/',
+    'reference/',
   ],
   rules: {
     'ts/no-misused-new': 0,
@@ -18,5 +20,24 @@ export default antfu({
     'style/quote-props': 'off',
     'svelte/indent': 'off',
     'antfu/if-newline': 'off',
+  },
+}, {
+  files: [
+    '**/*.{ts,tsx}',
+  ],
+  ignores: [
+    '**/*.md',
+    '**/*.md/**',
+  ],
+  rules: {
+    'ts/naming-convention': [
+      'error',
+      {
+        selector: 'memberLike',
+        modifiers: ['private'],
+        format: ['camelCase'],
+        leadingUnderscore: 'require',
+      },
+    ],
   },
 });

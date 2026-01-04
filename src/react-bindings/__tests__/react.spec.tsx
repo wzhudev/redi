@@ -76,10 +76,10 @@ describe('react', () => {
       static override contextType = RediContext;
 
       @WithDependency(aI)
-      private readonly a!: A;
+      private readonly _a!: A;
 
       override render() {
-        return <div>{this.a.key}</div>;
+        return <div>{this._a.key}</div>;
       }
     }
 
@@ -129,10 +129,10 @@ describe('react', () => {
 
     class AppImpl extends React.Component {
       @WithDependency(aI)
-      private readonly a!: A;
+      private readonly _a!: A;
 
       override render() {
-        return <div>{this.a.key}</div>;
+        return <div>{this._a.key}</div>;
       }
     }
 

@@ -78,43 +78,43 @@ declare function cancelIdleCallback(handle: number): void;
  * the type of the returned value of the executor would be T
  */
 export class IdleValue<T> implements IDisposable {
-  private readonly executor: () => void;
-  private readonly disposeIdleCallback: () => void;
+  private readonly _executor: () => void;
+  private readonly _disposeIdleCallback: () => void;
 
-  private didRun = false;
-  private value?: T;
-  private error?: Error;
+  private _didRun = false;
+  private _value?: T;
+  private _error?: Error;
 
   constructor(executor: () => T) {
-    this.executor = () => {
+    this._executor = () => {
       try {
-        this.value = executor();
+        this._value = executor();
       } catch (err: any) {
-        this.error = err;
+        this._error = err;
       } finally {
-        this.didRun = true;
+        this._didRun = true;
       }
     };
 
-    this.disposeIdleCallback = runWhenIdle(() => this.executor());
+    this._disposeIdleCallback = runWhenIdle(() => this._executor());
   }
 
   hasRun(): boolean {
-    return this.didRun;
+    return this._didRun;
   }
 
   dispose(): void {
-    this.disposeIdleCallback();
+    this._disposeIdleCallback();
   }
 
   getValue(): T {
-    if (!this.didRun) {
-      this.disposeIdleCallback();
-      this.executor();
+    if (!this._didRun) {
+      this._disposeIdleCallback();
+      this._executor();
     }
 
-    if (this.error) throw this.error;
+    if (this._error) throw this._error;
 
-    return this.value!;
+    return this._value!;
   }
 }

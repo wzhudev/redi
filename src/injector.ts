@@ -26,6 +26,7 @@ import {
 } from './dependencyCollection';
 import { normalizeFactoryDeps } from './dependencyDescriptor';
 import { normalizeForwardRef } from './dependencyForwardRef';
+import { Graph } from './dependencyGraph';
 import {
   AsyncHookSymbol,
   isAsyncDependencyItem,
@@ -42,18 +43,19 @@ import { RediError } from './error';
 import { IdleValue } from './idleValue';
 import { LookUp, Quantity } from './types';
 
-const MAX_RESOLUTIONS_QUEUED = 300;
-
 const NotInstantiatedSymbol = Symbol('$$NOT_INSTANTIATED_SYMBOL');
 
-class CircularDependencyError<T> extends RediError {
-  constructor(id: DependencyIdentifier<T>) {
-    super(
-      `Detecting cyclic dependency. The last identifier is "${prettyPrintIdentifier(
-        id,
-      )}".`,
-    );
+class CircularDependencyError extends RediError {
+  constructor(path: DependencyIdentifier<any>[]) {
+    const pretty = path.map((id) => prettyPrintIdentifier(id)).join(' -> ');
+    super(`Detecting cyclic dependency: "${pretty}".`);
   }
+}
+
+interface GraphTokenNode {
+  owner: Injector;
+  id: DependencyIdentifier<any>;
+  key: string;
 }
 
 class InjectorAlreadyDisposedError extends RediError {
@@ -153,16 +155,50 @@ export interface IAccessor {
  * ```
  */
 export class Injector {
-  private readonly dependencyCollection: DependencyCollection;
-  private readonly resolvedDependencyCollection: ResolvedDependencyCollection;
+  private readonly _dependencyCollection: DependencyCollection;
+  private readonly _resolvedDependencyCollection: ResolvedDependencyCollection;
 
-  private readonly children: Injector[] = [];
+  private readonly _children: Injector[] = [];
 
-  private resolutionOngoing = 0;
+  private _topoDepth = 0;
 
-  private disposingCallbacks = new Set<() => void>();
+  private static _injectorIdSeq = 0;
+  private static readonly _injectorIds = new WeakMap<object, number>();
+  private static _tokenIdSeq = 0;
+  private static readonly _tokenIds = new WeakMap<object, number>();
 
-  private disposed = false;
+  private static _getInjectorKey(injector: Injector): string {
+    let id = Injector._injectorIds.get(injector);
+    if (!id) {
+      id = Injector._injectorIdSeq += 1;
+      Injector._injectorIds.set(injector, id);
+    }
+    return `inj:${id}`;
+  }
+
+  private static _getTokenKey(id: DependencyIdentifier<any>): string {
+    if (typeof id === 'string') {
+      return `str:${id}`;
+    }
+
+    let tokenId = Injector._tokenIds.get(id as any);
+    if (!tokenId) {
+      tokenId = Injector._tokenIdSeq += 1;
+      Injector._tokenIds.set(id as any, tokenId);
+    }
+    return `tok:${tokenId}`;
+  }
+
+  private static _makeNodeKey(
+    owner: Injector,
+    id: DependencyIdentifier<any>,
+  ): string {
+    return `${Injector._getInjectorKey(owner)}|${Injector._getTokenKey(id)}`;
+  }
+
+  private _disposingCallbacks = new Set<() => void>();
+
+  private _disposed = false;
 
   /**
    * Create a new `Injector` instance.
@@ -171,7 +207,7 @@ export class Injector {
    *   Each dependency can be:
    *   - `[ClassName]` - Register a class as its own identifier
    *   - `[Identifier, DependencyItem]` - Register with a specific identifier and configuration
-   * @param parent - Optional parent injector for hierarchical injection.
+   * @param _parent - Optional parent injector for hierarchical injection.
    *   Child injectors inherit dependencies from their parent.
    *
    * @example
@@ -191,13 +227,13 @@ export class Injector {
    */
   constructor(
     dependencies?: Dependency[],
-    private readonly parent: Injector | null = null,
+    private readonly _parent: Injector | null = null,
   ) {
-    this.dependencyCollection = new DependencyCollection(dependencies || []);
-    this.resolvedDependencyCollection = new ResolvedDependencyCollection();
+    this._dependencyCollection = new DependencyCollection(dependencies || []);
+    this._resolvedDependencyCollection = new ResolvedDependencyCollection();
 
-    if (parent) {
-      parent.children.push(this);
+    if (this._parent) {
+      this._parent._children.push(this);
     }
   }
 
@@ -224,8 +260,8 @@ export class Injector {
    * ```
    */
   public onDispose(callback: () => void): IDisposable {
-    this.disposingCallbacks.add(callback);
-    return { dispose: () => this.disposingCallbacks.delete(callback) };
+    this._disposingCallbacks.add(callback);
+    return { dispose: () => this._disposingCallbacks.delete(callback) };
   }
 
   /**
@@ -281,26 +317,26 @@ export class Injector {
    */
   public dispose(): void {
     // Dispose child injectors first.
-    this.children.forEach((c) => c.dispose());
-    this.children.length = 0;
+    this._children.forEach((c) => c.dispose());
+    this._children.length = 0;
 
     // Call `dispose` method on each instantiated dependencies if they are `IDisposable` and clear collections.
-    this.dependencyCollection.dispose();
-    this.resolvedDependencyCollection.dispose();
+    this._dependencyCollection.dispose();
+    this._resolvedDependencyCollection.dispose();
 
     // Detach itself from parent.
-    this.deleteSelfFromParent();
+    this._deleteSelfFromParent();
 
-    this.disposed = true;
+    this._disposed = true;
 
-    this.disposingCallbacks.forEach((callback) => callback());
-    this.disposingCallbacks.clear();
+    this._disposingCallbacks.forEach((callback) => callback());
+    this._disposingCallbacks.clear();
   }
 
-  private deleteSelfFromParent(): void {
-    if (this.parent) {
-      const index = this.parent.children.indexOf(this);
-      this.parent.children.splice(index, 1);
+  private _deleteSelfFromParent(): void {
+    if (this._parent) {
+      const index = this._parent._children.indexOf(this);
+      this._parent._children.splice(index, 1);
     }
   }
 
@@ -338,13 +374,13 @@ export class Injector {
     const identifierOrCtor = dependency[0];
     const item = dependency[1];
 
-    if (this.resolvedDependencyCollection.has(identifierOrCtor)) {
+    if (this._resolvedDependencyCollection.has(identifierOrCtor)) {
       throw new AddDependencyAfterResolutionError(identifierOrCtor);
     }
 
     if (typeof item === 'undefined') {
       // Add dependency
-      this.dependencyCollection.add(identifierOrCtor as Ctor<T>);
+      this._dependencyCollection.add(identifierOrCtor as Ctor<T>);
     } else if (
       isAsyncDependencyItem(item) ||
       isClassDependencyItem(item) ||
@@ -352,13 +388,13 @@ export class Injector {
       isFactoryDependencyItem(item)
     ) {
       // Add dependency
-      this.dependencyCollection.add(
+      this._dependencyCollection.add(
         identifierOrCtor,
         item as DependencyItem<T>,
       );
     } else {
       // Add instance
-      this.resolvedDependencyCollection.add(identifierOrCtor, item as T);
+      this._resolvedDependencyCollection.add(identifierOrCtor, item as T);
     }
   }
 
@@ -382,12 +418,12 @@ export class Injector {
     this._ensureInjectorNotDisposed();
 
     const identifier = dependency[0];
-    if (this.resolvedDependencyCollection.has(identifier)) {
+    if (this._resolvedDependencyCollection.has(identifier)) {
       throw new AddDependencyAfterResolutionError(identifier);
     }
 
-    this.dependencyCollection.delete(identifier);
-    this.dependencyCollection.add(identifier, dependency[1]);
+    this._dependencyCollection.delete(identifier);
+    this._dependencyCollection.add(identifier, dependency[1]);
   }
 
   /**
@@ -407,11 +443,11 @@ export class Injector {
   public delete<T>(identifier: DependencyIdentifier<T>): void {
     this._ensureInjectorNotDisposed();
 
-    if (this.resolvedDependencyCollection.has(identifier)) {
+    if (this._resolvedDependencyCollection.has(identifier)) {
       throw new DeleteDependencyAfterResolutionError(identifier);
     }
 
-    this.dependencyCollection.delete(identifier);
+    this._dependencyCollection.delete(identifier);
   }
 
   /**
@@ -471,7 +507,7 @@ export class Injector {
    * ```
    */
   public has<T>(id: DependencyIdentifier<T>): boolean {
-    return this.dependencyCollection.has(id) || this.parent?.has(id) || false;
+    return this._dependencyCollection.has(id) || this._parent?.has(id) || false;
   }
 
   public get<T>(id: DependencyIdentifier<T>, lookUp?: LookUp): T;
@@ -569,7 +605,7 @@ export class Injector {
     if (!withNew) {
       // see if the dependency is already resolved, return it and check quantity
       // if the dependency is not registered, it will return null or [] based on the quantity
-      const cachedResult = this.getValue(id, quantity, lookUp);
+      const cachedResult = this._getValue(id, quantity, lookUp);
       if (cachedResult !== NotInstantiatedSymbol) {
         return cachedResult;
       }
@@ -577,7 +613,7 @@ export class Injector {
 
     // see if the dependency can be instantiated by itself or its parent
     const shouldCache = !withNew;
-    return this.createDependency(id, quantity, lookUp, shouldCache) as
+    return this._createDependency(id, quantity, lookUp, shouldCache) as
       | T[]
       | T
       | AsyncHook<T>
@@ -590,12 +626,12 @@ export class Injector {
   public getAsync<T>(id: DependencyIdentifier<T>): Promise<T> {
     this._ensureInjectorNotDisposed();
 
-    const cachedResult = this.getValue(id, Quantity.REQUIRED);
+    const cachedResult = this._getValue(id, Quantity.REQUIRED);
     if (cachedResult !== NotInstantiatedSymbol) {
       return Promise.resolve(cachedResult as T);
     }
 
-    const newResult = this.createDependency(id, Quantity.REQUIRED);
+    const newResult = this._createDependency(id, Quantity.REQUIRED);
     if (!isAsyncHook(newResult)) {
       return Promise.resolve(newResult as T);
     }
@@ -673,11 +709,8 @@ export class Injector {
       } else {
         result = this._resolveAsync(id, item as AsyncDependencyItem<T>);
       }
-
+    } finally {
       popupResolvingStack();
-    } catch (e: unknown) {
-      popupResolvingStack();
-      throw e;
     }
 
     return result;
@@ -687,8 +720,8 @@ export class Injector {
     id: DependencyIdentifier<T>,
     item: ExistingDependencyItem<T>,
   ): T {
-    const thing = this.get(item.useExisting);
-    this.resolvedDependencyCollection.add(id, thing);
+    const thing = this.get(item.useExisting) as T;
+    this._resolvedDependencyCollection.add(id, thing);
     return thing;
   }
 
@@ -697,7 +730,7 @@ export class Injector {
     item: ValueDependencyItem<T>,
   ): T {
     const thing = item.useValue;
-    this.resolvedDependencyCollection.add(id, thing);
+    this._resolvedDependencyCollection.add(id, thing);
     return thing;
   }
 
@@ -748,7 +781,7 @@ export class Injector {
     }
 
     if (id && shouldCache) {
-      this.resolvedDependencyCollection.add(id, thing);
+      this._resolvedDependencyCollection.add(id, thing);
     }
 
     return thing;
@@ -759,7 +792,6 @@ export class Injector {
     ...extraParams: any[]
   ) {
     const Ctor = item.useClass;
-    this.markNewResolution(Ctor);
 
     const declaredDependencies = getDependencies(Ctor)
       .sort((a, b) => a.paramIndex - b.paramIndex)
@@ -821,8 +853,6 @@ export class Injector {
 
     item?.onInstantiation?.(thing);
 
-    this.markResolutionCompleted();
-
     return thing;
   }
 
@@ -831,8 +861,6 @@ export class Injector {
     item: FactoryDependencyItem<T>,
     shouldCache: boolean,
   ): T {
-    this.markNewResolution(id);
-
     const declaredDependencies = normalizeFactoryDeps(item.deps);
 
     const resolvedArgs: any[] = [];
@@ -865,10 +893,8 @@ export class Injector {
     const thing = item.useFactory.apply(null, resolvedArgs);
 
     if (shouldCache) {
-      this.resolvedDependencyCollection.add(id, thing);
+      this._resolvedDependencyCollection.add(id, thing);
     }
-
-    this.markResolutionCompleted();
 
     item?.onInstantiation?.(thing);
 
@@ -893,7 +919,7 @@ export class Injector {
     return item.useAsync().then((thing) => {
       // check if another promise has been resolved,
       // do not resolve the async item twice
-      const resolvedCheck = this.getValue(id);
+      const resolvedCheck = this._getValue(id);
       if (resolvedCheck !== NotInstantiatedSymbol) {
         return resolvedCheck as T;
       }
@@ -915,31 +941,31 @@ export class Injector {
         ret = thing;
       }
 
-      this.resolvedDependencyCollection.add(id, ret);
+      this._resolvedDependencyCollection.add(id, ret);
 
       return ret;
     });
   }
 
-  private getValue<T>(
+  private _getValue<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity = Quantity.REQUIRED,
     lookUp?: LookUp,
   ): null | T | T[] | typeof NotInstantiatedSymbol {
     const onSelf = () => {
       if (
-        this.dependencyCollection.has(id) &&
-        !this.resolvedDependencyCollection.has(id)
+        this._dependencyCollection.has(id) &&
+        !this._resolvedDependencyCollection.has(id)
       ) {
         return NotInstantiatedSymbol;
       }
 
-      return this.resolvedDependencyCollection.get(id, quantity);
+      return this._resolvedDependencyCollection.get(id, quantity);
     };
 
     const onParent = () => {
-      if (this.parent) {
-        return this.parent.getValue(id, quantity);
+      if (this._parent) {
+        return this._parent._getValue(id, quantity);
       } else {
         if (quantity === Quantity.OPTIONAL) {
           return null;
@@ -955,7 +981,7 @@ export class Injector {
       return onParent();
     }
 
-    if (id === Injector) {
+    if ((id as any) === Injector) {
       return this as unknown as T;
     }
 
@@ -964,8 +990,8 @@ export class Injector {
     }
 
     if (
-      this.resolvedDependencyCollection.has(id) ||
-      this.dependencyCollection.has(id)
+      this._resolvedDependencyCollection.has(id) ||
+      this._dependencyCollection.has(id)
     ) {
       return onSelf();
     }
@@ -973,30 +999,49 @@ export class Injector {
     return onParent();
   }
 
-  private createDependency<T>(
+  private _createDependency<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity,
     lookUp?: LookUp,
     shouldCache = true,
   ): null | T | T[] | AsyncHook<T> | (T | AsyncHook<T>)[] {
     const onSelf = () => {
-      const registrations = this.dependencyCollection.get(id, quantity)!;
+      const registrations = this._dependencyCollection.get(id, quantity)!;
 
-      let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null;
-      if (Array.isArray(registrations)) {
-        ret = registrations.map((dependencyItem) =>
-          this._resolveDependency(id, dependencyItem, shouldCache),
-        );
-      } else {
-        ret = this._resolveDependency(id, registrations, shouldCache);
+      // VS Code-style approach: build a dependency graph and instantiate in topological order.
+      // Only applies when caching (singleton semantics) and not already in a topo-run.
+      // We skip async registrations because they are represented as AsyncHook and only cached
+      // once resolved.
+      if (shouldCache && this._topoDepth === 0) {
+        const items = Array.isArray(registrations)
+          ? registrations
+          : [registrations];
+        const hasAsync = items.some((it) => isAsyncDependencyItem(it));
+        if (!hasAsync) {
+          this._createAndCacheByGraph(id, [
+            {
+              owner: this,
+              id,
+              key: Injector._makeNodeKey(this, id),
+            },
+          ]);
+
+          return this._resolvedDependencyCollection.get(id, quantity) as any;
+        }
       }
 
-      return ret;
+      if (Array.isArray(registrations)) {
+        return registrations.map((dependencyItem) =>
+          this._resolveDependency(id, dependencyItem, shouldCache),
+        ) as any;
+      }
+
+      return this._resolveDependency(id, registrations, shouldCache) as any;
     };
 
     const onParent = () => {
-      if (this.parent) {
-        return this.parent.createDependency(
+      if (this._parent) {
+        return this._parent._createDependency(
           id,
           quantity,
           undefined,
@@ -1018,27 +1063,227 @@ export class Injector {
       return onParent();
     }
 
-    if (this.dependencyCollection.has(id)) {
+    if (this._dependencyCollection.has(id)) {
       return onSelf();
     }
 
     return onParent();
   }
 
-  private markNewResolution<T>(id: DependencyIdentifier<T>): void {
-    this.resolutionOngoing += 1;
+  private _createAndCacheByGraph(
+    rootId: DependencyIdentifier<any>,
+    startNodes: GraphTokenNode[],
+  ): void {
+    const graph = new Graph<GraphTokenNode>((n) => n.key);
+    const stack: GraphTokenNode[] = startNodes.slice();
+    const seen = new Set<string>();
+    const keyToNode = new Map<string, GraphTokenNode>();
 
-    if (this.resolutionOngoing >= MAX_RESOLUTIONS_QUEUED) {
-      throw new CircularDependencyError(id);
+    while (stack.length) {
+      const node = stack.pop()!;
+      if (seen.has(node.key)) {
+        continue;
+      }
+      seen.add(node.key);
+      keyToNode.set(node.key, node);
+
+      graph.lookupOrInsertNode(node);
+
+      // Discover dependencies of this node.
+      const deps = this._getTokenDependencies(node);
+      for (const dep of deps) {
+        if (dep.withNew) {
+          continue;
+        }
+
+        const depId = normalizeForwardRef(dep.identifier);
+        if (depId === Injector) {
+          continue;
+        }
+
+        const provider = node.owner._findProviderInjector(depId, dep.lookUp);
+        if (!provider) {
+          continue;
+        }
+
+        if (
+          provider._resolvedDependencyCollection.has(depId) ||
+          !provider._dependencyCollection.has(depId)
+        ) {
+          continue;
+        }
+
+        // Only include tokens that have at least one sync registration.
+        if (!provider._hasSyncRegistration(depId)) {
+          continue;
+        }
+
+        const depNode: GraphTokenNode = {
+          owner: provider,
+          id: depId,
+          key: Injector._makeNodeKey(provider, depId),
+        };
+        graph.insertEdge(node, depNode);
+        stack.push(depNode);
+      }
+    }
+
+    this._topoDepth += 1;
+    try {
+      while (true) {
+        const roots = graph.roots();
+
+        if (roots.length === 0) {
+          if (!graph.isEmpty()) {
+            const keyPath = graph.findCycleSlow();
+            const idPath = (keyPath || [])
+              .map((k) => keyToNode.get(k)?.id)
+              .filter(Boolean) as DependencyIdentifier<any>[];
+
+            throw new CircularDependencyError(
+              Injector._normalizeCycleToRoot(idPath, rootId),
+            );
+          }
+          break;
+        }
+
+        for (const root of roots) {
+          const data = root.data;
+
+          // Similar to VS Code: instantiation may have side effects.
+          if (data.owner._resolvedDependencyCollection.has(data.id)) {
+            graph.removeNode(data);
+            continue;
+          }
+
+          data.owner._instantiateAllSyncRegistrations(data.id);
+          graph.removeNode(data);
+        }
+      }
+    } finally {
+      this._topoDepth -= 1;
     }
   }
 
-  private markResolutionCompleted(): void {
-    this.resolutionOngoing -= 1;
+  private static _normalizeCycleToRoot(
+    path: DependencyIdentifier<any>[],
+    rootId: DependencyIdentifier<any>,
+  ): DependencyIdentifier<any>[] {
+    if (path.length < 2) {
+      return [rootId, rootId];
+    }
+
+    // Ensure it's a closed cycle in output.
+    const ring = path[0] === path[path.length - 1] ? path.slice(0, -1) : path;
+    const idx = ring.findIndex((id) => id === rootId);
+    if (idx === -1) {
+      const closed = ring.slice();
+      closed.push(closed[0]);
+      return closed;
+    }
+
+    const rotated = ring.slice(idx).concat(ring.slice(0, idx));
+    rotated.push(rotated[0]);
+    return rotated;
+  }
+
+  private _getTokenDependencies(node: GraphTokenNode) {
+    const deps: Array<ReturnType<typeof normalizeFactoryDeps>[number]> = [];
+
+    if (!node.owner._dependencyCollection.has(node.id)) {
+      return deps;
+    }
+
+    const items = node.owner._dependencyCollection.get(
+      node.id,
+      Quantity.MANY,
+    ) as DependencyItem<any>[];
+
+    for (const item of items) {
+      if (isAsyncDependencyItem(item)) {
+        continue;
+      }
+
+      if (isClassDependencyItem(item)) {
+        const d = getDependencies(item.useClass)
+          .sort((a, b) => a.paramIndex - b.paramIndex)
+          .map((x) => ({
+            ...x,
+            identifier: normalizeForwardRef(x.identifier),
+          }));
+        deps.push(...d);
+      } else if (isFactoryDependencyItem(item)) {
+        const d = normalizeFactoryDeps(item.deps).map((x) => ({
+          ...x,
+          identifier: normalizeForwardRef(x.identifier),
+        }));
+        deps.push(...d);
+      } else if (isExistingDependencyItem(item)) {
+        deps.push({
+          paramIndex: 0,
+          identifier: item.useExisting,
+          quantity: Quantity.REQUIRED,
+          lookUp: undefined,
+          withNew: false,
+        });
+      }
+    }
+
+    return deps;
+  }
+
+  private _hasSyncRegistration(id: DependencyIdentifier<any>): boolean {
+    if (!this._dependencyCollection.has(id)) {
+      return false;
+    }
+
+    const items = this._dependencyCollection.get(
+      id,
+      Quantity.MANY,
+    ) as DependencyItem<any>[];
+    return items.some((it) => !isAsyncDependencyItem(it));
+  }
+
+  private _instantiateAllSyncRegistrations(
+    id: DependencyIdentifier<any>,
+  ): void {
+    if (!this._dependencyCollection.has(id)) {
+      return;
+    }
+
+    const items = this._dependencyCollection.get(
+      id,
+      Quantity.MANY,
+    ) as DependencyItem<any>[];
+    for (const item of items) {
+      if (isAsyncDependencyItem(item)) {
+        continue;
+      }
+      this._resolveDependency(id, item as any, true);
+    }
+  }
+
+  private _findProviderInjector(
+    id: DependencyIdentifier<any>,
+    lookUp?: LookUp,
+  ): Injector | null {
+    if (lookUp === LookUp.SKIP_SELF) {
+      return this._parent?._findProviderInjector(id, undefined) ?? null;
+    }
+
+    if (lookUp === LookUp.SELF) {
+      return this._dependencyCollection.has(id) ? this : null;
+    }
+
+    if (this._dependencyCollection.has(id)) {
+      return this;
+    }
+
+    return this._parent?._findProviderInjector(id, undefined) ?? null;
   }
 
   private _ensureInjectorNotDisposed(): void {
-    if (this.disposed) {
+    if (this._disposed) {
       throw new InjectorAlreadyDisposedError();
     }
   }
