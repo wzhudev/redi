@@ -70,7 +70,7 @@
       "optional": true
     }
   },
-  "engines": {
+  "devEngines": {
     "node": ">=22.12.0"
   },
   "repository": {
