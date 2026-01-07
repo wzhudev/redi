@@ -7,12 +7,12 @@ import { AA, bbI } from './async.base';
 export class BBImpl implements BB {
   static counter = 0;
 
-  constructor(@Inject(AA) private readonly aa: AA) {
+  constructor(@Inject(AA) private readonly _aa: AA) {
     BBImpl.counter += 1;
   }
 
   get key(): string {
-    return `${this.aa.key}bb`;
+    return `${this._aa.key}bb`;
   }
 
   public getConstructedTime(): number {

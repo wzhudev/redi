@@ -7,10 +7,7 @@ export { useDependency, useInjector } from './reactHooks';
 export * from './reactRx';
 
 const __REDI_CONTEXT_LOCK__ = 'REDI_CONTEXT_LOCK';
-const isNode =
-  typeof process !== 'undefined' &&
-  process.versions != null &&
-  process.versions.node != null;
+const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 const globalObject: any =
   (typeof globalThis !== 'undefined' && globalThis) ||

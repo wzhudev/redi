@@ -63,9 +63,7 @@ export interface ClassDependencyItem<T> extends DependencyItemHooks<T> {
  * @param thing - The value to check.
  * @returns `true` if the value has a `useClass` property.
  */
-export function isClassDependencyItem<T>(
-  thing: unknown,
-): thing is ClassDependencyItem<T> {
+export function isClassDependencyItem<T>(thing: unknown): thing is ClassDependencyItem<T> {
   if (thing && typeof (thing as any).useClass !== 'undefined') {
     return true;
   }
@@ -76,12 +74,7 @@ export function isClassDependencyItem<T>(
 /**
  * Modifier decorators that can be applied to factory dependencies.
  */
-export type FactoryDepModifier =
-  | typeof Self
-  | typeof SkipSelf
-  | typeof Optional
-  | typeof Many
-  | typeof WithNew;
+export type FactoryDepModifier = typeof Self | typeof SkipSelf | typeof Optional | typeof Many | typeof WithNew;
 
 /**
  * A factory dependency declaration.
@@ -99,9 +92,7 @@ export type FactoryDepModifier =
  * const dep2: FactoryDep<CacheService> = [Optional, CacheService];
  * ```
  */
-export type FactoryDep<T> =
-  | [...FactoryDepModifier[], DependencyIdentifier<T>]
-  | DependencyIdentifier<T>;
+export type FactoryDep<T> = [...FactoryDepModifier[], DependencyIdentifier<T>] | DependencyIdentifier<T>;
 
 /**
  * A dependency item that uses a factory function to create instances.
@@ -139,9 +130,7 @@ export interface FactoryDependencyItem<T> extends DependencyItemHooks<T> {
  * @param thing - The value to check.
  * @returns `true` if the value has a `useFactory` property.
  */
-export function isFactoryDependencyItem<T>(
-  thing: unknown,
-): thing is FactoryDependencyItem<T> {
+export function isFactoryDependencyItem<T>(thing: unknown): thing is FactoryDependencyItem<T> {
   if (thing && typeof (thing as any).useFactory !== 'undefined') {
     return true;
   }
@@ -175,9 +164,7 @@ export interface ValueDependencyItem<T> extends DependencyItemHooks<T> {
  * @param thing - The value to check.
  * @returns `true` if the value has a `useValue` property.
  */
-export function isValueDependencyItem<T>(
-  thing: unknown,
-): thing is ValueDependencyItem<T> {
+export function isValueDependencyItem<T>(thing: unknown): thing is ValueDependencyItem<T> {
   if (thing && typeof (thing as any).useValue !== 'undefined') {
     return true;
   }
@@ -194,9 +181,7 @@ export interface ExistingDependencyItem<T> extends DependencyItemHooks<T> {
    */
   useExisting: DependencyIdentifier<T>;
 }
-export function isExistingDependencyItem<T>(
-  thing: unknown,
-): thing is ExistingDependencyItem<T> {
+export function isExistingDependencyItem<T>(thing: unknown): thing is ExistingDependencyItem<T> {
   if (thing && typeof (thing as any).useExisting !== 'undefined') {
     return true;
   }
@@ -231,9 +216,7 @@ export interface AsyncDependencyItem<T> extends DependencyItemHooks<T> {
    * - A class constructor to instantiate
    * - A tuple of [identifier, dependency item] for further resolution
    */
-  useAsync: () => Promise<
-    T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]
-  >;
+  useAsync: () => Promise<T | Ctor<T> | [DependencyIdentifier<T>, SyncDependencyItem<T>]>;
 }
 
 /**
@@ -242,9 +225,7 @@ export interface AsyncDependencyItem<T> extends DependencyItemHooks<T> {
  * @param thing - The value to check.
  * @returns `true` if the value has a `useAsync` property.
  */
-export function isAsyncDependencyItem<T>(
-  thing: unknown,
-): thing is AsyncDependencyItem<T> {
+export function isAsyncDependencyItem<T>(thing: unknown): thing is AsyncDependencyItem<T> {
   if (thing && typeof (thing as any).useAsync !== 'undefined') {
     return true;
   }
@@ -318,7 +299,5 @@ export type SyncDependencyItem<T> =
 export type DependencyItem<T> = SyncDependencyItem<T> | AsyncDependencyItem<T>;
 
 export function prettyPrintIdentifier<T>(id: DependencyIdentifier<T>): string {
-  return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol]
-    ? id.name
-    : id.toString();
+  return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol] ? id.name : id.toString();
 }

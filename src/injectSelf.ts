@@ -34,12 +34,6 @@ interface InjectSelfDecorator {
  */
 export const InjectSelf: InjectSelfDecorator = function InjectSelf<T>() {
   return function (registerTarget: Ctor<T>, _key: string, index: number) {
-    setDependency(
-      registerTarget,
-      Injector,
-      index,
-      Quantity.REQUIRED,
-      LookUp.SELF,
-    );
+    setDependency(registerTarget, Injector, index, Quantity.REQUIRED, LookUp.SELF);
   };
 } as any;
