@@ -18,5 +18,7 @@ export default antfu({
     'style/quote-props': 'off',
     'svelte/indent': 'off',
     'antfu/if-newline': 'off',
+    // Temporarily disabled: incompatible with ESLint 9 (context.sourceCode.isGlobalReference missing)
+    'unicorn/error-message': 'off',
   },
 });
