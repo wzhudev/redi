@@ -1,8 +1,5 @@
 import type { DependencyDescriptor } from './dependencyDescriptor';
-import type {
-  DependencyIdentifier,
-  IdentifierDecorator,
-} from './dependencyIdentifier';
+import type { DependencyIdentifier, IdentifierDecorator } from './dependencyIdentifier';
 import type { Ctor } from './dependencyItem';
 import type { LookUp } from './types';
 import { IdentifierDecoratorSymbol } from './dependencyIdentifier';
@@ -48,9 +45,7 @@ export class IdentifierUndefinedError extends RediError {
 /**
  * @internal
  */
-export function getDependencies<T>(
-  registerTarget: Ctor<T>,
-): DependencyDescriptor<any>[] {
+export function getDependencies<T>(registerTarget: Ctor<T>): DependencyDescriptor<any>[] {
   const target = registerTarget as any;
   return target[DEPENDENCIES] || [];
 }
@@ -58,14 +53,9 @@ export function getDependencies<T>(
 /**
  * @internal
  */
-export function getDependencyByIndex<T>(
-  registerTarget: Ctor<T>,
-  index: number,
-): DependencyDescriptor<any> {
+export function getDependencyByIndex<T>(registerTarget: Ctor<T>, index: number): DependencyDescriptor<any> {
   const allDependencies = getDependencies(registerTarget);
-  const dep = allDependencies.find(
-    (descriptor) => descriptor.paramIndex === index,
-  );
+  const dep = allDependencies.find((descriptor) => descriptor.paramIndex === index);
 
   if (!dep) {
     throw new DependencyDescriptorNotFoundError(index, registerTarget);
@@ -146,17 +136,13 @@ const cachedIdentifiers = new Map<string, IdentifierDecorator<any>>();
  */
 export function createIdentifier<T>(id: string): IdentifierDecorator<T> {
   if (knownIdentifiers.has(id)) {
-    console.error(
-      `Identifier "${id}" already exists. Returning the cached identifier decorator.`,
-    );
+    console.error(`Identifier "${id}" already exists. Returning the cached identifier decorator.`);
     return cachedIdentifiers.get(id)!;
   }
 
-  const decorator = (<any>(
-    function (registerTarget: Ctor<T>, _key: string, index: number): void {
-      setDependency(registerTarget, decorator, index);
-    }
-  )) as IdentifierDecorator<T>;
+  const decorator = (<any>function (registerTarget: Ctor<T>, _key: string, index: number): void {
+    setDependency(registerTarget, decorator, index);
+  }) as IdentifierDecorator<T>;
 
   decorator.decoratorName = id;
   decorator.toString = () => decorator.decoratorName;

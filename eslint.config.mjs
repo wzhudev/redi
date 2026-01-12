@@ -4,6 +4,8 @@ export default antfu({
   ignores: [
     'AGENTS.md',
     'CLAUDE.md',
+    '.claude/',
+    'reference/',
   ],
   rules: {
     'ts/no-misused-new': 0,
@@ -20,5 +22,24 @@ export default antfu({
     'antfu/if-newline': 'off',
     // Temporarily disabled: incompatible with ESLint 9 (context.sourceCode.isGlobalReference missing)
     'unicorn/error-message': 'off',
+  },
+}, {
+  files: [
+    '**/*.{ts,tsx}',
+  ],
+  ignores: [
+    '**/*.md',
+    '**/*.md/**',
+  ],
+  rules: {
+    'ts/naming-convention': [
+      'error',
+      {
+        selector: 'memberLike',
+        modifiers: ['private'],
+        format: ['camelCase'],
+        leadingUnderscore: 'require',
+      },
+    ],
   },
 });

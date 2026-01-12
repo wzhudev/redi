@@ -1,11 +1,6 @@
 /* eslint-disable jsdoc/check-param-names */
 
-import type {
-  DependencyIdentifier,
-  Injector,
-  LookUp,
-  Quantity,
-} from '@wendellhu/redi';
+import type { DependencyIdentifier, Injector, LookUp, Quantity } from '@wendellhu/redi';
 import { RediError } from '@wendellhu/redi';
 import { useContext, useMemo } from 'react';
 import { RediContext } from './reactContext';
@@ -78,43 +73,17 @@ export function useInjector(): Injector {
  * }
  * ```
  */
-export function useDependency<T>(
-  id: DependencyIdentifier<T>,
-  lookUp?: LookUp,
-): T;
-export function useDependency<T>(
-  id: DependencyIdentifier<T>,
-  quantity: Quantity.MANY,
-  lookUp?: LookUp,
-): T[];
-export function useDependency<T>(
-  id: DependencyIdentifier<T>,
-  quantity: Quantity.OPTIONAL,
-  lookUp?: LookUp,
-): T | null;
-export function useDependency<T>(
-  id: DependencyIdentifier<T>,
-  quantity: Quantity.REQUIRED,
-  lookUp?: LookUp,
-): T;
-export function useDependency<T>(
-  id: DependencyIdentifier<T>,
-  quantity: Quantity,
-  lookUp?: LookUp,
-): T | T[] | null;
-export function useDependency<T>(
-  id: DependencyIdentifier<T>,
-  quantity?: Quantity,
-  lookUp?: LookUp,
-): T | T[] | null;
+export function useDependency<T>(id: DependencyIdentifier<T>, lookUp?: LookUp): T;
+export function useDependency<T>(id: DependencyIdentifier<T>, quantity: Quantity.MANY, lookUp?: LookUp): T[];
+export function useDependency<T>(id: DependencyIdentifier<T>, quantity: Quantity.OPTIONAL, lookUp?: LookUp): T | null;
+export function useDependency<T>(id: DependencyIdentifier<T>, quantity: Quantity.REQUIRED, lookUp?: LookUp): T;
+export function useDependency<T>(id: DependencyIdentifier<T>, quantity: Quantity, lookUp?: LookUp): T | T[] | null;
+export function useDependency<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): T | T[] | null;
 export function useDependency<T>(
   id: DependencyIdentifier<T>,
   quantityOrLookUp?: Quantity | LookUp,
   lookUp?: LookUp,
 ): T | T[] | null {
   const injector = useInjector();
-  return useMemo(
-    () => injector.get<T>(id, quantityOrLookUp, lookUp),
-    [id, quantityOrLookUp, lookUp],
-  );
+  return useMemo(() => injector.get<T>(id, quantityOrLookUp, lookUp), [id, quantityOrLookUp, lookUp]);
 }

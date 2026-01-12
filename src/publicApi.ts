@@ -4,10 +4,7 @@ export { createIdentifier } from './decorators';
 export type { Dependency, DependencyPair } from './dependencyCollection';
 export { setDependencies } from './dependencyDeclare';
 export { forwardRef } from './dependencyForwardRef';
-export {
-  type DependencyIdentifier,
-  type IdentifierDecorator,
-} from './dependencyIdentifier';
+export { type DependencyIdentifier, type IdentifierDecorator } from './dependencyIdentifier';
 export {
   type AsyncDependencyItem,
   type AsyncHook,
@@ -27,6 +24,17 @@ export {
 export { Self, SkipSelf } from './dependencyLookUp';
 export { Inject, Many, Optional } from './dependencyQuantity';
 export { WithNew } from './dependencyWithNew';
+export {
+  type DevtoolsDependencyGraphSnapshot,
+  type DevtoolsEdgeSnapshot,
+  type DevtoolsInjectorSnapshot,
+  type DevtoolsTokenSnapshot,
+  type InjectorDevtoolsHook,
+  REDI_DEVTOOLS_GLOBAL,
+  REDI_DEVTOOLS_SNAPSHOT,
+  setInjectorDevtoolsHook,
+  snapshotDependencyGraph,
+} from './devtools';
 export { type IDisposable, isDisposable } from './dispose';
 export { RediError } from './error';
 export { type IAccessor, Injector } from './injector';
@@ -40,10 +48,7 @@ const globalObject: any =
   (typeof global !== 'undefined' && global);
 
 const __REDI_GLOBAL_LOCK__ = 'REDI_GLOBAL_LOCK';
-const isNode =
-  typeof process !== 'undefined' &&
-  process.versions != null &&
-  process.versions.node != null;
+const isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 if (globalObject[__REDI_GLOBAL_LOCK__]) {
   if (!isNode) {

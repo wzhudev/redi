@@ -6,8 +6,8 @@ class ClassComponentNotInRediContextError<T> extends RediError {
   constructor(component: React.Component<T>) {
     super(
       `You should make "RediContext" as ${component.constructor.name}'s default context type. ` +
-      'If you want to use multiple context, please check this on React doc site. ' +
-      'https://reactjs.org/docs/context.html#classcontexttype',
+        'If you want to use multiple context, please check this on React doc site. ' +
+        'https://reactjs.org/docs/context.html#classcontexttype',
     );
   }
 }
@@ -42,11 +42,7 @@ class ClassComponentNotInRediContextError<T> extends RediError {
  * }
  * ```
  */
-export function WithDependency<T>(
-  id: DependencyIdentifier<T>,
-  quantity?: Quantity,
-  lookUp?: LookUp,
-): any {
+export function WithDependency<T>(id: DependencyIdentifier<T>, quantity?: Quantity, lookUp?: LookUp): any {
   return function () {
     return {
       get(): T | T[] | null {

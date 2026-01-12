@@ -1,17 +1,11 @@
 import type { DependencyIdentifier } from './dependencyIdentifier';
 import type { Ctor } from './dependencyItem';
-import {
-  getDependencyByIndex,
-  RequiredDecoratorMisusedError,
-  setDependency,
-} from './decorators';
+import { getDependencyByIndex, RequiredDecoratorMisusedError, setDependency } from './decorators';
 import { prettyPrintIdentifier } from './dependencyItem';
 import { RediError } from './error';
 import { Quantity } from './types';
 
-function mapQuantityToNumber(
-  quantity: Quantity.OPTIONAL | Quantity.REQUIRED,
-): string {
+function mapQuantityToNumber(quantity: Quantity.OPTIONAL | Quantity.REQUIRED): string {
   if (quantity === Quantity.OPTIONAL) {
     return '0 or 1';
   } else {
@@ -41,15 +35,8 @@ export class QuantityCheckError extends RediError {
   }
 }
 
-export function checkQuantity(
-  id: DependencyIdentifier<any>,
-  quantity: Quantity,
-  length: number,
-): void {
-  if (
-    (quantity === Quantity.OPTIONAL && length > 1) ||
-    (quantity === Quantity.REQUIRED && length !== 1)
-  ) {
+export function checkQuantity(id: DependencyIdentifier<any>, quantity: Quantity, length: number): void {
+  if ((quantity === Quantity.OPTIONAL && length > 1) || (quantity === Quantity.REQUIRED && length !== 1)) {
     throw new QuantityCheckError(id, quantity, length);
   }
 }
@@ -123,9 +110,7 @@ interface ManyDecorator {
  * }
  * ```
  */
-export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(
-  Quantity.MANY,
-);
+export const Many: ManyDecorator = quantifyDecoratorFactoryProducer(Quantity.MANY);
 
 interface OptionalDecorator {
   (id?: DependencyIdentifier<any>): any;
@@ -159,9 +144,7 @@ interface OptionalDecorator {
  * }
  * ```
  */
-export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(
-  Quantity.OPTIONAL,
-);
+export const Optional: OptionalDecorator = quantifyDecoratorFactoryProducer(Quantity.OPTIONAL);
 
 interface InjectDecorator {
   (id: DependencyIdentifier<any>): any;
@@ -191,6 +174,4 @@ interface InjectDecorator {
  * const userService = injector.get(UserService);
  * ```
  */
-export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(
-  Quantity.REQUIRED,
-);
+export const Inject: InjectDecorator = quantifyDecoratorFactoryProducer(Quantity.REQUIRED);

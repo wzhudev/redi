@@ -41,9 +41,7 @@ interface SkipSelfDecorator {
  * }
  * ```
  */
-export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(
-  LookUp.SKIP_SELF,
-);
+export const SkipSelf: SkipSelfDecorator = lookupDecoratorFactoryProducer(LookUp.SKIP_SELF);
 
 interface SelfDecorator {
   (): any;

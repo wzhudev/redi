@@ -42,9 +42,7 @@ export interface IdentifierDecorator<T> {
   type: T;
 }
 
-export function isIdentifierDecorator<T>(
-  thing: any,
-): thing is IdentifierDecorator<T> {
+export function isIdentifierDecorator<T>(thing: any): thing is IdentifierDecorator<T> {
   return thing && thing[IdentifierDecoratorSymbol] === true;
 }
 
@@ -73,13 +71,6 @@ export function isIdentifierDecorator<T>(
  * injector.get(ILogger);
  * ```
  */
-export type DependencyIdentifier<T> =
-  | string
-  | Ctor<T>
-  | ForwardRef<T>
-  | IdentifierDecorator<T>;
+export type DependencyIdentifier<T> = string | Ctor<T> | ForwardRef<T> | IdentifierDecorator<T>;
 
-export type NormalizedDependencyIdentifier<T> = Exclude<
-  DependencyIdentifier<T>,
-  ForwardRef<T>
->;
+export type NormalizedDependencyIdentifier<T> = Exclude<DependencyIdentifier<T>, ForwardRef<T>>;
