@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2020",
     "jsx": "react",
     "lib": ["esnext", "dom"],
     "isolatedModules": true,
     "experimentalDecorators": true,
-    "baseUrl": "./",
+
     "module": "esnext",
-    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "./",
+    "moduleResolution": "bundler",
     "strict": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
@@ -26,5 +28,11 @@
       "@wendellhu/redi/*": ["src/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.tsx"
+  ]
 }

@@ -30,6 +30,7 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "build": "rolldown build -c rolldown.config.ts",
     "release": "release-it",
     "prettier": "prettier --write ./src ./test",
@@ -59,7 +60,7 @@
     "rolldown": "1.0.0-beta.24",
     "rolldown-plugin-dts": "^0.13.14",
     "rxjs": "^7.8.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
@@ -69,9 +70,6 @@
     "react": {
       "optional": true
     }
-  },
-  "devEngines": {
-    "node": ">=22.12.0"
   },
   "repository": {
     "type": "git",
