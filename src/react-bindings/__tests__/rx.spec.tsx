@@ -1,7 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
-
 import type { IDisposable } from '@wendellhu/redi';
 import type { Observable } from 'rxjs';
 import { act, render, renderHook } from '@testing-library/react';
@@ -11,11 +7,11 @@ import {
   useObservable,
   useUpdateBinder,
 } from '@wendellhu/redi/react-bindings';
+import { afterEach, describe, expect, it } from 'bun:test';
 import React, { Component, StrictMode, useState } from 'react';
-import { BehaviorSubject, interval, of, Subject } from 'rxjs';
 
+import { BehaviorSubject, interval, of, Subject } from 'rxjs';
 import { scan, startWith } from 'rxjs/operators';
-import { afterEach, describe, expect, it } from 'vitest';
 
 import { expectToThrow } from '../../__testing__/expectToThrow';
 import { TEST_ONLY_clearKnownIdentifiers } from '../../decorators';

@@ -5,11 +5,11 @@
     "lib": ["esnext", "dom"],
     "isolatedModules": true,
     "experimentalDecorators": true,
-
     "module": "esnext",
-    "ignoreDeprecations": "6.0",
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "moduleResolution": "bundler",
+    "types": ["bun", "node"],
     "strict": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
@@ -28,11 +28,5 @@
       "@wendellhu/redi/*": ["src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.tsx",
-    "src/**/*.test.tsx"
-  ]
+  "include": ["src/**/*"]
 }

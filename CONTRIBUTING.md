@@ -19,7 +19,7 @@ Unit tests are required for all new features and bug fixes. Please ensure that
 all tests pass before submitting a pull request. You can run the tests with:
 
 ```bash
-pnpm test
+bun test
 ```
 
 I also suggest to install the recommended VS Code extensions to have a better

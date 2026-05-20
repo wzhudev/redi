@@ -17,12 +17,13 @@ docs/
 rolldown.config.ts
 tsconfig.json
 eslint.config.mjs
-vite.config.mts
+bunfig.toml
+happydom.ts
 mise.toml
 
 # Workspace and dependency files
-pnpm-workspace.yaml
-pnpm-lock.yaml
+bun.lock
+bun.lockb
 node_modules/
 
 # Temporary and cache files

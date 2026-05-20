@@ -10,24 +10,24 @@ redi is a lightweight dependency injection library for TypeScript and JavaScript
 
 ```bash
 # Testing
-pnpm test                    # Run all tests with vitest
-pnpm coverage                # Run tests with coverage report
-pnpm watch                   # Run tests in watch mode
+bun test                     # Run all tests with bun:test
+bun run coverage             # Run tests with coverage report
+bun run watch                # Run tests in watch mode
 
 # Building
-pnpm build                   # Build the library using rolldown
+bun run build                # Build the library using rolldown
 
 # Linting & Formatting
-pnpm lint                    # Check code with eslint
-pnpm lint:fix                # Fix linting issues automatically
-pnpm prettier                # Format code with prettier
+bun run lint                 # Check code with eslint
+bun run lint:fix             # Fix linting issues automatically
+bun run prettier             # Format code with prettier
 
 # Documentation (in docs/ subdirectory)
-pnpm dev:doc                 # Start docs dev server
-pnpm build:doc               # Build documentation site
+bun run dev:doc              # Start docs dev server
+bun run build:doc            # Build documentation site
 
 # Release
-pnpm release                 # Publish new version (uses release-it)
+bun run release              # Publish new version (uses release-it)
 ```
 
 ## Architecture
@@ -84,8 +84,9 @@ Located in `src/react-bindings/`:
 
 ### Testing
 
-- Tests in `src/__tests__/` use vitest
+- Tests in `src/__tests__/` use `bun:test`
 - `src/__testing__/` contains test utilities and fixtures
+- DOM-based tests use happy-dom registered globally via `happydom.ts` (configured in `bunfig.toml`)
 - Coverage requirement: 100% (enforced via CI)
 - Test helper: `expectToThrow()` for error assertions
 
@@ -133,7 +134,7 @@ injector.add([ILogger, { useClass: ConsoleLogger }]);
 
 - **experimentalDecorators must be enabled** in tsconfig.json
 - **NO `emitDecoratorMetadata` required** - explicitly use `@Inject()` decorator
-- Uses **pnpm** as package manager (node >= 22.12.0)
+- Uses **bun** as package manager and test runner (Bun >= 1.3.0)
 - **lint-staged** runs on pre-commit via husky
 - Documentation site uses Nextra and is in the `docs/` subdirectory
 - When modifying core logic, ensure tests maintain 100% coverage

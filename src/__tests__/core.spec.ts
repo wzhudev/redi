@@ -18,7 +18,7 @@ import {
   SkipSelf,
   WithNew,
 } from '@wendellhu/redi';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, jest, spyOn } from 'bun:test';
 import { AA, bbI } from '../__testing__/async/async.base';
 import { expectToThrow } from '../__testing__/expectToThrow';
 import { TEST_ONLY_clearKnownIdentifiers } from '../decorators';
@@ -264,7 +264,7 @@ describe('core', () => {
         }
       }
 
-      const spy = vi.spyOn(console, 'warn');
+      const spy = spyOn(console, 'warn');
       spy.mockImplementation(() => {});
 
       const j = new Injector([[A]]);
@@ -1162,6 +1162,8 @@ describe('core', () => {
     it('should throw Error when forwardRef is not used', () => {
       expectToThrow(() => {
         class A {
+          // eslint-disable-next-line ts/ban-ts-comment
+          // @ts-expect-error
           // Intended to throw error.
           // eslint-disable-next-line ts/no-use-before-define
           constructor(@Inject(B) private b: B) {}
@@ -1342,7 +1344,7 @@ describe('core', () => {
     });
 
     it('should "onInstantiation" work for lazy class during', () => {
-      vi.useFakeTimers();
+      jest.useFakeTimers();
 
       interface A {
         key: string;
@@ -1398,14 +1400,13 @@ describe('core', () => {
       expect(flag).toBeFalsy();
 
       // after a period of time
-      vi.runAllTimers();
-      vi.runAllTicks();
+      jest.runAllTimers();
 
       const a = j.get(aI);
       expect(flag).toBeTruthy();
       expect(a.key).toBe('a++');
 
-      vi.useRealTimers();
+      jest.useRealTimers();
     });
 
     it('should "onInstantiation" work for factory dependencies', () => {
@@ -1528,7 +1529,9 @@ describe('core', () => {
       ]);
       const injector = parentInjector.createChild([[Person]]);
       const person = injector.get(Person);
-      expect(person.father).toBe(parentInjector.get(Person));
+      expect(person.father).toBe(
+        parentInjector.get(Person) as unknown as Father,
+      );
     });
   });
 
