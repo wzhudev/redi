@@ -1,7 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
-
 import type { IDisposable } from '@wendellhu/redi';
 import { act, fireEvent, render } from '@testing-library/react';
 import { createIdentifier, Injector } from '@wendellhu/redi';
@@ -14,9 +10,9 @@ import {
   WithDependency,
 } from '@wendellhu/redi/react-bindings';
 
-import React from 'react';
+import { afterEach, describe, expect, it } from 'bun:test';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import React from 'react';
 import { expectToThrow } from '../../__testing__/expectToThrow';
 import { TEST_ONLY_clearKnownIdentifiers } from '../../decorators';
 

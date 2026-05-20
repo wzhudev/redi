@@ -19,46 +19,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install --frozen-lockfile
 
       - name: Run type check
-        run: pnpm run typecheck
+        run: bun run typecheck
 
       - name: Run test with coverage
-        run: pnpm run coverage
+        run: bun run coverage
 
       - name: Upload coverage reports to Codecov
         if: github.ref == 'refs/heads/main'
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage/coverage-final.json
+          file: ./coverage/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run lint
-        run: pnpm run lint
+        run: bun run lint

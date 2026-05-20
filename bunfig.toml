@@ -1,0 +1,11 @@
+[install]
+linker = "hoisted"
+
+[test]
+preload = [ "./happydom.ts" ]
+coverageSkipTestFiles = true
+coverageReporter = [
+  "text",
+  "lcov"
+]
+coverageDir = "coverage"

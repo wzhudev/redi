@@ -1,4 +1,4 @@
-import { expect, vi } from 'vitest';
+import { expect, spyOn } from 'bun:test';
 
 /**
  * Helps prevent error logs blowing up as a result of expecting an error to be thrown,
@@ -9,7 +9,7 @@ import { expect, vi } from 'vitest';
 export function expectToThrow(func: () => unknown, error?: string): void {
   // Even though the error is caught, it still gets printed to the console
   // so we mock that out to avoid the wall of red text.
-  const spy = vi.spyOn(console, 'error');
+  const spy = spyOn(console, 'error');
   spy.mockImplementation(() => {
     // empty
   });
