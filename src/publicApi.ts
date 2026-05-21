@@ -1,4 +1,4 @@
-/* eslint-disable node/prefer-global/process */
+import { acquireGlobalLock } from './globalLock';
 
 export { createIdentifier } from './decorators';
 export type { Dependency, DependencyPair } from './dependencyCollection';
@@ -33,24 +33,9 @@ export { type IAccessor, Injector } from './injector';
 export { InjectSelf } from './injectSelf';
 export { LookUp, Quantity } from './types';
 
-const globalObject: any =
-  (typeof globalThis !== 'undefined' && globalThis) ||
-  (typeof window !== 'undefined' && window) ||
-  // eslint-disable-next-line no-restricted-globals
-  (typeof global !== 'undefined' && global);
-
-const __REDI_GLOBAL_LOCK__ = 'REDI_GLOBAL_LOCK';
-const isNode =
-  typeof process !== 'undefined' &&
-  process.versions != null &&
-  process.versions.node != null;
-
-if (globalObject[__REDI_GLOBAL_LOCK__]) {
-  if (!isNode) {
-    console.error(`[redi]: You are loading scripts of redi more than once! This may cause undesired behavior in your application.
+acquireGlobalLock(
+  'REDI_GLOBAL_LOCK',
+  `[redi]: You are loading scripts of redi more than once! This may cause undesired behavior in your application.
 Maybe your dependencies added redi as its dependency and bundled redi to its dist files. Or you import different versions of redi.
-For more info please visit our website: https://redi.wendell.fun/en-US/docs/faq#import-scripts-of-redi-more-than-once`);
-  }
-} else {
-  globalObject[__REDI_GLOBAL_LOCK__] = true;
-}
+For more info please visit our website: https://redi.wzhu.dev/en-US/docs/faq#import-scripts-of-redi-more-than-once`,
+);
