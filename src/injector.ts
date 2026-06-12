@@ -32,6 +32,7 @@ import {
   isAsyncHook,
   isClassDependencyItem,
   isCtor,
+  isDependencyItem,
   isExistingDependencyItem,
   isFactoryDependencyItem,
   isValueDependencyItem,
@@ -345,12 +346,7 @@ export class Injector {
     if (typeof item === 'undefined') {
       // Add dependency
       this.dependencyCollection.add(identifierOrCtor as Ctor<T>);
-    } else if (
-      isAsyncDependencyItem(item) ||
-      isClassDependencyItem(item) ||
-      isValueDependencyItem(item) ||
-      isFactoryDependencyItem(item)
-    ) {
+    } else if (isDependencyItem(item)) {
       // Add dependency
       this.dependencyCollection.add(
         identifierOrCtor,
