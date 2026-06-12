@@ -19,6 +19,7 @@ export {
   isAsyncHook,
   isClassDependencyItem,
   isCtor,
+  isDependencyItem,
   isFactoryDependencyItem,
   isValueDependencyItem,
   type SyncDependencyItem,

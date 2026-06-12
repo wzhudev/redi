@@ -317,6 +317,28 @@ export type SyncDependencyItem<T> =
  */
 export type DependencyItem<T> = SyncDependencyItem<T> | AsyncDependencyItem<T>;
 
+/**
+ * Type guard to check if a value is any kind of declarative {@link DependencyItem}.
+ *
+ * Use this to distinguish a declarative descriptor (`{ useClass }`,
+ * `{ useFactory }`, `{ useValue }`, `{ useExisting }`, `{ useAsync }`)
+ * from a pre-constructed instance.
+ *
+ * @param thing - The value to check.
+ * @returns `true` if the value is a `DependencyItem` of any variant.
+ */
+export function isDependencyItem<T>(
+  thing: unknown,
+): thing is DependencyItem<T> {
+  return (
+    isClassDependencyItem(thing) ||
+    isFactoryDependencyItem(thing) ||
+    isValueDependencyItem(thing) ||
+    isExistingDependencyItem(thing) ||
+    isAsyncDependencyItem(thing)
+  );
+}
+
 export function prettyPrintIdentifier<T>(id: DependencyIdentifier<T>): string {
   return isCtor(id) && !(id as any)[IdentifierDecoratorSymbol]
     ? id.name

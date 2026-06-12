@@ -580,6 +580,26 @@ describe('core', () => {
         expect(j.get(b)).toBe(j.get(A));
         expect(initCount).toBe(1);
       });
+
+      it('should resolve as an alias when registered via `Injector.add`', () => {
+        let initCount = 0;
+
+        class A {
+          constructor() {
+            initCount += 1;
+          }
+        }
+
+        const b = createIdentifier<A>('b');
+
+        const j = new Injector();
+        j.add([A]);
+        j.add([b, { useExisting: A }]);
+
+        expect(j.get(b)).toBe(j.get(A));
+        expect(j.get(b)).toBeInstanceOf(A);
+        expect(initCount).toBe(1);
+      });
     });
 
     describe('async item', () => {
