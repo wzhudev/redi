@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.2](https://github.com/wzhudev/redi/compare/v1.1.1...v1.1.2) (2026-06-12)
+
+### Bug Fixes
+
+- fix eslint problems ([8dc51ff](https://github.com/wzhudev/redi/commit/8dc51ff044dfdeb34ab1bf2de62920cc7a2d6c34))
+- respect `useExisting` items in `Injector.add()` ([#57](https://github.com/wzhudev/redi/issues/57)) ([54d8667](https://github.com/wzhudev/redi/commit/54d86678eb547cc5b1ed79146d58a7b6ea2ffa42))
+
+### Features
+
+- implement global lock mechanism and enhance idle callback handling ([#55](https://github.com/wzhudev/redi/issues/55)) ([74076bf](https://github.com/wzhudev/redi/commit/74076bfd2b371d8439489e67080a3513cf245922))
+- upgrade typescript version ([#53](https://github.com/wzhudev/redi/issues/53)) ([4de6891](https://github.com/wzhudev/redi/commit/4de68918bcb5b3e56f080395969f6278c6776c40))
+
 ## [1.1.1](https://github.com/wzhudev/redi/compare/v1.1.0...v1.1.1) (2026-01-07)
 
 # [1.1.0](https://github.com/wzhudev/redi/compare/v1.0.2...v1.1.0) (2025-12-29)
