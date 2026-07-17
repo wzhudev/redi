@@ -24,6 +24,7 @@ export interface CanvasNodeModel {
   readonly parentId?: string;
   readonly source?: GraphCluster | GraphGroup | GraphRegistration;
   readonly terminalLabel?: string;
+  readonly terminalOutcome?: GraphEdge['outcome'];
   readonly width: number;
 }
 
@@ -32,6 +33,7 @@ export type CanvasEdgeKind = 'alias' | 'dependency' | 'structural';
 export interface CanvasEdgeModel {
   readonly aggregated: boolean;
   readonly count: number;
+  readonly hoverLabel?: string;
   readonly id: string;
   readonly kind: CanvasEdgeKind;
   readonly label?: string;
@@ -79,14 +81,8 @@ export interface GraphIndex {
     string,
     Readonly<{ cluster: GraphCluster; group: GraphGroup }>
   >;
-  readonly incomingByRegistrationId: ReadonlyMap<
-    string,
-    readonly GraphEdge[]
-  >;
-  readonly outgoingByRegistrationId: ReadonlyMap<
-    string,
-    readonly GraphEdge[]
-  >;
+  readonly incomingByRegistrationId: ReadonlyMap<string, readonly GraphEdge[]>;
+  readonly outgoingByRegistrationId: ReadonlyMap<string, readonly GraphEdge[]>;
   readonly registrationById: ReadonlyMap<string, GraphRegistration>;
 }
 
@@ -94,9 +90,9 @@ const INJECTOR_MIN_WIDTH = 300;
 const INJECTOR_COLLAPSED_HEIGHT = 78;
 const GROUP_MIN_WIDTH = 236;
 const REGISTRATION_WIDTH = GROUP_MIN_WIDTH;
-const REGISTRATION_HEIGHT = 56;
+const REGISTRATION_HEIGHT = 62;
 const TERMINAL_WIDTH = 160;
-const TERMINAL_HEIGHT = 34;
+const TERMINAL_HEIGHT = 30;
 
 const elk = new ELK({
   workerFactory: () => new ElkWorker() as unknown as Worker,
@@ -231,10 +227,7 @@ function registrationEndpoint(
   if (!cluster) return null;
   const boundary = boundaryByClusterId.get(cluster.id);
   if (!boundary) return null;
-  if (
-    !visibleClusterIds.has(cluster.id) ||
-    collapsedContents.has(cluster.id)
-  ) {
+  if (!visibleClusterIds.has(cluster.id) || collapsedContents.has(cluster.id)) {
     return { hidden: true, id: boundary };
   }
   return { hidden: false, id: registrationId };
@@ -331,10 +324,11 @@ export function buildCanvasGraph(
       options.collapsedContents,
     );
     if (!source) continue;
-    const kind = index.registrationById.get(edge.sourceRegistrationId)
-      ?.providerKind === 'existing'
-      ? 'alias'
-      : 'dependency';
+    const kind =
+      index.registrationById.get(edge.sourceRegistrationId)?.providerKind ===
+      'existing'
+        ? 'alias'
+        : 'dependency';
 
     for (const [targetIndex, rawTargetId] of edgeTargets(edge).entries()) {
       let target: Endpoint | null;
@@ -349,6 +343,7 @@ export function buildCanvasGraph(
             kind: 'terminal',
             parentId: edge.sourceClusterId,
             terminalLabel: outcomeLabels[edge.outcome],
+            terminalOutcome: edge.outcome,
             width: TERMINAL_WIDTH,
           });
         }
@@ -385,6 +380,7 @@ export function buildCanvasGraph(
       edges.push({
         aggregated: false,
         count: 1,
+        hoverLabel: edge.label,
         id: `${edge.id}/target-${targetIndex}`,
         kind,
         ...(lookupBadge(edge) ? { label: lookupBadge(edge) } : {}),
@@ -409,9 +405,7 @@ export function buildCanvasGraph(
   }
 
   const structureKey = [
-    ...nodes.map(
-      (node) => `${node.kind}:${node.id}:${node.parentId ?? ''}`,
-    ),
+    ...nodes.map((node) => `${node.kind}:${node.id}:${node.parentId ?? ''}`),
     ...edges.map((edge) => `${edge.kind}:${edge.source}:${edge.target}`),
   ].join('|');
 
@@ -607,9 +601,9 @@ export async function layoutCanvasGraph(
       'elk.direction': 'DOWN',
       'elk.edgeRouting': 'ORTHOGONAL',
       'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '130',
+      'elk.layered.spacing.nodeNodeBetweenLayers': '96',
       'elk.padding': '[top=36,left=36,bottom=36,right=36]',
-      'elk.spacing.nodeNode': '72',
+      'elk.spacing.nodeNode': '56',
     },
   };
   const laidOutOuter = await elk.layout(outer);

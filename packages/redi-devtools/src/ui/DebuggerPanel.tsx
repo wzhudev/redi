@@ -24,6 +24,8 @@ import {
   getSmoothStepPath,
   Handle,
   MarkerType,
+  MiniMap,
+  Panel,
   Position,
   ReactFlow,
   ReactFlowProvider,
@@ -84,6 +86,7 @@ interface GroupNodeData extends Record<string, unknown> {
 interface RegistrationNodeData extends Record<string, unknown> {
   readonly dimmed: boolean;
   readonly dynamic: boolean;
+  readonly identifierLabel: string;
   readonly lazy: boolean;
   readonly onSelect: (id: string) => void;
   readonly providerKind: string;
@@ -92,19 +95,25 @@ interface RegistrationNodeData extends Record<string, unknown> {
   readonly status: string;
 }
 
-type TerminalNodeData = Record<string, unknown>;
+interface TerminalNodeData extends Record<string, unknown> {
+  readonly label: string;
+  readonly tone: string;
+}
 
 interface DependencyEdgeData extends Record<string, unknown> {
   readonly aggregated: boolean;
   readonly alias: boolean;
+  readonly color: string;
   readonly count: number;
   readonly dimmed: boolean;
   readonly emphasized: boolean;
   readonly hovered: boolean;
+  readonly hoverLabel: string;
   readonly label: string;
   readonly onHover: (id: string) => void;
   readonly onLeave: (id: string) => void;
   readonly outcome?: GraphEdge['outcome'];
+  readonly pathOffset: number;
 }
 
 type InjectorFlowNode = Node<InjectorNodeData, 'injector'>;
@@ -137,6 +146,73 @@ const INJECTOR_COLORS = [
   '#db2777',
 ] as const;
 
+type TerminalTone = 'danger' | 'muted' | 'warning';
+
+const terminalTones: Record<GraphEdge['outcome'], TerminalTone> = {
+  external: 'muted',
+  injector: 'muted',
+  'many-empty': 'warning',
+  'optional-missing': 'warning',
+  'quantity-mismatch': 'danger',
+  'required-missing': 'danger',
+  resolved: 'muted',
+};
+
+function dependencyEdgeColor(
+  edge: Readonly<{
+    aggregated: boolean;
+    alias: boolean;
+    emphasized: boolean;
+    outcome?: GraphEdge['outcome'];
+  }>,
+): string {
+  if (
+    edge.outcome === 'required-missing' ||
+    edge.outcome === 'quantity-mismatch'
+  ) {
+    return '#dc2626';
+  }
+  if (edge.outcome === 'optional-missing' || edge.outcome === 'many-empty') {
+    return '#d97706';
+  }
+  if (edge.emphasized) return '#2563eb';
+  if (edge.alias) return '#9333ea';
+  if (edge.aggregated) return '#7c3aed';
+  return '#64748b';
+}
+
+function pluralize(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function GlyphIcon({ d }: { readonly d: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="12"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.6"
+      viewBox="0 0 16 16"
+      width="12"
+    >
+      <path d={d} />
+    </svg>
+  );
+}
+
+const glyphs = {
+  center:
+    'M8 1.5v2.5M8 12v2.5M1.5 8H4M12 8h2.5M8 5.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8Z',
+  chevronDown: 'M4 6l4 4 4-4',
+  chevronRight: 'M6 4l4 4-4 4',
+  close: 'M4 4l8 8M12 4l-8 8',
+  rows: 'M2.5 3.5h11M2.5 8h11M2.5 12.5h11',
+  rowsHidden: 'M2.5 3.5h11M2.5 8h6M2.5 12.5h3',
+} as const;
+
 const outcomeLabels: Record<GraphEdge['outcome'], string> = {
   external: 'outside active tree',
   injector: 'Injector itself',
@@ -151,10 +227,7 @@ function clusterColor(cluster: GraphCluster): string {
   return INJECTOR_COLORS[cluster.discoveryId % INJECTOR_COLORS.length];
 }
 
-const InjectorNode = memo(({
-  data,
-  id,
-}: NodeProps<InjectorFlowNode>) => {
+const InjectorNode = memo(({ data, id }: NodeProps<InjectorFlowNode>) => {
   return (
     <section
       className={`redi-devtools__injector-node${
@@ -179,18 +252,11 @@ const InjectorNode = memo(({
           <span>
             <strong>{data.label}</strong>
             <small>
-              #
-{data.discoveryId}
-{' '}
-·
-{' '}
-{data.registrationCount}
-{' '}
-registrations ·
-{' '}
-              {data.childCount}
-{' '}
-children
+              {`#${data.discoveryId} · ${pluralize(
+                data.registrationCount,
+                'registration',
+                'registrations',
+              )} · ${pluralize(data.childCount, 'child', 'children')}`}
             </small>
           </span>
         </button>
@@ -201,7 +267,7 @@ children
             title="Center Injector"
             type="button"
           >
-            ◎
+            <GlyphIcon d={glyphs.center} />
           </button>
           <button
             aria-label={`${
@@ -215,7 +281,9 @@ children
             }
             type="button"
           >
-            {data.contentsCollapsed ? '▣' : '□'}
+            <GlyphIcon
+              d={data.contentsCollapsed ? glyphs.rowsHidden : glyphs.rows}
+            />
           </button>
           <button
             aria-label={`${
@@ -228,16 +296,22 @@ children
             }
             type="button"
           >
-            {data.subtreeCollapsed ? '▸' : '▾'}
+            <GlyphIcon
+              d={
+                data.subtreeCollapsed ? glyphs.chevronRight : glyphs.chevronDown
+              }
+            />
           </button>
         </div>
       </header>
       {data.contentsCollapsed
 ? (
         <div className="redi-devtools__injector-collapsed">
-          {data.registrationCount}
-{' '}
-registrations hidden
+          {`${pluralize(
+            data.registrationCount,
+            'registration',
+            'registrations',
+          )} hidden`}
         </div>
       )
 : null}
@@ -265,10 +339,7 @@ registrations hidden
   );
 });
 
-const IdentifierGroupNode = memo(({
-  data,
-  id,
-}: NodeProps<GroupFlowNode>) => {
+const IdentifierGroupNode = memo(({ data, id }: NodeProps<GroupFlowNode>) => {
   return (
     <section
       className="redi-devtools__group-node"
@@ -277,156 +348,206 @@ const IdentifierGroupNode = memo(({
     >
       <header>
         <strong>{data.identifierLabel}</strong>
-        <span>{data.registrationCount}</span>
+        {data.registrationCount > 1
+? (
+          <span>{data.registrationCount}</span>
+        )
+: null}
       </header>
     </section>
   );
 });
 
-const RegistrationNode = memo(({
-  data,
-  id,
-}: NodeProps<RegistrationFlowNode>) => {
+const RegistrationNode = memo(
+  ({ data, id }: NodeProps<RegistrationFlowNode>) => {
+    // Skip text the surrounding chrome already shows: the provider name when
+    // it matches the group's identifier, the kind when it matches the name.
+    const showProviderLabel = data.providerLabel !== data.identifierLabel;
+    const showProviderKind = data.providerKind !== data.providerLabel;
+    return (
+      <button
+        className={`redi-devtools__registration-node nodrag${
+          data.selected ? ' is-selected' : ''
+        }${data.dimmed ? ' is-dimmed' : ''}`}
+        data-redi-devtools-registration={id}
+        onClick={() => data.onSelect(id)}
+        type="button"
+      >
+        <Handle
+          className="redi-devtools__hidden-handle"
+          data-redi-devtools-registration-target=""
+          position={Position.Bottom}
+          type="target"
+        />
+        <span className="redi-devtools__registration-provider">
+          {showProviderLabel ? <strong>{data.providerLabel}</strong> : null}
+          {showProviderKind ? <small>{data.providerKind}</small> : null}
+        </span>
+        <span className="redi-devtools__registration-badges">
+          <span data-status={data.status}>{data.status}</span>
+          {data.lazy ? <span>lazy</span> : null}
+          {data.dynamic ? <span>dynamic</span> : null}
+        </span>
+        <Handle
+          className="redi-devtools__hidden-handle"
+          data-redi-devtools-registration-source=""
+          position={Position.Top}
+          type="source"
+        />
+      </button>
+    );
+  },
+);
+
+const TerminalNode = memo(({ data }: NodeProps<TerminalFlowNode>) => {
   return (
-    <button
-      className={`redi-devtools__registration-node nodrag${
-        data.selected ? ' is-selected' : ''
-      }${data.dimmed ? ' is-dimmed' : ''}`}
-      data-redi-devtools-registration={id}
-      onClick={() => data.onSelect(id)}
-      type="button"
-    >
+    <div className="redi-devtools__terminal-node" data-tone={data.tone}>
       <Handle
-        data-redi-devtools-registration-target=""
-        position={Position.Bottom}
+        className="redi-devtools__hidden-handle"
+        position={Position.Top}
         type="target"
       />
-      <span className="redi-devtools__registration-provider">
-        <strong>{data.providerLabel}</strong>
-        <small>{data.providerKind}</small>
-      </span>
-      <span className="redi-devtools__registration-badges">
-        <span data-status={data.status}>{data.status}</span>
-        {data.lazy ? <span>lazy</span> : null}
-        {data.dynamic ? <span>dynamic</span> : null}
-      </span>
-      <Handle
-        data-redi-devtools-registration-source=""
-        position={Position.Top}
-        type="source"
-      />
-    </button>
-  );
-});
-
-const TerminalNode = memo((_props: NodeProps<TerminalFlowNode>) => {
-  return (
-    <div
-      aria-hidden="true"
-      className="redi-devtools__terminal-anchor"
-    >
-      <Handle position={Position.Top} type="target" />
+      {data.label}
     </div>
   );
 });
 
-const DependencyEdge = memo(({
-  data,
-  id,
-  markerEnd,
-  sourceX,
-  sourceY,
-  sourcePosition,
-  targetX,
-  targetY,
-  targetPosition,
-}: EdgeProps<DependencyFlowEdge>) => {
-  const [path, labelX, labelY] = getSmoothStepPath({
-    borderRadius: 10,
-    offset: 24,
-    sourcePosition,
+/**
+ * Anchor edge badges next to their source instead of the path midpoint —
+ * long detour edges have midpoints in visually unrelated territory.
+ */
+function labelAnchor(
+  position: Position,
+  x: number,
+  y: number,
+): Readonly<{ x: number; y: number }> {
+  const distance = 30;
+  if (position === Position.Top) return { x, y: y - distance };
+  if (position === Position.Bottom) return { x, y: y + distance };
+  if (position === Position.Left) return { x: x - distance, y };
+  return { x: x + distance, y };
+}
+
+const DependencyEdge = memo(
+  ({
+    data,
+    id,
+    markerEnd,
     sourceX,
     sourceY,
-    targetPosition,
+    sourcePosition,
     targetX,
     targetY,
-  });
-  const emphasized = data?.emphasized ?? false;
-  const dimmed = data?.dimmed ?? false;
-  const aggregated = data?.aggregated ?? false;
-  const alias = data?.alias ?? false;
-  const hovered = data?.hovered ?? false;
-  const color = emphasized
-    ? '#2563eb'
-    : alias
-      ? '#9333ea'
-    : aggregated
-      ? '#7c3aed'
-      : '#64748b';
-  const opacity = emphasized ? 0.98 : dimmed ? 0.08 : aggregated ? 0.68 : 0.48;
+    targetPosition,
+  }: EdgeProps<DependencyFlowEdge>) => {
+    const [path] = getSmoothStepPath({
+      borderRadius: 10,
+      offset: data?.pathOffset ?? 24,
+      sourcePosition,
+      sourceX,
+      sourceY,
+      targetPosition,
+      targetX,
+      targetY,
+    });
+    const emphasized = data?.emphasized ?? false;
+    const dimmed = data?.dimmed ?? false;
+    const aggregated = data?.aggregated ?? false;
+    const alias = data?.alias ?? false;
+    const hovered = data?.hovered ?? false;
+    const count = data?.count ?? 1;
+    const color = data?.color ?? '#64748b';
+    const failed =
+      data?.outcome !== undefined &&
+      data.outcome !== 'resolved' &&
+      data.outcome !== 'injector' &&
+      data.outcome !== 'external';
+    const opacity =
+      hovered || emphasized
+        ? 1
+        : dimmed
+          ? 0.18
+          : failed
+            ? 0.85
+            : aggregated
+              ? 0.68
+              : 0.5;
+    const badgeLabel = [
+      data?.label,
+      aggregated && count > 1 ? `× ${count}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const displayLabel = hovered ? data?.hoverLabel || badgeLabel : badgeLabel;
+    const anchor = labelAnchor(sourcePosition, sourceX, sourceY);
 
-  return (
-    <>
-      <g>
-        <BaseEdge
-          className={alias
-            ? 'redi-devtools__alias-edge-path'
-            : 'redi-devtools__dependency-edge-path'}
-          interactionWidth={0}
-          markerEnd={alias ? undefined : markerEnd}
-          path={path}
-          style={{
-            opacity,
-            stroke: color,
-            strokeDasharray: alias ? '3 4' : aggregated ? '6 4' : undefined,
-            strokeWidth: emphasized ? 2.5 : aggregated ? 1.8 : 1.5,
-            transition: 'opacity 160ms ease, stroke 160ms ease',
-          }}
-        />
-        {alias
-? (
-          <circle
-            cx={targetX}
-            cy={targetY}
-            fill="#fff"
-            r={4}
-            stroke={color}
-            strokeWidth={2}
+    return (
+      <>
+        <g>
+          <BaseEdge
+            className={
+              alias
+                ? 'redi-devtools__alias-edge-path'
+                : 'redi-devtools__dependency-edge-path'
+            }
+            interactionWidth={0}
+            markerEnd={alias ? undefined : markerEnd}
+            path={path}
+            style={{
+              opacity,
+              stroke: color,
+              strokeDasharray: alias ? '3 4' : aggregated ? '6 4' : undefined,
+              strokeWidth:
+                hovered || emphasized ? 2.4 : aggregated || failed ? 1.8 : 1.5,
+              transition:
+                'opacity 160ms ease, stroke 160ms ease, stroke-width 160ms ease',
+            }}
           />
+          {alias
+? (
+            <circle
+              cx={targetX}
+              cy={targetY}
+              fill="#fff"
+              opacity={opacity}
+              r={3.5}
+              stroke={color}
+              strokeWidth={1.5}
+            />
+          )
+: null}
+          <path
+            className="redi-devtools__dependency-edge-hit-area"
+            d={path}
+            fill="none"
+            onPointerOut={() => data?.onLeave(id)}
+            onPointerOver={() => data?.onHover(id)}
+            stroke="transparent"
+            strokeWidth={20}
+          />
+        </g>
+        {displayLabel
+? (
+          <EdgeLabelRenderer>
+            <span
+              className={`redi-devtools__edge-label nodrag nopan${
+                emphasized ? ' is-emphasized' : ''
+              }${hovered ? ' is-hovered' : ''}`}
+              data-redi-devtools-edge-label={id}
+              style={{
+                opacity: hovered || emphasized ? 1 : dimmed ? 0.15 : 0.82,
+                transform: `translate(-50%, -50%) translate(${anchor.x}px, ${anchor.y}px)`,
+              }}
+            >
+              {displayLabel}
+            </span>
+          </EdgeLabelRenderer>
         )
 : null}
-        <path
-          className="redi-devtools__dependency-edge-hit-area"
-          d={path}
-          fill="none"
-          onPointerOut={() => data?.onLeave(id)}
-          onPointerOver={() => data?.onHover(id)}
-          stroke="transparent"
-          strokeWidth={20}
-        />
-      </g>
-      {data?.label
-? (
-        <EdgeLabelRenderer>
-          <span
-            className={`redi-devtools__edge-label nodrag nopan${
-              emphasized ? ' is-emphasized' : ''
-            }${hovered ? ' is-hovered' : ''
-            }`}
-            data-redi-devtools-edge-label={id}
-            style={{
-              opacity: emphasized ? 1 : dimmed ? 0.1 : aggregated ? 0.85 : 0.62,
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-            }}
-          >
-            {data.label}
-          </span>
-        </EdgeLabelRenderer>
-      )
-: null}
-    </>
-  );
-});
+      </>
+    );
+  },
+);
 
 const nodeTypes = {
   identifierGroup: IdentifierGroupNode,
@@ -435,6 +556,78 @@ const nodeTypes = {
   terminal: TerminalNode,
 };
 const edgeTypes = { dependency: DependencyEdge };
+
+function LegendSwatch({
+  circle,
+  color,
+  dash,
+  width = 1.5,
+}: {
+  readonly circle?: boolean;
+  readonly color: string;
+  readonly dash?: string;
+  readonly width?: number;
+}) {
+  return (
+    <svg aria-hidden="true" height="10" viewBox="0 0 30 10" width="30">
+      <line
+        stroke={color}
+        strokeDasharray={dash}
+        strokeWidth={width}
+        x1="1"
+        x2={circle ? 24 : 29}
+        y1="5"
+        y2="5"
+      />
+      {circle
+? (
+        <circle
+          cx="26"
+          cy="5"
+          fill="#fff"
+          r="3"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+      )
+: null}
+    </svg>
+  );
+}
+
+function Legend() {
+  return (
+    <details className="redi-devtools__legend">
+      <summary>Legend</summary>
+      <ul>
+        <li>
+          <LegendSwatch color="#64748b" />
+          <span>depends on</span>
+        </li>
+        <li>
+          <LegendSwatch color="#2563eb" width={2.4} />
+          <span>selected resolution path</span>
+        </li>
+        <li>
+          <LegendSwatch circle color="#9333ea" dash="3 4" />
+          <span>alias (useExisting)</span>
+        </li>
+        <li>
+          <LegendSwatch color="#7c3aed" dash="6 4" width={1.8} />
+          <span>collapsed edges (× count)</span>
+        </li>
+        <li>
+          <LegendSwatch color="#dc2626" width={1.8} />
+          <span>unresolved requirement</span>
+        </li>
+        <li>
+          <LegendSwatch color="#b6c2d4" width={2.5} />
+          <span>parent → child Injector</span>
+        </li>
+      </ul>
+    </details>
+  );
+}
 
 function edgeTarget(index: GraphIndex, edge: GraphEdge): string {
   if (edge.targetRegistrationIds.length > 0) {
@@ -448,7 +641,9 @@ function edgeTarget(index: GraphIndex, edge: GraphEdge): string {
       .join(', ');
   }
   if (edge.targetClusterId) {
-    return index.clusterById.get(edge.targetClusterId)?.label ?? edge.targetClusterId;
+    return (
+      index.clusterById.get(edge.targetClusterId)?.label ?? edge.targetClusterId
+    );
   }
   return outcomeLabels[edge.outcome];
 }
@@ -483,7 +678,11 @@ function Details({
   readonly selection: GraphSelection | null;
 }) {
   if (!selection) {
-    return <p className="redi-devtools__muted">Select an Injector or Registration.</p>;
+    return (
+      <p className="redi-devtools__muted">
+        Select an Injector or Registration.
+      </p>
+    );
   }
 
   if (selection.kind === 'injector') {
@@ -506,7 +705,8 @@ function Details({
           <dt>Parent</dt>
           <dd>
             {cluster.parentId
-              ? (index.clusterById.get(cluster.parentId)?.label ?? cluster.parentId)
+              ? (index.clusterById.get(cluster.parentId)?.label ??
+                cluster.parentId)
               : 'Root'}
           </dd>
           <dt>Children</dt>
@@ -566,7 +766,10 @@ function countRegistrations(cluster: GraphCluster): number {
 
 function makeFlowNodes(
   canvasNodes: readonly CanvasNodeModel[],
-  layout: ReadonlyMap<string, Readonly<{ height: number; width: number; x: number; y: number }>>,
+  layout: ReadonlyMap<
+    string,
+    Readonly<{ height: number; width: number; x: number; y: number }>
+  >,
   selection: GraphSelection | null,
   highlightedRegistrationIds: ReadonlySet<string>,
   collapsedContents: ReadonlySet<string>,
@@ -643,6 +846,7 @@ function makeFlowNodes(
             dimmed:
               hasSelection && !highlightedRegistrationIds.has(registration.id),
             dynamic: registration.dynamic ?? false,
+            identifierLabel: registration.identifierLabel,
             lazy: registration.lazy ?? false,
             onSelect: onSelectRegistration,
             providerKind: registration.providerKind,
@@ -661,7 +865,12 @@ function makeFlowNodes(
     return [
       {
         ...common,
-        data: {},
+        data: {
+          label: node.terminalLabel ?? '',
+          tone: node.terminalOutcome
+            ? terminalTones[node.terminalOutcome]
+            : 'muted',
+        },
         extent: 'parent',
         type: 'terminal',
         zIndex: 2,
@@ -680,6 +889,9 @@ function makeFlowEdges(
   onLeave: (id: string) => void,
 ): readonly FlowEdge[] {
   const nodeKinds = indexCanvasNodeKinds(canvasNodes);
+  // Smoothstep paths from nearby sources share the same turning lanes and
+  // overlap; stagger the turn distance per source so parallel edges fan out.
+  const laneBySource = new Map<string, number>();
   return canvasEdges.map((edge): FlowEdge => {
     if (edge.kind === 'structural') {
       return {
@@ -687,7 +899,7 @@ function makeFlowEdges(
         id: edge.id,
         source: edge.source,
         sourceHandle: 'structure-source',
-        style: { stroke: '#94a3b8', strokeWidth: 3 },
+        style: { opacity: 0.75, stroke: '#b6c2d4', strokeWidth: 2.5 },
         target: edge.target,
         targetHandle: 'structure-target',
         type: 'smoothstep',
@@ -699,34 +911,42 @@ function makeFlowEdges(
     );
     const hovered = edge.id === hoveredEdgeId;
     const handles = dependencyHandles(nodeKinds, edge);
+    const lane = laneBySource.get(edge.source) ?? 0;
+    laneBySource.set(edge.source, lane + 1);
+    const color = dependencyEdgeColor({
+      aggregated: edge.aggregated,
+      alias: edge.kind === 'alias',
+      emphasized,
+      ...(edge.outcome ? { outcome: edge.outcome } : {}),
+    });
     return {
       data: {
         aggregated: edge.aggregated,
         alias: edge.kind === 'alias',
+        color,
         count: edge.count,
         dimmed: hasRegistrationSelection && !emphasized,
         emphasized,
         hovered,
+        hoverLabel: edge.hoverLabel ?? '',
         label: edge.label ?? '',
         onHover,
         onLeave,
+        pathOffset: 18 + (lane % 4) * 10,
         ...(edge.outcome ? { outcome: edge.outcome } : {}),
       },
       id: edge.id,
       markerEnd: {
-        color: emphasized ? '#2563eb' : '#64748b',
-        height: 14,
+        color,
+        height: 11,
+        markerUnits: 'userSpaceOnUse',
         type: MarkerType.ArrowClosed,
-        width: 14,
+        width: 11,
       },
       source: edge.source,
-      ...(handles.sourceHandle
-        ? { sourceHandle: handles.sourceHandle }
-        : {}),
+      ...(handles.sourceHandle ? { sourceHandle: handles.sourceHandle } : {}),
       target: edge.target,
-      ...(handles.targetHandle
-        ? { targetHandle: handles.targetHandle }
-        : {}),
+      ...(handles.targetHandle ? { targetHandle: handles.targetHandle } : {}),
       type: 'dependency',
       zIndex: hovered ? 1000 : 3,
     };
@@ -824,6 +1044,25 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
     });
   }, []);
 
+  // The `fitView` prop only applies on mount; re-fit whenever the graph
+  // structure changes (collapse, discovery, new child Injectors) so fresh
+  // content never lands outside the viewport. Deliberate centering wins.
+  const fittedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!layout) return;
+    if (fittedKeyRef.current === layout.structureKey) return;
+    fittedKeyRef.current = layout.structureKey;
+    if (pendingCenterId) return;
+    const frame = window.requestAnimationFrame(() => {
+      void flowRef.current?.fitView({
+        duration: 320,
+        maxZoom: 1,
+        padding: 0.12,
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [layout, pendingCenterId]);
+
   useEffect(() => {
     if (!pendingCenterId || !layout) return;
     const frame = window.requestAnimationFrame(() => {
@@ -864,7 +1103,7 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
     setHoveredEdgeId(id);
   }, []);
   const leaveEdge = useCallback((id: string) => {
-    setHoveredEdgeId((current) => current === id ? null : current);
+    setHoveredEdgeId((current) => (current === id ? null : current));
   }, []);
 
   const highlighted = useMemo(
@@ -931,8 +1170,7 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
   );
 
   const activeTreeIds = useMemo(
-    () =>
-      activeRootId ? rootTreeIds(model, activeRootId) : new Set<string>(),
+    () => (activeRootId ? rootTreeIds(model, activeRootId) : new Set<string>()),
     [activeRootId, model],
   );
   const searchResults = useMemo((): readonly SearchResult[] => {
@@ -943,7 +1181,9 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
       const cluster = index.clusterById.get(clusterId);
       if (!cluster) continue;
       if (
-        `${cluster.label} ${cluster.id}`.toLocaleLowerCase().includes(normalized)
+        `${cluster.label} ${cluster.id}`
+          .toLocaleLowerCase()
+          .includes(normalized)
       ) {
         results.push({
           description: `${countRegistrations(cluster)} registrations`,
@@ -1073,7 +1313,7 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
           <input
             aria-label="Search active Injector tree"
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search Injector, Identifier, Provider…"
+            placeholder="Search the Injector tree…"
             type="search"
             value={query}
           />
@@ -1100,7 +1340,11 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
           )
 : null}
         </div>
-        <button className="redi-devtools__toolbar-button" onClick={refresh} type="button">
+        <button
+          className="redi-devtools__toolbar-button"
+          onClick={refresh}
+          type="button"
+        >
           Refresh
         </button>
         <button
@@ -1112,15 +1356,15 @@ function PanelContent({ className, pollInterval, style }: DebuggerPanelProps) {
           Details
         </button>
         <span className="redi-devtools__summary">
-          {activeClusterCount}
-{' '}
-injectors ·
-{activeEdgeCount}
-{' '}
-dependencies
-{activePollInterval === null
-            ? ' · polling off'
-            : ` · polling ${activePollInterval}ms`}
+          {`${pluralize(activeClusterCount, 'injector', 'injectors')} · ${pluralize(
+            activeEdgeCount,
+            'dependency',
+            'dependencies',
+          )}${
+            activePollInterval === null
+              ? ' · polling off'
+              : ` · polling ${activePollInterval}ms`
+          }`}
         </span>
       </header>
 
@@ -1128,11 +1372,15 @@ dependencies
         <div className="redi-devtools__canvas" data-redi-devtools-canvas="">
           {!activeRootId
 ? (
-            <div className="redi-devtools__empty">No live Injectors discovered.</div>
+            <div className="redi-devtools__empty">
+              No live Injectors discovered.
+            </div>
           )
 : flowNodes.length === 0
 ? (
-            <div className="redi-devtools__empty">Laying out Injector tree…</div>
+            <div className="redi-devtools__empty">
+              Laying out Injector tree…
+            </div>
           )
 : (
             <ReactFlow<FlowNode, FlowEdge>
@@ -1159,6 +1407,28 @@ dependencies
             >
               <Background color="#cbd5e1" gap={20} size={1} />
               <Controls position="bottom-left" showInteractive={false} />
+              <MiniMap
+                className="redi-devtools__minimap"
+                maskColor="rgb(241 245 249 / 72%)"
+                nodeBorderRadius={4}
+                nodeColor={(node) =>
+                  node.type === 'injector'
+                    ? `${(node.data as InjectorNodeData).color}2e`
+                    : node.type === 'identifierGroup'
+                      ? '#e2e8f0'
+                      : 'transparent'}
+                nodeStrokeColor={(node) =>
+                  node.type === 'injector'
+                    ? (node.data as InjectorNodeData).color
+                    : 'none'}
+                nodeStrokeWidth={2}
+                pannable
+                position="bottom-right"
+                zoomable
+              />
+              <Panel position="top-right">
+                <Legend />
+              </Panel>
             </ReactFlow>
           )}
         </div>
@@ -1184,7 +1454,7 @@ dependencies
                 onClick={() => setDetailsOpen(false)}
                 type="button"
               >
-                ×
+                <GlyphIcon d={glyphs.close} />
               </button>
             </header>
             <div className="redi-devtools__details-content">

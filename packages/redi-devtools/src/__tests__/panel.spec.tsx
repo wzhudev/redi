@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import {
   createIdentifier,
   Injector,
@@ -40,7 +46,10 @@ describe('DebuggerPanel', () => {
 
     try {
       const { container } = render(
-        <DebuggerPanel pollInterval={false} style={{ height: 640, width: 900 }} />,
+        <DebuggerPanel
+          pollInterval={false}
+          style={{ height: 640, width: 900 }}
+        />,
       );
       const rootSwitch = screen.getByLabelText(
         'Root Injector',
@@ -83,13 +92,13 @@ describe('DebuggerPanel', () => {
         container
           .querySelector('[data-redi-devtools-registration-source]')
           ?.classList
-          .contains('react-flow__handle-top'),
+.contains('react-flow__handle-top'),
       ).toBe(true);
       expect(
         container
           .querySelector('[data-redi-devtools-registration-target]')
           ?.classList
-          .contains('react-flow__handle-bottom'),
+.contains('react-flow__handle-bottom'),
       ).toBe(true);
       fireEvent.click(screen.getByRole('button', { name: /Panel child.*#/i }));
       expect(
@@ -133,7 +142,10 @@ describe('DebuggerPanel', () => {
 
     try {
       const { container } = render(
-        <DebuggerPanel pollInterval={false} style={{ height: 640, width: 900 }} />,
+        <DebuggerPanel
+          pollInterval={false}
+          style={{ height: 640, width: 900 }}
+        />,
       );
       const rootSwitch = screen.getByLabelText(
         'Root Injector',
@@ -167,7 +179,7 @@ describe('DebuggerPanel', () => {
         expect(
           container.querySelectorAll('[data-redi-devtools-registration]'),
         ).toHaveLength(0);
-        expect(container.textContent).toContain('1 registrations hidden');
+        expect(container.textContent).toContain('1 registration hidden');
       });
 
       fireEvent.click(
