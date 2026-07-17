@@ -1,0 +1,652 @@
+.redi-devtools {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  flex-direction: column;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 12px;
+}
+
+.redi-devtools button,
+.redi-devtools input,
+.redi-devtools select {
+  font: inherit;
+}
+
+.redi-devtools__toolbar {
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #dbe3ee;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 4%);
+}
+
+.redi-devtools__root-switch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.redi-devtools__root-switch select,
+.redi-devtools__search-wrap input {
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: #0f172a;
+}
+
+.redi-devtools__root-switch select {
+  max-width: 190px;
+  padding: 0 28px 0 9px;
+  font-weight: 600;
+}
+
+.redi-devtools__root-switch select:focus,
+.redi-devtools__search-wrap input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 12%);
+}
+
+.redi-devtools__search-wrap {
+  position: relative;
+  width: min(290px, 32vw);
+}
+
+.redi-devtools__search-wrap input {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.redi-devtools__search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  max-height: 320px;
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 18%);
+}
+
+.redi-devtools__search-results > span {
+  display: block;
+  padding: 9px;
+  color: #64748b;
+}
+
+.redi-devtools__search-results button {
+  display: flex;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  flex-direction: column;
+  text-align: left;
+}
+
+.redi-devtools__search-results button:hover,
+.redi-devtools__search-results button:focus-visible {
+  outline: none;
+  background: #eff6ff;
+}
+
+.redi-devtools__search-results small {
+  margin-top: 2px;
+  color: #64748b;
+}
+
+.redi-devtools__toolbar-button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.redi-devtools__toolbar-button:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.redi-devtools__summary {
+  margin-left: auto;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.redi-devtools__body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+.redi-devtools__canvas {
+  position: relative;
+  min-width: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(219 234 254 / 36%), transparent 42%),
+    #f8fafc;
+  flex: 1;
+}
+
+.redi-devtools__canvas .react-flow__renderer {
+  cursor: grab;
+}
+
+.redi-devtools__canvas .react-flow__renderer:active {
+  cursor: grabbing;
+}
+
+/* React Flow disables pointer events for non-selectable/non-draggable nodes. */
+.redi-devtools .react-flow__node-injector,
+.redi-devtools .react-flow__node-registration {
+  pointer-events: all !important;
+}
+
+.redi-devtools .react-flow__edge-dependency {
+  pointer-events: all;
+}
+
+.redi-devtools__dependency-edge-hit-area {
+  pointer-events: stroke;
+}
+
+.redi-devtools__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  color: #64748b;
+  place-items: center;
+}
+
+.redi-devtools__injector-node,
+.redi-devtools__group-node,
+.redi-devtools__registration-node,
+.redi-devtools__terminal-anchor {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+.redi-devtools__injector-node {
+  position: relative;
+  overflow: visible;
+  border: 2px solid color-mix(in srgb, var(--redi-injector-color) 58%, #cbd5e1);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 86%);
+  box-shadow:
+    0 10px 30px rgb(15 23 42 / 8%),
+    inset 0 3px 0 var(--redi-injector-color);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.redi-devtools__injector-node.is-selected {
+  border-color: var(--redi-injector-color);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--redi-injector-color) 16%, transparent),
+    0 12px 34px rgb(15 23 42 / 12%),
+    inset 0 3px 0 var(--redi-injector-color);
+}
+
+.redi-devtools__injector-header {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  left: 9px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  gap: 8px;
+}
+
+.redi-devtools__injector-title {
+  display: flex;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  flex: 1;
+  gap: 8px;
+  text-align: left;
+}
+
+.redi-devtools__injector-title:hover {
+  background: rgb(226 232 240 / 65%);
+}
+
+.redi-devtools__injector-title > span:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.redi-devtools__injector-title strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redi-devtools__injector-title small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redi-devtools__injector-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--redi-injector-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--redi-injector-color) 15%, transparent);
+  flex: 0 0 auto;
+}
+
+.redi-devtools__injector-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.redi-devtools__injector-actions button,
+.redi-devtools__details > header button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #dbe3ee;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  place-items: center;
+}
+
+.redi-devtools__injector-actions button:hover:not(:disabled) {
+  border-color: var(--redi-injector-color);
+  color: var(--redi-injector-color);
+}
+
+.redi-devtools__injector-actions button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.redi-devtools__injector-collapsed {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  left: 14px;
+  color: #64748b;
+  font-size: 10px;
+  text-align: center;
+}
+
+.redi-devtools__group-node {
+  position: relative;
+  overflow: visible;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: rgb(248 250 252 / 88%);
+}
+
+.redi-devtools__group-node > header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 9px 9px 0 0;
+  background: #f1f5f9;
+  color: #334155;
+  justify-content: space-between;
+}
+
+.redi-devtools__group-node header strong {
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redi-devtools__group-node header span {
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 9px;
+  place-items: center;
+}
+
+.redi-devtools__registration-node {
+  position: relative;
+  display: flex;
+  overflow: visible;
+  padding: 8px 10px 7px;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0;
+  outline: 0;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.redi-devtools__registration-node:hover {
+  background: #f8fafc;
+  box-shadow: inset 3px 0 0 #94a3b8;
+}
+
+.redi-devtools__registration-node.is-selected {
+  background: #eff6ff;
+  box-shadow:
+    inset 3px 0 0 #2563eb,
+    inset 0 0 0 1px rgb(37 99 235 / 18%);
+}
+
+.redi-devtools__registration-node.is-dimmed {
+  opacity: 0.28;
+}
+
+.redi-devtools__registration-provider {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.redi-devtools__registration-provider strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redi-devtools__registration-provider small {
+  margin-top: 1px;
+  color: #64748b;
+  font-size: 9px;
+}
+
+.redi-devtools__registration-badges {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.redi-devtools__registration-badges > span {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.redi-devtools__registration-badges > span[data-status="created"] {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.redi-devtools__registration-badges > span[data-status="pending"] {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.redi-devtools__terminal-anchor {
+  position: relative;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.redi-devtools__structural-handle,
+.redi-devtools__dependency-handle {
+  pointer-events: none;
+}
+
+.redi-devtools__structural-handle {
+  width: 9px;
+  height: 9px;
+  border: 2px solid #f8fafc;
+  background: #94a3b8;
+}
+
+.redi-devtools__dependency-handle {
+  width: 7px;
+  height: 7px;
+  border: 2px solid #fff;
+  background: var(--redi-injector-color);
+}
+
+.redi-devtools__edge-label {
+  position: absolute;
+  z-index: 20;
+  max-width: 180px;
+  padding: 3px 6px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #fff;
+  color: #475569;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 160ms ease;
+  pointer-events: none;
+}
+
+.redi-devtools__edge-label.is-hovered {
+  z-index: 1001;
+}
+
+.redi-devtools__edge-label.is-emphasized {
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.redi-devtools__details {
+  position: relative;
+  min-width: 240px;
+  max-width: 520px;
+  overflow: hidden;
+  border-left: 1px solid #cbd5e1;
+  background: #fff;
+  flex: 0 0 auto;
+}
+
+.redi-devtools__details-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  z-index: 4;
+  width: 7px;
+  cursor: col-resize;
+}
+
+.redi-devtools__details > header {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid #e2e8f0;
+  justify-content: space-between;
+}
+
+.redi-devtools__details > header h2 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.redi-devtools__details-content {
+  height: calc(100% - 46px);
+  overflow: auto;
+  padding: 16px;
+}
+
+.redi-devtools__details-kicker {
+  color: #2563eb;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.redi-devtools__details-content h3 {
+  margin: 4px 0 14px;
+  font-size: 16px;
+}
+
+.redi-devtools__details-content h4 {
+  margin: 18px 0 8px;
+  color: #334155;
+  font-size: 11px;
+}
+
+.redi-devtools__details-list {
+  display: grid;
+  gap: 7px 10px;
+  grid-template-columns: 88px minmax(0, 1fr);
+  margin: 0;
+}
+
+.redi-devtools__details-list dt {
+  color: #64748b;
+}
+
+.redi-devtools__details-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.redi-devtools__details-content pre {
+  padding: 9px;
+  overflow: auto;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 9px;
+}
+
+.redi-devtools__details-edges {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.redi-devtools__details-edges li {
+  display: flex;
+  padding: 7px;
+  border-radius: 6px;
+  background: #f8fafc;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.redi-devtools__details-edges code {
+  color: #1d4ed8;
+  font-size: 9px;
+}
+
+.redi-devtools__details-edges span,
+.redi-devtools__muted {
+  color: #64748b;
+}
+
+.redi-devtools .react-flow__controls {
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgb(15 23 42 / 10%);
+}
+
+.redi-devtools .react-flow__controls-button {
+  border-bottom-color: #e2e8f0;
+}
+
+@media (max-width: 720px) {
+  .redi-devtools__toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .redi-devtools__search-wrap {
+    min-width: 180px;
+    flex: 1;
+  }
+
+  .redi-devtools__summary {
+    display: none;
+  }
+
+  .redi-devtools__details {
+    position: absolute;
+    top: 49px;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+    max-width: min(88vw, 420px);
+    box-shadow: -12px 0 32px rgb(15 23 42 / 16%);
+  }
+}

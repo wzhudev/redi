@@ -4,10 +4,10 @@
 
 **Blocked by:** 05 — Dependency Graph projection + Debugger Panel.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Multi-root forest renders; filter can focus one tree
-- [ ] Selecting a group/registration shows a details view with kind, status, and relevant edge/lookup information
-- [ ] Polling interval is configurable and/or manual refresh is available
-- [ ] Basic navigation of a large graph remains possible (pan/zoom or equivalent scroll)
-- [ ] Works for both Panel and Overlay (shared surface)
+- [x] Multi-root forest renders; filter can focus one tree
+- [x] Selecting a group/registration shows a details view with kind, status, and relevant edge/lookup information
+- [x] Polling interval is configurable and/or manual refresh is available
+- [x] Basic navigation of a large graph remains possible (pan/zoom or equivalent scroll)
+- [x] Works for both Panel and Overlay (shared surface)

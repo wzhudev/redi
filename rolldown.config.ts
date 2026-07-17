@@ -10,7 +10,7 @@ export default defineConfig([
       sourcemap: true,
       dir: 'dist/esm',
     },
-    plugins: [dts()],
+    plugins: [dts({ compilerOptions: { stripInternal: true } })],
   },
   {
     input: 'src/index.ts',
@@ -39,7 +39,7 @@ export default defineConfig([
       dir: 'dist/esm/react-bindings',
       sourcemap: true,
     },
-    plugins: [dts()],
+    plugins: [dts({ compilerOptions: { stripInternal: true } })],
   },
   {
     input: 'src/react-bindings/index.ts',

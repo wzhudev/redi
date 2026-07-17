@@ -61,6 +61,26 @@ export function isBareClassDependency<T>(
   return thing.length === 1;
 }
 
+let nextDependencyRegistrationId = 1;
+
+function createDependencyRegistrationId(): string {
+  const id = `registration-${nextDependencyRegistrationId}`;
+  nextDependencyRegistrationId += 1;
+  return id;
+}
+
+/** One distinct declarative registration, even when its item object is reused. */
+export interface DependencyRegistration<T = any> {
+  readonly id: string;
+  readonly item: DependencyItem<T>;
+}
+
+/** One cached value associated with the registration that produced it. */
+export interface ResolvedDependency<T = any> {
+  readonly registrationId: string;
+  readonly value: T | null;
+}
+
 const ResolvingStack: DependencyIdentifier<any>[] = [];
 
 export function pushResolvingStack(id: DependencyIdentifier<unknown>) {
@@ -93,7 +113,11 @@ export class DependencyNotFoundForModuleError extends RediError {
 
 export class DependencyNotFoundError extends RediError {
   constructor(id: DependencyIdentifier<any>) {
-    const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. The stack of dependencies is: "${ResolvingStack.map((id) => prettyPrintIdentifier(id)).join(' -> ')}".`;
+    const stack: string[] = [];
+    for (const resolvingId of ResolvingStack) {
+      stack.push(prettyPrintIdentifier(resolvingId));
+    }
+    const msg = `Cannot find "${prettyPrintIdentifier(id)}" registered by any injector. The stack of dependencies is: "${stack.join(' -> ')}".`;
 
     super(msg);
 
@@ -109,21 +133,24 @@ export class DependencyNotFoundError extends RediError {
 export class DependencyCollection implements IDisposable {
   private readonly dependencyMap = new Map<
     DependencyIdentifier<any>,
-    DependencyItem<any>[]
+    DependencyRegistration<any>[]
   >();
 
   constructor(dependencies: Dependency[]) {
-    this.normalizeDependencies(dependencies).map((pair) =>
-      this.add(pair[0], pair[1]),
-    );
+    for (const pair of this.normalizeDependencies(dependencies)) {
+      this.add(pair[0], pair[1]);
+    }
   }
 
-  public add<T>(ctor: Ctor<T>): void;
-  public add<T>(id: DependencyIdentifier<T>, val: DependencyItem<T>): void;
+  public add<T>(ctor: Ctor<T>): DependencyRegistration<T>;
+  public add<T>(
+    id: DependencyIdentifier<T>,
+    val: DependencyItem<T>,
+  ): DependencyRegistration<T>;
   public add<T>(
     ctorOrId: Ctor<T> | DependencyIdentifier<T>,
     val?: DependencyItem<T>,
-  ): void {
+  ): DependencyRegistration<T> {
     if (typeof val === 'undefined') {
       val = { useClass: ctorOrId as Ctor<T>, lazy: false };
     }
@@ -133,34 +160,38 @@ export class DependencyCollection implements IDisposable {
       arr = [];
       this.dependencyMap.set(ctorOrId, arr);
     }
-    arr.push(val);
+    const registration: DependencyRegistration<T> = {
+      id: createDependencyRegistrationId(),
+      item: val,
+    };
+    arr.push(registration);
+    return registration;
   }
 
   public delete<T>(id: DependencyIdentifier<T>): void {
     this.dependencyMap.delete(id);
   }
 
-  // public get<T>(id: DependencyIdentifier<T>): DependencyItem<T>;
-  public get<T>(
+  public getRegistrations<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity.REQUIRED,
-  ): DependencyItem<T>;
-  public get<T>(
+  ): DependencyRegistration<T>;
+  public getRegistrations<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity.MANY,
-  ): DependencyItem<T>[];
-  public get<T>(
+  ): DependencyRegistration<T>[];
+  public getRegistrations<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity.OPTIONAL,
-  ): DependencyItem<T> | null;
-  public get<T>(
+  ): DependencyRegistration<T> | null;
+  public getRegistrations<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity,
-  ): DependencyItem<T> | DependencyItem<T>[] | null;
-  public get<T>(
+  ): DependencyRegistration<T> | DependencyRegistration<T>[] | null;
+  public getRegistrations<T>(
     id: DependencyIdentifier<T>,
     quantity: Quantity,
-  ): DependencyItem<T> | DependencyItem<T>[] | null {
+  ): DependencyRegistration<T> | DependencyRegistration<T>[] | null {
     const ret = this.dependencyMap.get(id)!;
 
     checkQuantity(id, quantity, ret.length);
@@ -169,6 +200,23 @@ export class DependencyCollection implements IDisposable {
 
   public has<T>(id: DependencyIdentifier<T>): boolean {
     return this.dependencyMap.has(id);
+  }
+
+  /** Read-only copy used by Injector tooling without exposing mutable storage. */
+  public snapshot(): readonly (readonly [
+    DependencyIdentifier<any>,
+    readonly DependencyRegistration<any>[],
+  ])[] {
+    const snapshot: Array<
+      readonly [
+        DependencyIdentifier<any>,
+        readonly DependencyRegistration<any>[],
+      ]
+    > = [];
+    for (const [identifier, registrations] of this.dependencyMap) {
+      snapshot.push([identifier, [...registrations]] as const);
+    }
+    return snapshot;
   }
 
   public dispose(): void {
@@ -181,7 +229,8 @@ export class DependencyCollection implements IDisposable {
   private normalizeDependencies(
     dependencies: Dependency[],
   ): DependencyPair<any>[] {
-    return dependencies.map((dependency) => {
+    const normalized: DependencyPair<any>[] = [];
+    for (const dependency of dependencies) {
       const id = dependency[0];
       let val: DependencyItem<any>;
       if (isBareClassDependency(dependency)) {
@@ -193,8 +242,9 @@ export class DependencyCollection implements IDisposable {
         val = dependency[1];
       }
 
-      return [id, val];
-    });
+      normalized.push([id, val]);
+    }
+    return normalized;
   }
 }
 
@@ -206,21 +256,73 @@ export class DependencyCollection implements IDisposable {
 export class ResolvedDependencyCollection implements IDisposable {
   private readonly resolvedDependencies = new Map<
     DependencyIdentifier<any>,
-    any[]
+    ResolvedDependency<any>[]
   >();
 
-  public add<T>(id: DependencyIdentifier<T>, val: T | null): void {
+  public constructor() {}
+
+  public add<T>(
+    id: DependencyIdentifier<T>,
+    val: T | null,
+    registrationId = createDependencyRegistrationId(),
+  ): ResolvedDependency<T> {
     let arr = this.resolvedDependencies.get(id);
     if (typeof arr === 'undefined') {
       arr = [];
       this.resolvedDependencies.set(id, arr);
     }
 
-    arr.push(val);
+    const resolved: ResolvedDependency<T> = {
+      registrationId,
+      value: val,
+    };
+    arr.push(resolved);
+    return resolved;
   }
 
   public has<T>(id: DependencyIdentifier<T>): boolean {
     return this.resolvedDependencies.has(id);
+  }
+
+  public hasResolvedRegistration<T>(
+    id: DependencyIdentifier<T>,
+    registrationId: string,
+  ): boolean {
+    for (const entry of this.resolvedDependencies.get(id) ?? []) {
+      if (entry.registrationId === registrationId) return true;
+    }
+    return false;
+  }
+
+  public getResolvedRegistration<T>(
+    id: DependencyIdentifier<T>,
+    registrationId: string,
+  ): ResolvedDependency<T> | undefined {
+    for (const entry of this.resolvedDependencies.get(id) ?? []) {
+      if (entry.registrationId === registrationId) return entry;
+    }
+    return undefined;
+  }
+
+  /** Read-only copy used to report creation state without resolving values. */
+  public snapshot(): readonly (readonly [
+    DependencyIdentifier<any>,
+    readonly ResolvedDependency<any>[],
+  ])[] {
+    const snapshot: Array<
+      readonly [DependencyIdentifier<any>, readonly ResolvedDependency<any>[]]
+    > = [];
+    for (const [identifier, entries] of this.resolvedDependencies) {
+      snapshot.push([identifier, [...entries]] as const);
+    }
+    return snapshot;
+  }
+
+  /** Cached entries for an Identifier, copied to prevent mutation. */
+  public entries<T>(
+    id: DependencyIdentifier<T>,
+  ): readonly ResolvedDependency<T>[] {
+    return [...(this.resolvedDependencies.get(id) || [])];
   }
 
   public get<T>(
@@ -237,25 +339,31 @@ export class ResolvedDependencyCollection implements IDisposable {
     id: DependencyIdentifier<T>,
     quantity: Quantity,
   ): T | T[] | null {
-    const ret = this.resolvedDependencies.get(id);
+    const entries = this.resolvedDependencies.get(id);
 
-    if (!ret) {
+    if (!entries) {
       throw new DependencyNotFoundError(id);
     }
 
-    checkQuantity(id, quantity, ret.length);
+    checkQuantity(id, quantity, entries.length);
+    const values: T[] = [];
+    for (const entry of entries) {
+      values.push(entry.value as T);
+    }
 
     if (quantity === Quantity.MANY) {
-      return ret;
+      return values;
     } else {
-      return ret[0];
+      return values[0];
     }
   }
 
   public dispose(): void {
-    Array.from(this.resolvedDependencies.values()).forEach((items) => {
-      items.forEach((item) => (isDisposable(item) ? item.dispose() : void 0));
-    });
+    for (const entries of this.resolvedDependencies.values()) {
+      for (const { value } of entries) {
+        if (isDisposable(value)) value.dispose();
+      }
+    }
 
     this.resolvedDependencies.clear();
   }

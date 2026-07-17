@@ -2,6 +2,7 @@ import type {
   Dependency,
   DependencyOrInstance,
   DependencyPair,
+  DependencyRegistration,
 } from './dependencyCollection';
 import type { DependencyIdentifier } from './dependencyIdentifier';
 import type {
@@ -12,9 +13,17 @@ import type {
   DependencyItem,
   ExistingDependencyItem,
   FactoryDependencyItem,
+  SyncDependencyItem,
   ValueDependencyItem,
 } from './dependencyItem';
 import type { IDisposable } from './dispose';
+import type {
+  InjectorDebugApi,
+  InjectorDebugIdentifierGroup,
+  InjectorDebugRegistration,
+  InjectorDebugResolution,
+  InjectorDebugResolutionRequest,
+} from './injectorDebug';
 import { getSortedDependencies } from './decorators';
 import {
   DependencyCollection,
@@ -25,6 +34,7 @@ import {
   ResolvedDependencyCollection,
 } from './dependencyCollection';
 import { getFactoryDependencies } from './dependencyDescriptor';
+import { normalizeForwardRef } from './dependencyForwardRef';
 import {
   AsyncHookSymbol,
   isAsyncDependencyItem,
@@ -40,11 +50,26 @@ import {
 import { QuantityCheckError } from './dependencyQuantity';
 import { RediError } from './error';
 import { IdleValue } from './idleValue';
+import {
+  getDebugDependencies,
+  getDebugProviderKind,
+  getDebugProviderLabel,
+} from './injectorDebugUtils';
+import {
+  markInjectorDisposedForDiscovery,
+  registerInjectorForDiscovery,
+} from './injectorDiscovery';
 import { LookUp, Quantity } from './types';
 
 const MAX_RESOLUTIONS_QUEUED = 300;
 
 const NotInstantiatedSymbol = Symbol('$$NOT_INSTANTIATED_SYMBOL');
+const DetachedInjectorConstruction = Symbol('DetachedInjectorConstruction');
+
+interface ResolutionTarget {
+  readonly injector: Injector;
+  readonly synthetic?: 'injector';
+}
 
 class CircularDependencyError<T> extends RediError {
   constructor(id: DependencyIdentifier<T>) {
@@ -153,10 +178,51 @@ export interface IAccessor {
  * ```
  */
 export class Injector {
+  /**
+   * Create a parent-aware Injector without attaching it to the parent's owned
+   * children or global Discovery until `attach()` is called. Renderer
+   * integrations use this for speculative work that may never commit.
+   *
+   * @internal
+   */
+  public static createDetached(
+    dependencies?: Dependency[],
+    parent: Injector | null = null,
+  ): Readonly<{ attach: () => boolean; injector: Injector }> {
+    const injector = Reflect.construct(Injector, [
+      dependencies,
+      parent,
+      DetachedInjectorConstruction,
+    ]) as Injector;
+    return Object.freeze({
+      attach: () => injector._attachLifecycle(),
+      injector,
+    });
+  }
+
   private readonly dependencyCollection: DependencyCollection;
   private readonly resolvedDependencyCollection: ResolvedDependencyCollection;
 
+  private readonly asyncLoadedItems = new WeakMap<
+    DependencyRegistration<any>,
+    SyncDependencyItem<any>
+  >();
+
+  private readonly asyncPendingPromises = new WeakMap<
+    DependencyRegistration<any>,
+    Promise<any>
+  >();
+
+  private readonly debugGroupIds = new Map<DependencyIdentifier<any>, string>();
+
+  private nextDebugGroupId = 1;
+
+  /** Side-effect-free APIs intended for developer tooling, not business logic. */
+  public readonly debug: InjectorDebugApi;
+
   private readonly children: Injector[] = [];
+
+  private lifecycleAttached = false;
 
   private resolutionOngoing = 0;
 
@@ -193,12 +259,32 @@ export class Injector {
     dependencies?: Dependency[],
     private readonly parent: Injector | null = null,
   ) {
+    // eslint-disable-next-line prefer-rest-params -- private construction token
+    const detached = arguments[2] === DetachedInjectorConstruction;
     this.dependencyCollection = new DependencyCollection(dependencies || []);
     this.resolvedDependencyCollection = new ResolvedDependencyCollection();
+    this.debug = Object.freeze({
+      explain: <T>(request: InjectorDebugResolutionRequest<T>) =>
+        this._debugExplain(request),
+      listRegistrations: () => this._debugListRegistrations(),
+    });
 
-    if (parent) {
-      parent.children.push(this);
+    if (!detached) {
+      this._attachLifecycle();
     }
+  }
+
+  private _attachLifecycle(): boolean {
+    if (this.disposed) return false;
+    if (this.lifecycleAttached) return true;
+    if (this.parent?.disposed) throw new InjectorAlreadyDisposedError();
+
+    if (this.parent) {
+      this.parent.children.push(this);
+    }
+    registerInjectorForDiscovery(this, this.parent);
+    this.lifecycleAttached = true;
+    return true;
   }
 
   /**
@@ -280,8 +366,13 @@ export class Injector {
    * ```
    */
   public dispose(): void {
+    if (this.disposed) {
+      return;
+    }
+
     // Dispose child injectors first.
-    this.children.forEach((c) => c.dispose());
+    // Iterate over a copy because each child removes itself from this array.
+    [...this.children].forEach((c) => c.dispose());
     this.children.length = 0;
 
     // Call `dispose` method on each instantiated dependencies if they are `IDisposable` and clear collections.
@@ -292,16 +383,20 @@ export class Injector {
     this.deleteSelfFromParent();
 
     this.disposed = true;
+    markInjectorDisposedForDiscovery(this);
 
     this.disposingCallbacks.forEach((callback) => callback());
     this.disposingCallbacks.clear();
   }
 
   private deleteSelfFromParent(): void {
-    if (this.parent) {
+    if (this.parent && this.lifecycleAttached) {
       const index = this.parent.children.indexOf(this);
-      this.parent.children.splice(index, 1);
+      if (index >= 0) {
+        this.parent.children.splice(index, 1);
+      }
     }
+    this.lifecycleAttached = false;
   }
 
   /**
@@ -533,15 +628,23 @@ export class Injector {
   ): T[] | T | null {
     this._ensureInjectorNotDisposed();
 
-    const newResult = this._get(id, quantityOrLookup, lookUp);
+    const normalized = this._normalizeResolutionOptions(
+      quantityOrLookup,
+      lookUp,
+    );
+    if (this._wouldResolveAsync(id, normalized.quantity, normalized.lookUp)) {
+      throw new GetAsyncItemFromSyncApiError(id);
+    }
+
+    const result = this._get(id, quantityOrLookup, lookUp);
     if (
-      (Array.isArray(newResult) && newResult.some((r) => isAsyncHook(r))) ||
-      isAsyncHook(newResult)
+      (Array.isArray(result) && result.some((item) => isAsyncHook(item))) ||
+      isAsyncHook(result)
     ) {
       throw new GetAsyncItemFromSyncApiError(id);
     }
 
-    return newResult as T | T[] | null;
+    return result as T | T[] | null;
   }
 
   private _get<T>(
@@ -550,16 +653,12 @@ export class Injector {
     lookUp?: LookUp,
     withNew?: boolean,
   ): T[] | T | AsyncHook<T> | null {
-    let quantity: Quantity = Quantity.REQUIRED;
-    if (
-      quantityOrLookup === Quantity.REQUIRED ||
-      quantityOrLookup === Quantity.OPTIONAL ||
-      quantityOrLookup === Quantity.MANY
-    ) {
-      quantity = quantityOrLookup as Quantity;
-    } else {
-      lookUp = quantityOrLookup as LookUp;
-    }
+    const normalized = this._normalizeResolutionOptions(
+      quantityOrLookup,
+      lookUp,
+    );
+    const { quantity } = normalized;
+    lookUp = normalized.lookUp;
 
     if (!withNew) {
       // see if the dependency is already resolved, return it and check quantity
@@ -638,8 +737,22 @@ export class Injector {
 
   private _resolveDependency<T>(
     id: DependencyIdentifier<T>,
-    item: DependencyItem<T>,
+    registration: DependencyRegistration<T>,
     shouldCache = true,
+  ): T | AsyncHook<T> {
+    return this._resolveDependencyItem(
+      id,
+      registration.item,
+      shouldCache,
+      registration,
+    );
+  }
+
+  private _resolveDependencyItem<T>(
+    id: DependencyIdentifier<T>,
+    item: DependencyItem<T>,
+    shouldCache: boolean,
+    registration?: DependencyRegistration<T>,
   ): T | AsyncHook<T> {
     let result: T | AsyncHook<T>;
 
@@ -650,23 +763,32 @@ export class Injector {
         result = this._resolveValueDependency(
           id,
           item as ValueDependencyItem<T>,
+          shouldCache,
+          registration?.id,
         );
       } else if (isFactoryDependencyItem(item)) {
         result = this._resolveFactory(
           id,
           item as FactoryDependencyItem<T>,
           shouldCache,
+          registration?.id,
         );
       } else if (isClassDependencyItem(item)) {
         result = this._resolveClass(
           id,
           item as ClassDependencyItem<T>,
           shouldCache,
+          registration?.id,
         );
       } else if (isExistingDependencyItem(item)) {
-        result = this._resolveExisting(id, item as ExistingDependencyItem<T>);
+        result = this._resolveExisting(
+          id,
+          item as ExistingDependencyItem<T>,
+          shouldCache,
+          registration?.id,
+        );
       } else {
-        result = this._resolveAsync(id, item as AsyncDependencyItem<T>);
+        result = this._resolveAsync(id, registration!);
       }
 
       popupResolvingStack();
@@ -681,18 +803,26 @@ export class Injector {
   private _resolveExisting<T>(
     id: DependencyIdentifier<T>,
     item: ExistingDependencyItem<T>,
+    shouldCache: boolean,
+    registrationId?: string,
   ): T {
-    const thing = this.get(item.useExisting);
-    this.resolvedDependencyCollection.add(id, thing);
+    const thing = this.get(normalizeForwardRef(item.useExisting));
+    if (shouldCache) {
+      this.resolvedDependencyCollection.add(id, thing, registrationId);
+    }
     return thing;
   }
 
   private _resolveValueDependency<T>(
     id: DependencyIdentifier<T>,
     item: ValueDependencyItem<T>,
+    shouldCache: boolean,
+    registrationId?: string,
   ): T {
     const thing = item.useValue;
-    this.resolvedDependencyCollection.add(id, thing);
+    if (shouldCache) {
+      this.resolvedDependencyCollection.add(id, thing, registrationId);
+    }
     return thing;
   }
 
@@ -700,6 +830,7 @@ export class Injector {
     id: DependencyIdentifier<T> | null,
     item: ClassDependencyItem<T>,
     shouldCache: boolean,
+    registrationId?: string,
   ): T {
     let thing: T;
 
@@ -756,7 +887,7 @@ export class Injector {
     }
 
     if (id && shouldCache) {
-      this.resolvedDependencyCollection.add(id, thing);
+      this.resolvedDependencyCollection.add(id, thing, registrationId);
     }
 
     return thing;
@@ -833,6 +964,7 @@ export class Injector {
     id: DependencyIdentifier<T>,
     item: FactoryDependencyItem<T>,
     shouldCache: boolean,
+    registrationId?: string,
   ): T {
     this.markNewResolution(id);
 
@@ -868,7 +1000,7 @@ export class Injector {
     const thing = item.useFactory.apply(null, resolvedArgs);
 
     if (shouldCache) {
-      this.resolvedDependencyCollection.add(id, thing);
+      this.resolvedDependencyCollection.add(id, thing, registrationId);
     }
 
     this.markResolutionCompleted();
@@ -880,48 +1012,66 @@ export class Injector {
 
   private _resolveAsync<T>(
     id: DependencyIdentifier<T>,
-    item: AsyncDependencyItem<T>,
+    registration: DependencyRegistration<T>,
   ): AsyncHook<T> {
     const asyncLoader: AsyncHook<T> = {
       __symbol: AsyncHookSymbol,
-      whenReady: () => this._resolveAsyncImpl(id, item),
+      whenReady: () => this._resolveAsyncImpl(id, registration),
     };
     return asyncLoader;
   }
 
   private _resolveAsyncImpl<T>(
     id: DependencyIdentifier<T>,
-    item: AsyncDependencyItem<T>,
+    registration: DependencyRegistration<T>,
   ): Promise<T> {
-    return item.useAsync().then((thing) => {
-      // check if another promise has been resolved,
-      // do not resolve the async item twice
-      const resolvedCheck = this.getValue(id);
-      if (resolvedCheck !== NotInstantiatedSymbol) {
-        return resolvedCheck as T;
-      }
+    const item = registration.item as AsyncDependencyItem<T>;
+    const pending = this.asyncPendingPromises.get(registration);
+    if (pending) {
+      return pending as Promise<T>;
+    }
 
-      let ret: T;
-      if (Array.isArray(thing)) {
-        const item = thing[1];
-        if (isAsyncDependencyItem(item)) {
-          throw new AsyncItemReturnAsyncItemError(id);
-        } else {
-          ret = this._resolveDependency(id, item) as T;
+    const promise = Promise.resolve()
+      .then(() => item.useAsync())
+      .then((thing) => {
+        // Do not resolve the same registration again if another path won first.
+        const resolvedEntry =
+          this.resolvedDependencyCollection.getResolvedRegistration(
+            id,
+            registration.id,
+          );
+        if (resolvedEntry) {
+          return resolvedEntry.value as T;
         }
-      } else if (isCtor(thing)) {
-        ret = this._resolveClassImpl({
-          useClass: thing,
-          onInstantiation: item.onInstantiation,
-        });
-      } else {
-        ret = thing;
-      }
 
-      this.resolvedDependencyCollection.add(id, ret);
+        let loadedItem: SyncDependencyItem<T>;
+        let ret: T;
+        if (Array.isArray(thing)) {
+          loadedItem = thing[1];
+          if (isAsyncDependencyItem(loadedItem)) {
+            throw new AsyncItemReturnAsyncItemError(id);
+          }
+          ret = this._resolveDependencyItem(id, loadedItem, false) as T;
+        } else if (isCtor(thing)) {
+          loadedItem = {
+            useClass: thing,
+            onInstantiation: item.onInstantiation,
+          };
+          ret = this._resolveClassImpl(loadedItem);
+        } else {
+          loadedItem = { useValue: thing };
+          ret = thing;
+        }
 
-      return ret;
-    });
+        this.asyncLoadedItems.set(registration, loadedItem);
+        this.resolvedDependencyCollection.add(id, ret, registration.id);
+
+        return ret;
+      })
+      .finally(() => this.asyncPendingPromises.delete(registration));
+
+    this.asyncPendingPromises.set(registration, promise);
+    return promise;
   }
 
   private getValue<T>(
@@ -929,51 +1079,28 @@ export class Injector {
     quantity: Quantity = Quantity.REQUIRED,
     lookUp?: LookUp,
   ): null | T | T[] | typeof NotInstantiatedSymbol {
-    const onSelf = () => {
-      if (
-        this.dependencyCollection.has(id) &&
-        !this.resolvedDependencyCollection.has(id)
-      ) {
-        return NotInstantiatedSymbol;
-      }
-
-      return this.resolvedDependencyCollection.get(id, quantity);
-    };
-
-    const onParent = () => {
-      if (this.parent) {
-        return this.parent.getValue(id, quantity);
-      } else {
-        if (quantity === Quantity.OPTIONAL) {
-          return null;
-        } else if (quantity === Quantity.MANY) {
-          return [];
-        }
-
-        throw new QuantityCheckError(id, Quantity.REQUIRED, 0);
-      }
-    };
-
-    if (lookUp === LookUp.SKIP_SELF) {
-      return onParent();
+    const target = this._findResolutionTarget(id, lookUp, true);
+    if (!target) {
+      if (quantity === Quantity.OPTIONAL) return null;
+      if (quantity === Quantity.MANY) return [];
+      throw new QuantityCheckError(id, Quantity.REQUIRED, 0);
     }
 
-    if (id === Injector) {
-      return this as unknown as T;
-    }
-
-    if (lookUp === LookUp.SELF) {
-      return onSelf();
+    if (target.synthetic === 'injector') {
+      if (quantity === Quantity.MANY) {
+        return [target.injector as unknown as T];
+      }
+      return target.injector as unknown as T;
     }
 
     if (
-      this.resolvedDependencyCollection.has(id) ||
-      this.dependencyCollection.has(id)
+      target.injector.dependencyCollection.has(id) &&
+      !target.injector.resolvedDependencyCollection.has(id)
     ) {
-      return onSelf();
+      return NotInstantiatedSymbol;
     }
 
-    return onParent();
+    return target.injector.resolvedDependencyCollection.get(id, quantity);
   }
 
   private createDependency<T>(
@@ -982,50 +1109,279 @@ export class Injector {
     lookUp?: LookUp,
     shouldCache = true,
   ): null | T | T[] | AsyncHook<T> | (T | AsyncHook<T>)[] {
-    const onSelf = () => {
-      const registrations = this.dependencyCollection.get(id, quantity)!;
+    const target = this._findResolutionTarget(id, lookUp, false);
+    if (!target) {
+      if (quantity === Quantity.OPTIONAL) return null;
+      if (quantity === Quantity.MANY) return [];
 
-      let ret: (T | AsyncHook<T>)[] | T | AsyncHook<T> | null = null;
-      if (Array.isArray(registrations)) {
-        ret = registrations.map((dependencyItem) =>
-          this._resolveDependency(id, dependencyItem, shouldCache),
-        );
-      } else {
-        ret = this._resolveDependency(id, registrations, shouldCache);
-      }
-
-      return ret;
-    };
-
-    const onParent = () => {
-      if (this.parent) {
-        return this.parent.createDependency(
-          id,
-          quantity,
-          undefined,
-          shouldCache,
-        );
-      } else {
-        if (quantity === Quantity.OPTIONAL) {
-          return null;
-        } else if (quantity === Quantity.MANY) {
-          return [];
-        }
-
-        pushResolvingStack(id);
-        throw new DependencyNotFoundError(id);
-      }
-    };
-
-    if (lookUp === LookUp.SKIP_SELF) {
-      return onParent();
+      pushResolvingStack(id);
+      throw new DependencyNotFoundError(id);
     }
 
-    if (this.dependencyCollection.has(id)) {
-      return onSelf();
+    if (target.synthetic === 'injector') {
+      if (quantity === Quantity.MANY) {
+        return [target.injector as unknown as T];
+      }
+      return target.injector as unknown as T;
     }
 
-    return onParent();
+    const registrations = target.injector.dependencyCollection.getRegistrations(
+      id,
+      quantity,
+    )!;
+    if (Array.isArray(registrations)) {
+      return registrations.map((registration) =>
+        target.injector._resolveDependency(id, registration, shouldCache),
+      );
+    }
+
+    return target.injector._resolveDependency(id, registrations, shouldCache);
+  }
+
+  private _normalizeResolutionOptions(
+    quantityOrLookup?: Quantity | LookUp,
+    lookUp?: LookUp,
+  ): { lookUp?: LookUp; quantity: Quantity } {
+    if (
+      quantityOrLookup === Quantity.REQUIRED ||
+      quantityOrLookup === Quantity.OPTIONAL ||
+      quantityOrLookup === Quantity.MANY
+    ) {
+      return { lookUp, quantity: quantityOrLookup };
+    }
+
+    return {
+      lookUp: quantityOrLookup as LookUp | undefined,
+      quantity: Quantity.REQUIRED,
+    };
+  }
+
+  /** Shared target selection for recursive resolution and Resolution Explain. */
+  private _findResolutionTarget<T>(
+    id: DependencyIdentifier<T>,
+    lookUp: LookUp | undefined,
+    includeResolved: boolean,
+  ): ResolutionTarget | null {
+    let current = lookUp === LookUp.SKIP_SELF ? this.parent : this;
+    const selfOnly = lookUp === LookUp.SELF;
+
+    while (current) {
+      if ((id as unknown) === Injector) {
+        return { injector: current, synthetic: 'injector' };
+      }
+
+      if (
+        current.dependencyCollection.has(id) ||
+        (includeResolved && current.resolvedDependencyCollection.has(id))
+      ) {
+        return { injector: current };
+      }
+
+      if (selfOnly) break;
+      current = current.parent;
+    }
+
+    return null;
+  }
+
+  private _wouldResolveAsync<T>(
+    id: DependencyIdentifier<T>,
+    quantity: Quantity,
+    lookUp: LookUp | undefined,
+  ): boolean {
+    const target = this._findResolutionTarget(id, lookUp, true);
+    if (
+      !target ||
+      target.synthetic ||
+      target.injector.resolvedDependencyCollection.has(id)
+    ) {
+      return false;
+    }
+
+    const items = target.injector.dependencyCollection
+      .snapshot()
+      .find(([identifier]) => identifier === id)?.[1];
+    if (!items) return false;
+
+    if (quantity !== Quantity.MANY && items.length !== 1) {
+      return false;
+    }
+
+    return items.some(({ item }) => isAsyncDependencyItem(item));
+  }
+
+  private _debugGroupId(identifier: DependencyIdentifier<any>): string {
+    let id = this.debugGroupIds.get(identifier);
+    if (!id) {
+      id = `group-${this.nextDebugGroupId}`;
+      this.nextDebugGroupId += 1;
+      this.debugGroupIds.set(identifier, id);
+    }
+    return id;
+  }
+
+  private _debugListRegistrations(): readonly InjectorDebugIdentifierGroup[] {
+    const dependencySnapshot = this.dependencyCollection.snapshot();
+    const resolvedSnapshot = this.resolvedDependencyCollection.snapshot();
+    const resolvedByIdentifier = new Map(resolvedSnapshot);
+    const identifiers = dependencySnapshot.map(([identifier]) => identifier);
+    for (const [identifier] of resolvedSnapshot) {
+      if (!identifiers.includes(identifier)) identifiers.push(identifier);
+    }
+
+    return identifiers.map((identifier) => {
+      const declaredRegistrations =
+        dependencySnapshot.find(
+          ([candidate]) => candidate === identifier,
+        )?.[1] ?? [];
+      const resolved = resolvedByIdentifier.get(identifier) ?? [];
+      const declaredIds = new Set(
+        declaredRegistrations.map((registration) => registration.id),
+      );
+      const registrations: InjectorDebugRegistration[] =
+        declaredRegistrations.map((registration) => {
+          const item = registration.item;
+          const loadedItem = isAsyncDependencyItem(item)
+            ? this.asyncLoadedItems.get(registration)
+            : undefined;
+          const loadedProviderKind = loadedItem
+            ? getDebugProviderKind(loadedItem)
+            : undefined;
+          const providerLabel = loadedItem
+            ? `async to ${getDebugProviderLabel(loadedItem)}`
+            : getDebugProviderLabel(item);
+
+          return Object.freeze({
+            id: registration.id,
+            dependencies: getDebugDependencies(item, loadedItem),
+            ...(isFactoryDependencyItem(item) && item.dynamic
+              ? { dynamic: true as const }
+              : {}),
+            identifier,
+            identifierLabel: prettyPrintIdentifier(identifier),
+            ...(isClassDependencyItem(item) && item.lazy
+              ? { lazy: true as const }
+              : {}),
+            ...(loadedProviderKind ? { loadedProviderKind } : {}),
+            providerKind: getDebugProviderKind(item),
+            providerLabel,
+            status: this.resolvedDependencyCollection.hasResolvedRegistration(
+              identifier,
+              registration.id,
+            )
+              ? ('created' as const)
+              : isAsyncDependencyItem(item)
+                ? ('pending' as const)
+                : ('not-created' as const),
+          });
+        });
+
+      for (const resolvedEntry of resolved) {
+        if (declaredIds.has(resolvedEntry.registrationId)) continue;
+        registrations.push(
+          Object.freeze({
+            id: resolvedEntry.registrationId,
+            dependencies: Object.freeze([]),
+            identifier,
+            identifierLabel: prettyPrintIdentifier(identifier),
+            providerKind: 'instance' as const,
+            providerLabel: 'instance',
+            status: 'created' as const,
+          }),
+        );
+      }
+
+      return Object.freeze({
+        id: this._debugGroupId(identifier),
+        identifier,
+        identifierLabel: prettyPrintIdentifier(identifier),
+        registrations: Object.freeze(registrations),
+      });
+    });
+  }
+
+  private _debugExplain<T>(
+    request: InjectorDebugResolutionRequest<T>,
+  ): InjectorDebugResolution<T> {
+    const normalizedRequest = Object.freeze({
+      identifier: request.identifier,
+      lookUp: request.lookUp,
+      quantity: request.quantity ?? Quantity.REQUIRED,
+      withNew: request.withNew ?? false,
+    });
+    const target = this._findResolutionTarget(
+      request.identifier,
+      request.lookUp,
+      !normalizedRequest.withNew,
+    );
+
+    if (!target) {
+      const outcome =
+        normalizedRequest.quantity === Quantity.OPTIONAL
+          ? ('optional-missing' as const)
+          : normalizedRequest.quantity === Quantity.MANY
+            ? ('many-empty' as const)
+            : ('required-missing' as const);
+      return { landing: null, outcome, request: normalizedRequest };
+    }
+
+    if (target.synthetic === 'injector') {
+      return {
+        landing: {
+          groupId: target.injector._debugGroupId(Injector),
+          injector: target.injector,
+          registrationIds: Object.freeze([]),
+          synthetic: 'injector',
+        },
+        outcome: 'resolved',
+        request: normalizedRequest,
+      };
+    }
+
+    const resolvedEntries =
+      target.injector.resolvedDependencyCollection.entries(request.identifier);
+    const hasResolved =
+      !normalizedRequest.withNew && resolvedEntries.length > 0;
+    const registrationIds = hasResolved
+      ? resolvedEntries.map((entry) => entry.registrationId)
+      : (
+          target.injector.dependencyCollection
+            .snapshot()
+            .find(([identifier]) => identifier === request.identifier)?.[1] ??
+            []
+        ).map((registration) => registration.id);
+    const actual = registrationIds.length;
+    const landing = {
+      groupId: target.injector._debugGroupId(request.identifier),
+      injector: target.injector,
+      registrationIds: Object.freeze(
+        registrationIds.slice(
+          0,
+          normalizedRequest.quantity === Quantity.MANY ? actual : 1,
+        ),
+      ),
+    };
+    const quantityMismatch =
+      (normalizedRequest.quantity === Quantity.REQUIRED && actual !== 1) ||
+      (normalizedRequest.quantity === Quantity.OPTIONAL && actual > 1);
+
+    if (quantityMismatch) {
+      return {
+        actual,
+        landing: {
+          ...landing,
+          registrationIds: Object.freeze(registrationIds),
+        },
+        outcome: 'quantity-mismatch',
+        request: normalizedRequest,
+      };
+    }
+
+    return {
+      landing,
+      outcome: 'resolved',
+      request: normalizedRequest,
+    };
   }
 
   private markNewResolution<T>(id: DependencyIdentifier<T>): void {

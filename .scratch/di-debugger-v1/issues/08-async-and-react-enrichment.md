@@ -4,10 +4,10 @@
 
 **Blocked by:** 05 — Dependency Graph projection + Debugger Panel (React enrichment also relies on 02 — Injector Discovery registry).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Unloaded `useAsync` shows as pending Registration with no internal dependency edges
-- [ ] After the async module is loaded, polling/projection expands edges like a normal provider
-- [ ] React bindings can attach optional Discovery enrichment (e.g. Provider association) without being required for non-React usage
-- [ ] Enrichment is visible or usable in the Debugger UI when present
-- [ ] Tests cover async pending vs loaded and at least one React enrichment path
+- [x] Unloaded `useAsync` shows as pending Registration with no internal dependency edges
+- [x] After the async module is loaded, polling/projection expands edges like a normal provider
+- [x] React bindings can attach optional Discovery enrichment (e.g. Provider association) without being required for non-React usage
+- [x] Enrichment is visible or usable in the Debugger UI when present
+- [x] Tests cover async pending vs loaded and at least one React enrichment path

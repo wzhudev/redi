@@ -4,10 +4,10 @@
 
 **Blocked by:** 05 — Dependency Graph projection + Debugger Panel.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Setup function mounts Overlay without requiring the app to render Panel itself
-- [ ] Overlay shows the same graph surface/behavior as Panel
-- [ ] Setup/teardown does not leak DOM roots or timers after dispose/unmount
-- [ ] Import alone still does not mount Overlay
-- [ ] Tests cover mount and unmount of setup
+- [x] Setup function mounts Overlay without requiring the app to render Panel itself
+- [x] Overlay shows the same graph surface/behavior as Panel
+- [x] Setup/teardown does not leak DOM roots or timers after dispose/unmount
+- [x] Import alone still does not mount Overlay
+- [x] Tests cover mount and unmount of setup

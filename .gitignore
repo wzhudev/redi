@@ -13,3 +13,4 @@ dist/
 # benchmark
 bench/results.json
 bench/baseline.local.json
+*.tsbuildinfo

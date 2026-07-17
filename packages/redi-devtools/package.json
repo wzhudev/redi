@@ -1,0 +1,51 @@
+{
+  "name": "@wendellhu/redi-devtools",
+  "version": "0.1.0",
+  "description": "Developer tools for inspecting @wendellhu/redi dependency graphs.",
+  "author": "Evan<wzhudev@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./style.css": "./dist/esm/index.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "rolldown build -c rolldown.config.ts",
+    "prepack": "bun run build",
+    "test": "bun test ./src",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@wendellhu/redi": ">=1.2.0 <2",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wzhudev/redi.git",
+    "directory": "packages/redi-devtools"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.11.2",
+    "elkjs": "^0.11.1"
+  }
+}

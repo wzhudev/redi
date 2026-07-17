@@ -1,6 +1,6 @@
 {
   "name": "@wendellhu/redi",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "A dependency library for TypeScript and JavaScript, along with a binding for React.",
   "author": "Evan<wzhudev@gmail.com>",
   "license": "MIT",
@@ -30,8 +30,10 @@
     "test": "bun test",
     "coverage": "bun test --coverage",
     "watch": "bun test --watch",
-    "typecheck": "tsc --noEmit",
-    "build": "rolldown build -c rolldown.config.ts",
+    "typecheck": "bun run typecheck:core && bun --filter @wendellhu/redi-devtools typecheck",
+    "typecheck:core": "tsc --noEmit",
+    "build": "bun run build:core && bun --filter @wendellhu/redi-devtools build",
+    "build:core": "rolldown build -c rolldown.config.ts",
     "bench": "bun run bench/index.ts",
     "bench:json": "bun run bench/index.ts --json",
     "bench:compare": "bun run bench/index.ts --compare=bench/baseline.json",
@@ -44,8 +46,12 @@
     "build:doc": "bun --filter redi-site build"
   },
   "workspaces": [
-    "docs"
+    "docs",
+    "packages/*"
   ],
+  "overrides": {
+    "@wendellhu/redi": "file:."
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^4.19.0",
     "@happy-dom/global-registrator": "^15.11.7",
@@ -61,8 +67,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "release-it": "^19.2.2",
     "rolldown": "1.0.0-beta.24",
     "rolldown-plugin-dts": "^0.13.14",

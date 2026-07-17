@@ -1,7 +1,7 @@
 # Spec: DI Debugger v1 (Dependency Graph)
 
-Status: Ready for implementation  
-Related: [CONTEXT.md](../CONTEXT.md), [ADR 0001](./adr/0001-separate-debugger-package.md)–[0005](./adr/0005-graph-as-projection.md)
+Status: Implemented (2026-07-16)
+Related: [CONTEXT.md](../../CONTEXT.md), [ADR 0001](../adr/0001-separate-debugger-package.md)–[0006](../adr/0006-injector-tree-visualization.md)
 
 ## Problem Statement
 
@@ -9,7 +9,7 @@ Developers using redi can register complex Injector hierarchies (parent/child ov
 
 ## Solution
 
-Ship a React-based DI Debugger in `@wendellhu/redi-devtools`. Developers mount a Debugger Panel component or call a setup function that auto-mounts a Debugger Overlay. The UI shows a Dependency Graph of the whole Injector forest: each Injector is an Injector Cluster; registrations for the same Identifier in a cluster form an Identifier Group; Dependency Edges land where runtime resolution would land. Core `@wendellhu/redi` always keeps a lightweight Injector Discovery registry and exposes tooling APIs under `injector.debug` (including Resolution Explain) so the graph can be built as a read-only projection without calling `get()`.
+Ship a React-based DI Debugger in `@wendellhu/redi-devtools`. Developers mount a Debugger Panel component or call a setup function that auto-mounts a Debugger Overlay. The UI shows one Active Root Tree at a time. Each Injector is an independent compound node connected to child Injectors by structural tree connectors; it contains Identifier Groups, which contain the Injector's Registrations. Resolution-aware Dependency Edges connect concrete Registrations within or across Injector boundaries. Core `@wendellhu/redi` always keeps a lightweight Injector Discovery registry and exposes tooling APIs under `injector.debug` (including Resolution Explain) so the graph can be built as a read-only projection without calling `get()`.
 
 ## User Stories
 
@@ -23,19 +23,19 @@ Ship a React-based DI Debugger in `@wendellhu/redi-devtools`. Developers mount a
 8. As an application developer, I want disposed Injectors to leave Discovery, so that the graph does not show dead containers.
 9. As an application developer, I want to explicitly register or ignore an Injector, so that I can correct Discovery in unusual setups.
 10. As an application developer using React bindings, I want Injectors from Redi context / `connectDependencies` to be enrichable with UI-tree hints, so that I can tell which Provider subtree an Injector belongs to when that information exists.
-11. As an application developer, I want the Dependency Graph to show the entire parent/child hierarchy on one canvas, so that I do not have to switch “current injector” to understand overrides and cross-layer links.
-12. As an application developer, I want each Injector drawn as an Injector Cluster, so that ownership of registrations is obvious.
+11. As an application developer, I want the Dependency Graph to show one complete root Injector tree on one canvas, so that I can understand overrides and cross-layer links without switching a “current injector.”
+12. As an application developer, I want each Injector drawn as an independent compound node connected to its children, so that ownership is obvious without geometrically nesting child Injectors inside parents.
 13. As an application developer, I want registrations for the same Identifier inside one Injector grouped together, so that `@Many()` and multiple bindings stay coherent.
 14. As an application developer, I want Registration cards to show provider kind (`useClass`, `useValue`, `useFactory`, `useExisting`, `useAsync`) and options such as lazy, so that I can see how something is provided.
 15. As an application developer, I want Registration cards to show creation status (created / not created / pending async), so that I know what has already been instantiated without forcing creation.
 16. As an application developer, I want Dependency Edges to match runtime resolution including `@Self()`, `@SkipSelf()`, `@Optional()`, and `@Many()`, so that the graph does not lie about where a dependency would come from.
 17. As an application developer, I want optional-missing and required-missing outcomes to be visible as explicit edge outcomes, so that “no link” is not confused with a drawing bug.
-18. As an application developer, I want alias registrations (`useExisting`) to show edges to the resolved target group, so that aliases are understandable.
+18. As an application developer, I want alias registrations (`useExisting`) to show edges to the concrete resolved Registration, so that aliases are understandable.
 19. As an application developer, I want unloaded `useAsync` registrations marked pending without fake dependency edges, so that incomplete async state is honest.
 20. As an application developer, I want loaded `useAsync` modules expanded like normal providers once available, so that async dependencies become inspectable after load.
-21. As an application developer, I want parent/child relationships shown as cluster hierarchy (not as Dependency Edges), so that scope and injection are not visually conflated.
-22. As an application developer with multiple unrelated root Injectors, I want a forest on one canvas, so that I can see the whole process at a glance.
-23. As an application developer with a large forest, I want to filter to one tree, so that the graph stays usable.
+21. As an application developer, I want parent/child relationships shown as thick neutral structural connectors without dependency arrowheads, so that scope and injection are not visually conflated.
+22. As an application developer with multiple unrelated root Injectors, I want a top toolbar switch containing only parentless Injectors, so that I can show one complete tree at a time.
+23. As an application developer with a large active tree, I want to center any Injector without changing the active root and search within the active tree, so that the graph stays navigable.
 24. As an application developer, I want the graph to refresh by polling in v1, so that add/replace/child/dispose/instantiation changes eventually appear without event instrumentation.
 25. As an application developer, I want inspecting the graph never to call `get()` or instantiate dependencies, so that observation does not change program behavior.
 26. As a tooling author, I want Resolution Explain and related helpers under `injector.debug`, so that I can build accurate graphs without using business `get` APIs.
@@ -44,9 +44,9 @@ Ship a React-based DI Debugger in `@wendellhu/redi-devtools`. Developers mount a
 29. As a library maintainer, I want Explain lookup to share the same find-registration rules as create/get, so that graph edges and runtime stay aligned.
 30. As a future Node.js user, I accept that v1 has no HTTP remote shell, so that the first release can focus on in-process React debugging.
 31. As a future user of Resolution Trace, I accept that lifecycle timelines are out of v1, so that structure lands first.
-32. As an application developer, I want basic pan/zoom or scroll of a large graph, so that big hierarchies remain navigable.
+32. As an application developer, I want pan, zoom, and fit-to-view controls, so that big hierarchies remain navigable.
 33. As an application developer, I want readable labels for Identifiers (pretty names for classes and `createIdentifier` tokens), so that the graph is scannable.
-34. As an application developer, I want to select a Registration or Identifier Group and see details (kind, status, lookup decorations on outgoing edges), so that the canvas need not show every attribute at once.
+34. As an application developer, I want to select an Injector or Registration and see details, so that the canvas need not show every attribute at once.
 35. As a library maintainer, I want core Discovery bookkeeping to be cheap and correct across create/dispose, so that apps that never install devtools still stay safe.
 
 ## Implementation Decisions
@@ -88,20 +88,24 @@ Ship a React-based DI Debugger in `@wendellhu/redi-devtools`. Developers mount a
   3. Group by Identifier → Identifier Groups.
   4. For each Registration, collect declared dependency descriptors (`getDependencies` / factory deps / `useExisting`).
   5. Run Resolution Explain from the owning Injector for each descriptor to choose edge targets.
-- One canvas shows the full hierarchy; Injector Cluster partitions nest or link by parent/child.
-- Multiple roots → forest; UI provides filter-by-tree.
+- One canvas shows the complete Active Root Tree; Injector Clusters are separate compound nodes connected by parent/child structural edges and never nest inside one another.
+- Multiple roots → root-only toolbar switch; only one root tree is rendered at a time.
 - Dependency Edges are resolution outcomes, not merely “declared token” links.
-- Parent/child links are hierarchy among clusters, never Dependency Edges.
+- Parent/child links are hierarchy among clusters, never Dependency Edges; outer tree layout has priority over shortening cross-Injector dependency routes.
 - `useAsync`: pending if unloaded (no internal edges); expand like a normal provider once loaded.
 - v1 refresh: polling interval (configurable via setup/Panel props is desirable); event-driven refresh deferred until Resolution Trace.
 
 ### UI (devtools)
 
 - Shared surface for Overlay and Panel.
-- Primary view: Dependency Graph with clusters, groups, edges, status affordances.
-- Supporting chrome: tree/forest filter, selection details, manual refresh control (in addition to polling).
-- Visual distinction for inherited cross-cluster edges vs same-cluster edges is encouraged but not a separate mode.
-- Exact graph library choice is an implementation detail; must support clusters and edges at the scale of real apps (e.g. Univer-sized forests with filtering).
+- Primary view: a top-down compound Dependency Graph. Independent Injector nodes contain Identifier Groups, and Identifier Groups contain concrete Registration nodes.
+- Dependency Edges land on concrete Registration nodes. Missing/special outcomes use labeled terminal edges rather than fake nodes.
+- Supporting chrome: root-only switch, active-tree search, manual refresh, pan/zoom/fit, selection details, explicit per-Injector center action, and independent contents/subtree collapse controls.
+- Root switching initially expands the complete tree and all Registration contents; collapse state is temporary and is not persisted.
+- Collapsed contents/subtrees aggregate crossing dependency edges at the visible Injector boundary with incoming/outgoing counts.
+- All Dependency Edges remain visible at low contrast. Selecting a Registration highlights its transitive outgoing dependency closure plus its direct incoming dependencies.
+- Injector ownership uses stable color plus text. Injector structural connectors are thicker, neutral, and arrowless; Dependency Edges are thinner and directed.
+- Exact graph library choice is an implementation detail; it must support multi-level compound nodes, constrained top-down tree layout, cross-container edge routing, pan/zoom, and graphs at the scale of real apps (e.g. Univer-sized trees).
 
 ### Compatibility and versioning
 

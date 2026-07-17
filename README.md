@@ -74,6 +74,31 @@ const fileList = injector.get(FileListService);
 - **[Optional & Many](https://redi.wzhu.dev/docs/declare-dependency)**: `@Optional()` and `@Many()` decorators
 - **[React Integration](https://redi.wzhu.dev/docs/react)**: `useDependency`, `connectDependencies` and more hooks
 - **[RxJS Support](https://redi.wzhu.dev/docs/react)**: `useObservable` and `useUpdateBinder` for reactive programming
+- **Dependency Graph Debugger**: Optional `@wendellhu/redi-devtools` Panel and Overlay for inspecting live Injector forests without instantiating providers
+
+## Dependency Graph Debugger
+
+Install the separate development-only UI package, then either embed its shared
+Panel:
+
+```tsx
+import { DebuggerPanel } from '@wendellhu/redi-devtools';
+
+const DebugPage = () => <DebuggerPanel pollInterval={2000} />;
+```
+
+Or explicitly mount the Overlay from browser-only bootstrap code:
+
+```ts
+import { setupDebugger } from '@wendellhu/redi-devtools';
+
+const overlay = setupDebugger();
+
+// Later
+overlay.dispose();
+```
+
+Importing `@wendellhu/redi-devtools` alone does not mount UI or start polling.
 
 ## Performance
 

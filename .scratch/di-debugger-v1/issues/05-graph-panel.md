@@ -1,14 +1,14 @@
 # 05 — Dependency Graph projection + Debugger Panel
 
-**What to build:** Developers can mount a React Debugger Panel and see a live Dependency Graph: Injector Clusters for the whole hierarchy, Identifier Groups inside each cluster, Dependency Edges that follow Resolution Explain (including cross-cluster and missing/optional outcomes), and basic polling refresh — all without `get()` side effects.
+**What to build:** Developers can mount a React Debugger Panel and see a live compound Dependency Graph: one root Injector tree at a time, separate Injector nodes connected by structural edges, Identifier Groups and Registration nodes inside each Injector, resolution-aware Registration-to-Registration edges, and polling refresh — all without `get()` side effects. See ADR 0006.
 
 **Blocked by:** 01 — Scaffold `@wendellhu/redi-devtools`; 03 — registration listing; 04 — Resolution Explain.
 
-**Status:** ready-for-agent
+**Status:** implemented
 
-- [ ] A React Debugger Panel component mounts at a developer-chosen location with no import-time enablement
-- [ ] Graph shows Injector Clusters for parent/child hierarchy (hierarchy ≠ Dependency Edges)
-- [ ] Same-Identifier Registrations are grouped; edges use Explain landings (cross-cluster allowed)
-- [ ] Optional/required missing outcomes are visible as explicit edge results
-- [ ] Graph refreshes by polling without instantiating dependencies
-- [ ] Projector/Panel tests (or fixture-driven projector tests) cover groups, cross-cluster edges, and missing outcomes
+- [x] A React Debugger Panel component mounts at a developer-chosen location with no import-time enablement
+- [x] Graph shows separate compound Injector nodes in a stable top-down tree (hierarchy ≠ Dependency Edges)
+- [x] Same-Identifier Registrations are grouped inside their owning Injector; edges land on concrete Explain-selected Registrations (cross-Injector allowed)
+- [x] Optional/required missing outcomes are visible as explicit edge results
+- [x] Graph refreshes by polling without instantiating dependencies
+- [x] Panel tests cover root switching, compound containment, centering, collapse aggregation, selection highlighting, and navigation controls

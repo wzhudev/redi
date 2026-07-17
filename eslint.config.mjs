@@ -4,6 +4,7 @@ export default antfu({
   ignores: [
     'AGENTS.md',
     'CLAUDE.md',
+    'docs/public/_pagefind/**',
   ],
   rules: {
     'ts/no-misused-new': 0,

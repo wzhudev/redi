@@ -4,7 +4,7 @@ Canonical vocabulary for redi. Domain terms only — no implementation details.
 
 ## Dependency Graph (依赖关系图)
 
-A structural view of an Injector hierarchy and how registrations relate. One graph shows the whole parent/child tree at once — not one Injector at a time. Each Injector appears as a cluster/partition containing its own Identifier Groups and Registrations. The first version refreshes this view by periodic polling; event-driven refresh is deferred until Resolution Trace work lands.
+A structural view of one root Injector and its complete descendant tree, plus the relationships among their Registrations. Each Injector is a separate compound node connected to its children by structural tree connectors; child Injectors are not geometrically nested inside parent Injectors. An Injector contains its own Identifier Groups, and those groups contain their Registrations. When multiple unrelated root Injectors exist, the debugger shows one tree at a time and switches roots through a root-only control. The first version refreshes this view by periodic polling; event-driven refresh is deferred until Resolution Trace work lands.
 
 ## Identifier Group (Identifier 分组)
 
@@ -16,11 +16,15 @@ One configured binding of an Identifier inside an Injector — how that Identifi
 
 ## Dependency Edge (依赖边)
 
-A dependency from a Registration to the Identifier Group that runtime resolution would actually use (constructor injection, factory `deps`, or an alias such as `useExisting`), honoring lookup and quantity rules such as `@Self()`, `@SkipSelf()`, `@Optional()`, and `@Many()`. The target group may live in the same Injector cluster or another cluster in the hierarchy when that is where resolution would land. If resolution would yield nothing (for example a missing `@Optional()` dependency), the graph must show that outcome explicitly rather than implying a normal link. Parent/child relationships between Injectors are shown as hierarchy structure among clusters, not as Dependency Edges. Edge targets on the Dependency Graph must not diverge from runtime behavior, and computing them must not instantiate dependencies or otherwise change application state (no inspecting via real `get()`).
+A directed dependency from a Registration to the concrete Registration(s) that runtime resolution would actually select (constructor injection, factory `deps`, or an alias such as `useExisting`), honoring lookup and quantity rules such as `@Self()`, `@SkipSelf()`, `@Optional()`, and `@Many()`. A `@Many()` dependency may fan out to multiple Registration targets. The targets may live in the same Injector Cluster or cross into another cluster in the active tree. If resolution would yield no Registration (for example a missing `@Optional()` dependency), the graph shows a labeled terminal outcome instead of a fake node. Parent/child Injector connectors are structurally and visually distinct from Dependency Edges. Edge targets must not diverge from runtime behavior, and computing them must not instantiate dependencies or otherwise change application state (no inspecting via real `get()`).
 
 ## Injector Cluster (Injector 分区)
 
-The visual boundary of one Injector on the Dependency Graph. Clusters nest or link according to parent/child Injector relationships so the whole hierarchy is visible on a single graph. When Injector Discovery finds multiple unrelated roots, the graph is a forest on one canvas, with filtering so the developer can focus on one tree.
+The independent compound-node boundary of one Injector on the Dependency Graph. It contains Identifier Groups and Registrations owned by that Injector. Parent and child Injector Clusters are separate nodes connected by non-directional structural lines in a top-down tree; one cluster is never geometrically nested inside another. Every cluster can be centered in the viewport without changing which root tree is active.
+
+## Active Root Tree (当前根树)
+
+The one Injector tree currently shown by the DI Debugger: a root Injector with no parent and all of its descendants. Only parentless Injectors are choices in the root switch. Centering or selecting a descendant changes the viewport or details selection, not the Active Root Tree.
 
 ## Resolution Trace (解析追踪)
 

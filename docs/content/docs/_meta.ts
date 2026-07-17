@@ -26,6 +26,7 @@ export default {
   },
   hierarchy: 'Hierarchy Injection',
   react: 'React Integration',
+  devtools: 'Developer Tools',
 
   '---Other': {
     type: 'separator',

@@ -4,6 +4,7 @@ import type {
   FactoryDependencyItem,
   FactoryDepModifier,
 } from './dependencyItem';
+import { normalizeForwardRef } from './dependencyForwardRef';
 import { Self, SkipSelf } from './dependencyLookUp';
 import { Many, Optional } from './dependencyQuantity';
 import { LookUp, Quantity } from './types';
@@ -41,7 +42,12 @@ export function getFactoryDependencies(
 ): DependencyDescriptor<any>[] {
   let cached = factoryDependenciesCache.get(item);
   if (!cached) {
-    cached = normalizeFactoryDeps(item.deps);
+    cached = normalizeFactoryDeps(item.deps).map((descriptor) => {
+      const identifier = normalizeForwardRef(descriptor.identifier);
+      return identifier === descriptor.identifier
+        ? descriptor
+        : { ...descriptor, identifier };
+    });
     factoryDependenciesCache.set(item, cached);
   }
 

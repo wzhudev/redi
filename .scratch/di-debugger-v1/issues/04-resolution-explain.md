@@ -4,10 +4,10 @@
 
 **Blocked by:** 03 — `injector.debug` registration listing and creation status.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `injector.debug.explain` (or equivalent) returns landings for identifier + quantity + lookUp without calling `get()`
-- [ ] SELF / SKIP_SELF / default parent walk / OPTIONAL empty / MANY / child override / `useExisting` match runtime lookup semantics
-- [ ] Required-missing and optional-missing are explicit outcomes (not silent omission)
-- [ ] Explain never instantiates lazy (or other) providers; creation status unchanged afterward
-- [ ] Parity tests lock Explain landings against known registration locations / post-hoc `get` assertion lane where appropriate
+- [x] `injector.debug.explain` (or equivalent) returns landings for identifier + quantity + lookUp without calling `get()`
+- [x] SELF / SKIP_SELF / default parent walk / OPTIONAL empty / MANY / child override / `useExisting` match runtime lookup semantics
+- [x] Required-missing and optional-missing are explicit outcomes (not silent omission)
+- [x] Explain never instantiates lazy (or other) providers; creation status unchanged afterward
+- [x] Parity tests lock Explain landings against known registration locations / post-hoc `get` assertion lane where appropriate

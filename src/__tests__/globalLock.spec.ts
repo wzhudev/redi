@@ -54,4 +54,19 @@ describe('globalLock', () => {
     expect(typeof env.isNode).toBe('boolean');
     expect(typeof env.warn).toBe('function');
   });
+
+  it('uses console.error for the detected environment warning sink', () => {
+    const original = console.error;
+    let warning: unknown;
+    console.error = (message: unknown) => {
+      warning = message;
+    };
+
+    try {
+      detectGlobalEnv().warn('detected warning');
+      expect(warning).toBe('detected warning');
+    } finally {
+      console.error = original;
+    }
+  });
 });
