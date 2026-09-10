@@ -286,8 +286,22 @@ export class Injector {
     this.children.length = 0;
 
     // Call `dispose` method on each instantiated dependencies if they are `IDisposable` and clear collections.
-    this.dependencyCollection.dispose();
+    //
+    // `resolvedDependencyCollection` must be disposed of first. A dependency
+    // registered as `lazy: true` is stored here as a Proxy around an
+    // `IdleValue` -- and the `isDisposable()` check inside its own `dispose()`
+    // reads the Proxy's `dispose` property, which the Proxy's `get` trap
+    // treats like any other property access: it forces the real value to be
+    // constructed right now instead of waiting for an idle callback. That
+    // construction looks itself up in `dependencyCollection`, so if that had
+    // already been cleared (the previous order), it fails with
+    // "Cannot find ... registered by any injector" instead of disposing
+    // cleanly. This only surfaces when `dispose()` runs before a lazy
+    // dependency's idle callback has had a chance to fire -- e.g. React
+    // StrictMode's mount -> cleanup -> mount, which disposes an instance
+    // within milliseconds of creating it.
     this.resolvedDependencyCollection.dispose();
+    this.dependencyCollection.dispose();
 
     // Detach itself from parent.
     this.deleteSelfFromParent();

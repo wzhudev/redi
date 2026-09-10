@@ -442,6 +442,65 @@ describe('core', () => {
         expect(b.getAnotherKey()).toBe('another changed b');
       });
 
+      it('disposes cleanly when a lazy dependency is disposed of before it has been accessed', () => {
+        const cI = createIdentifier<{ key: string }>('cI');
+        const aI = createIdentifier<A>('aI');
+
+        interface A extends IDisposable {
+          key: string;
+        }
+
+        let constructed = false;
+        let disposed = false;
+
+        // A1 has a dependency of its own (cI) -- constructing it needs a
+        // lookup in `dependencyCollection`. This is the part that actually
+        // reproduces the bug: a lazy class with no dependencies of its own
+        // never needs that lookup, so it can't trigger the crash regardless
+        // of dispose() ordering.
+        class C {
+          key = 'c';
+        }
+
+        class A1 implements A {
+          key: string;
+
+          constructor(@Inject(cI) private readonly c: { key: string }) {
+            this.key = this.c.key;
+            constructed = true;
+          }
+
+          dispose(): void {
+            disposed = true;
+          }
+        }
+
+        class B {
+          constructor(@Inject(aI) private readonly a: A) {}
+        }
+
+        const j = new Injector([
+          [B],
+          [cI, { useClass: C }],
+          [aI, { useClass: A1, lazy: true }],
+        ]);
+
+        // Resolves B synchronously -- A1 is only injected as a lazy proxy,
+        // never actually touched, so it is never constructed.
+        j.get(B);
+        expect(constructed).toBeFalsy();
+
+        // Disposing immediately (no idle callback has run yet) used to throw
+        // instead of disposing cleanly -- see the comment on
+        // `resolvedDependencyCollection.dispose()` in `injector.ts`.
+        expect(() => j.dispose()).not.toThrow();
+
+        // The lazy dependency is force-constructed so it can be disposed of
+        // properly, same as any other IDisposable the injector created.
+        expect(constructed).toBeTruthy();
+        expect(disposed).toBeTruthy();
+      });
+
       it('should support "setDependencies"', () => {
         class A {
           key = 'a';
