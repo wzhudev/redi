@@ -722,6 +722,19 @@ export class Injector {
           //   return undefined;
           // }
 
+          // `Injector.dispose()` checks `isDisposable(item)` on every
+          // resolved dependency, which reads this exact property. Without
+          // this guard that read alone would fall through to
+          // `idle.getValue()` below and force-construct the real instance --
+          // defeating the point of `lazy: true` (avoid work that's never
+          // needed) and running its constructor's side effects (e.g. opening
+          // a connection) only to immediately dispose of it again. If the
+          // idle construction hasn't run yet, just cancel it instead:
+          // there's nothing real to dispose of, so nothing needs disposing.
+          if (key === 'dispose' && !idle.hasRun()) {
+            return () => idle.dispose();
+          }
+
           const thing = idle.getValue();
 
           let property = (thing as any)[key];

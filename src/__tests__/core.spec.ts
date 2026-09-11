@@ -442,6 +442,93 @@ describe('core', () => {
         expect(b.getAnotherKey()).toBe('another changed b');
       });
 
+      it('cancels a lazy dependency that is disposed of before it has been accessed, without constructing it', () => {
+        const cI = createIdentifier<{ key: string }>('cI');
+        const aI = createIdentifier<A>('aI');
+
+        interface A extends IDisposable {
+          key: string;
+        }
+
+        let constructed = false;
+        let disposed = false;
+
+        // A1 has a dependency of its own (cI) -- constructing it needs a
+        // lookup in `dependencyCollection`. This is what used to reproduce
+        // the crash this fix is for: a lazy class with no dependencies of
+        // its own never needs that lookup, so it couldn't trigger it.
+        class C {
+          key = 'c';
+        }
+
+        class A1 implements A {
+          key: string;
+
+          constructor(@Inject(cI) private readonly c: { key: string }) {
+            this.key = this.c.key;
+            constructed = true;
+          }
+
+          dispose(): void {
+            disposed = true;
+          }
+        }
+
+        class B {
+          constructor(@Inject(aI) private readonly a: A) {}
+        }
+
+        const j = new Injector([
+          [B],
+          [cI, { useClass: C }],
+          [aI, { useClass: A1, lazy: true }],
+        ]);
+
+        // Resolves B synchronously -- A1 is only injected as a lazy proxy,
+        // never actually touched, so it is never constructed.
+        j.get(B);
+        expect(constructed).toBeFalsy();
+
+        // Disposing immediately (no idle callback has run yet) used to throw
+        // instead of disposing cleanly. It must not throw -- and, just as
+        // importantly, it must not construct A1 (with its side effect in the
+        // constructor) just to immediately dispose of it: `lazy: true` means
+        // this work was never supposed to happen if nothing ever needed it.
+        expect(() => j.dispose()).not.toThrow();
+        expect(constructed).toBeFalsy();
+        expect(disposed).toBeFalsy();
+      });
+
+      it('disposes a lazy dependency properly if it was actually accessed before disposal', () => {
+        const aI = createIdentifier<IDisposable>('aI');
+
+        let disposed = false;
+
+        class A1 implements IDisposable {
+          key = 'a';
+          dispose(): void {
+            disposed = true;
+          }
+        }
+
+        class B {
+          constructor(@Inject(aI) private readonly a: IDisposable & { key: string }) {}
+
+          touch(): string {
+            return this.a.key;
+          }
+        }
+
+        const j = new Injector([[B], [aI, { useClass: A1, lazy: true }]]);
+
+        const b = j.get(B);
+        expect(b.touch()).toBe('a'); // actually constructs A1 via the proxy
+
+        j.dispose();
+
+        expect(disposed).toBeTruthy();
+      });
+
       it('should support "setDependencies"', () => {
         class A {
           key = 'a';
