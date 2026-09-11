@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/wzhudev/redi/compare/v1.1.2...v1.1.3) (2026-09-11)
+
+
+### Bug Fixes
+
+* dispose resolvedDependencyCollection should not trigger lazy instantiation ([6925005](https://github.com/wzhudev/redi/commit/69250050567e4b5a87cdc55b503585bad9c0300a))
+
 ## [1.1.2](https://github.com/wzhudev/redi/compare/v1.1.1...v1.1.2) (2026-06-12)
 
 ### Bug Fixes
