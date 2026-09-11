@@ -286,22 +286,8 @@ export class Injector {
     this.children.length = 0;
 
     // Call `dispose` method on each instantiated dependencies if they are `IDisposable` and clear collections.
-    //
-    // `resolvedDependencyCollection` must be disposed of first. A dependency
-    // registered as `lazy: true` is stored here as a Proxy around an
-    // `IdleValue` -- and the `isDisposable()` check inside its own `dispose()`
-    // reads the Proxy's `dispose` property, which the Proxy's `get` trap
-    // treats like any other property access: it forces the real value to be
-    // constructed right now instead of waiting for an idle callback. That
-    // construction looks itself up in `dependencyCollection`, so if that had
-    // already been cleared (the previous order), it fails with
-    // "Cannot find ... registered by any injector" instead of disposing
-    // cleanly. This only surfaces when `dispose()` runs before a lazy
-    // dependency's idle callback has had a chance to fire -- e.g. React
-    // StrictMode's mount -> cleanup -> mount, which disposes an instance
-    // within milliseconds of creating it.
-    this.resolvedDependencyCollection.dispose();
     this.dependencyCollection.dispose();
+    this.resolvedDependencyCollection.dispose();
 
     // Detach itself from parent.
     this.deleteSelfFromParent();
@@ -735,6 +721,19 @@ export class Injector {
           // if (key === 'whenReady') {
           //   return undefined;
           // }
+
+          // `Injector.dispose()` checks `isDisposable(item)` on every
+          // resolved dependency, which reads this exact property. Without
+          // this guard that read alone would fall through to
+          // `idle.getValue()` below and force-construct the real instance --
+          // defeating the point of `lazy: true` (avoid work that's never
+          // needed) and running its constructor's side effects (e.g. opening
+          // a connection) only to immediately dispose of it again. If the
+          // idle construction hasn't run yet, just cancel it instead:
+          // there's nothing real to dispose of, so nothing needs disposing.
+          if (key === 'dispose' && !idle.hasRun()) {
+            return () => idle.dispose();
+          }
 
           const thing = idle.getValue();
 
