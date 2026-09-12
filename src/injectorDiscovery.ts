@@ -31,26 +31,68 @@ export interface InjectorDiscoverySnapshot {
 interface InjectorDiscoveryState {
   disposed: boolean;
   readonly id: number;
+  readonly injector: Injector;
   parent: InjectorDiscoveryState | null;
+  /** Weakly linked children, created lazily on first link. */
+  children: Set<WeakRef<Injector>> | null;
+  readonly ref: WeakRef<Injector>;
 }
 
 interface MutableInjectorDiscoveryRecord {
   readonly id: number;
   readonly injector: Injector;
   parent: InjectorDiscoveryRecord | null;
-  children: InjectorDiscoveryRecord[];
+  children: MutableInjectorDiscoveryRecord[];
   readonly metadata?: InjectorDiscoveryMetadata;
 }
 
-const liveInjectors = new Set<Injector>();
+/**
+ * Top-level Discovery entry points: root Injectors plus any Injector a
+ * developer explicitly registered. Children are linked from their parent's
+ * state (see `linkInjectorForDiscovery`) and materialized on snapshot, so the
+ * registry never grows with the whole forest.
+ *
+ * Every reference here is weak: an Injector that is dropped without being
+ * disposed can be garbage collected. Dead `WeakRef`s are swept lazily by
+ * `compactLiveInjectors` / snapshot traversal, so no finalization callbacks or
+ * per-construction bookkeeping are needed.
+ */
+const liveInjectors = new Set<WeakRef<Injector>>();
+const stateByInjector = new WeakMap<Injector, InjectorDiscoveryState>();
 const ignoredInjectors = new WeakSet<Injector>();
 const disposedInjectors = new WeakSet<Injector>();
-const stateByInjector = new WeakMap<Injector, InjectorDiscoveryState>();
 const metadataByInjector = new WeakMap<Injector, InjectorDiscoveryMetadata>();
 
 let nextInjectorId = 1;
 
-function assertAcyclicParent(injector: Injector, parent: Injector | null): void {
+function addTopLevel(state: InjectorDiscoveryState): void {
+  liveInjectors.add(state.ref);
+
+  // Opportunistically sweep refs whose Injector has been collected, so a
+  // long-lived process that creates and drops many roots does not grow the
+  // set without bound even if Discovery is never read.
+  if (liveInjectors.size >= 1024 && liveInjectors.size % 512 === 0) {
+    compactLiveInjectors();
+  }
+}
+
+/** Drop top-level entries whose Injector has been garbage collected. */
+function compactLiveInjectors(): void {
+  for (const ref of liveInjectors) {
+    if (!ref.deref()) {
+      liveInjectors.delete(ref);
+    }
+  }
+}
+
+function isDiscoverableParent(parentState: InjectorDiscoveryState): boolean {
+  return !parentState.disposed && !ignoredInjectors.has(parentState.injector);
+}
+
+function assertAcyclicParent(
+  injector: Injector,
+  parent: Injector | null,
+): void {
   const injectorState = getOrCreateState(injector);
   const visited = new Set<InjectorDiscoveryState>();
   let current = parent ? getOrCreateState(parent) : null;
@@ -72,6 +114,13 @@ function assertAcyclicParent(injector: Injector, parent: Injector | null): void 
   }
 }
 
+/**
+ * Create or update the discovery state for `injector`.
+ *
+ * - `parent === undefined` preserves the existing relationship.
+ * - `parent === null` clears it.
+ * - a live Injector links `injector` under `parent`'s state.
+ */
 function getOrCreateState(
   injector: Injector,
   parent?: Injector | null,
@@ -80,15 +129,37 @@ function getOrCreateState(
 
   if (!state) {
     state = {
+      children: null,
       disposed: false,
       id: nextInjectorId,
-      parent: parent ? getOrCreateState(parent) : null,
+      injector,
+      parent: null,
+      ref: new WeakRef(injector),
     };
     nextInjectorId += 1;
     stateByInjector.set(injector, state);
-  } else if (parent !== undefined) {
-    state.parent = parent ? getOrCreateState(parent) : null;
+
+    if (parent !== undefined && parent !== null) {
+      const parentState = getOrCreateState(parent);
+      state.parent = parentState;
+      (parentState.children ??= new Set()).add(state.ref);
+    }
+
+    return state;
+  }
+
+  if (parent !== undefined) {
+    if (state.parent) {
+      state.parent.children?.delete(state.ref);
+    }
+
+    const parentState = parent ? getOrCreateState(parent) : null;
+    state.parent = parentState;
+    if (parentState) {
+      (parentState.children ??= new Set()).add(state.ref);
+    }
   } else if (state.parent?.disposed) {
+    state.parent.children?.delete(state.ref);
     state.parent = null;
   }
 
@@ -96,7 +167,7 @@ function getOrCreateState(
 }
 
 /**
- * Explicitly include an Injector in Discovery.
+ * Explicitly include an Injector in Discovery as a top-level entry point.
  *
  * Passing a parent overrides the relationship remembered by automatic
  * construction-time registration. Omitting it preserves that relationship.
@@ -117,26 +188,49 @@ export function registerInjectorForDiscovery(
     assertAcyclicParent(injector, parent);
   }
 
-  getOrCreateState(injector, parent);
+  const state = getOrCreateState(injector, parent);
   ignoredInjectors.delete(injector);
-  liveInjectors.add(injector);
+  addTopLevel(state);
   return true;
+}
+
+/**
+ * Link a child Injector into Discovery without making it a top-level entry
+ * point. Children are materialized by walking the forest on snapshot, so the
+ * top-level registry only ever holds roots and explicit registrations.
+ *
+ * @internal
+ */
+export function linkInjectorForDiscovery(
+  injector: Injector,
+  parent: Injector,
+): void {
+  if (disposedInjectors.has(injector)) {
+    return;
+  }
+
+  getOrCreateState(injector, parent);
 }
 
 /**
  * Explicitly exclude a live Injector from Discovery without disposing it.
  * Its stable id, relationship, and metadata are retained weakly so that a
- * later explicit registration can restore the same record identity.
+ * later explicit registration can restore the same record identity. Its
+ * children surface as roots while it is ignored.
  *
  * @returns `true` when a discovered Injector was removed.
  */
 export function ignoreInjectorForDiscovery(injector: Injector): boolean {
-  if (disposedInjectors.has(injector)) {
+  if (disposedInjectors.has(injector) || ignoredInjectors.has(injector)) {
+    return false;
+  }
+
+  if (!stateByInjector.has(injector)) {
     return false;
   }
 
   ignoredInjectors.add(injector);
-  return liveInjectors.delete(injector);
+  return true;
 }
 
 /**
@@ -201,42 +295,89 @@ export function getInjectorDiscoveryMetadata(
 /**
  * Read all currently discovered Injectors as an immutable forest snapshot.
  *
- * Ignored Injectors are omitted. If an Injector's direct parent is ignored,
- * that Injector becomes a root until the parent is registered again.
- * Reading Discovery never resolves or instantiates a dependency.
+ * Top-level roots are walked first, then each state's weakly linked children.
+ * Ignored Injectors are omitted; their descendants surface as roots until the
+ * ignored Injector is registered again. Reading Discovery never resolves or
+ * instantiates a dependency.
  */
 export function getInjectorDiscoverySnapshot(): InjectorDiscoverySnapshot {
-  const mutableRecords = new Map<Injector, MutableInjectorDiscoveryRecord>();
-  const recordsByState = new Map<
-    InjectorDiscoveryState,
-    MutableInjectorDiscoveryRecord
-  >();
+  const records: MutableInjectorDiscoveryRecord[] = [];
+  const visited = new Set<InjectorDiscoveryState>();
 
-  for (const injector of liveInjectors) {
+  const visit = (
+    injector: Injector,
+    parentRecord: MutableInjectorDiscoveryRecord | null,
+  ): void => {
+    if (disposedInjectors.has(injector)) {
+      return;
+    }
+
     const state = getOrCreateState(injector);
+    if (visited.has(state)) {
+      return;
+    }
+    visited.add(state);
+
+    if (ignoredInjectors.has(injector)) {
+      for (const childRef of state.children ?? []) {
+        const child = childRef.deref();
+        if (child) {
+          visit(child, null);
+        } else {
+          state.children?.delete(childRef);
+        }
+      }
+      return;
+    }
+
     const metadata = metadataByInjector.get(injector);
     const record: MutableInjectorDiscoveryRecord = {
+      children: [],
       id: state.id,
       injector,
-      parent: null,
-      children: [],
+      parent: parentRecord,
       ...(metadata ? { metadata } : {}),
     };
-    mutableRecords.set(injector, record);
-    recordsByState.set(state, record);
+    records.push(record);
+    if (parentRecord) {
+      parentRecord.children.push(record);
+    }
+
+    for (const childRef of state.children ?? []) {
+      const child = childRef.deref();
+      if (child) {
+        visit(child, record);
+      } else {
+        state.children?.delete(childRef);
+      }
+    }
+  };
+
+  // Roots and orphans first. A top-level Injector whose discovery parent is
+  // itself discoverable is skipped here; it will be reached while walking that
+  // parent. A second pass picks up anything left unreachable.
+  for (const ref of liveInjectors) {
+    const injector = ref.deref();
+    if (!injector) {
+      liveInjectors.delete(ref);
+      continue;
+    }
+
+    const state = stateByInjector.get(injector);
+    if (state?.parent && isDiscoverableParent(state.parent)) {
+      continue;
+    }
+
+    visit(injector, null);
   }
 
-  for (const [injector, record] of mutableRecords) {
-    const parentState = stateByInjector.get(injector)?.parent;
-    const parentRecord = parentState ? recordsByState.get(parentState) : undefined;
-
-    if (parentRecord) {
-      record.parent = parentRecord;
-      parentRecord.children.push(record);
+  for (const ref of liveInjectors) {
+    const injector = ref.deref();
+    if (injector) {
+      visit(injector, null);
     }
   }
 
-  const records = Array.from(mutableRecords.values());
   for (const record of records) {
     Object.freeze(record.children);
     Object.freeze(record);
@@ -251,20 +392,32 @@ export function getInjectorDiscoverySnapshot(): InjectorDiscoverySnapshot {
 /**
  * Remove an Injector from Discovery permanently as part of its disposal.
  *
+ * Its weakly linked children lose their parent and become top-level entries so
+ * they stay discoverable as roots.
+ *
  * @internal
  */
 export function markInjectorDisposedForDiscovery(injector: Injector): void {
-  liveInjectors.delete(injector);
-  const disposedState = stateByInjector.get(injector);
-  if (disposedState) {
-    disposedState.disposed = true;
-    for (const liveInjector of liveInjectors) {
-      const state = stateByInjector.get(liveInjector);
-      if (state?.parent === disposedState) {
-        state.parent = null;
+  const state = stateByInjector.get(injector);
+  if (state) {
+    liveInjectors.delete(state.ref);
+    state.parent?.children?.delete(state.ref);
+    state.disposed = true;
+
+    for (const childRef of state.children ?? []) {
+      const child = childRef.deref();
+      if (!child) {
+        continue;
+      }
+
+      const childState = stateByInjector.get(child);
+      if (childState && childState.parent === state) {
+        childState.parent = null;
+        addTopLevel(childState);
       }
     }
   }
+
   ignoredInjectors.delete(injector);
   metadataByInjector.delete(injector);
   disposedInjectors.add(injector);

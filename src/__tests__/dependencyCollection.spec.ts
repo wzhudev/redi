@@ -24,33 +24,31 @@ describe('dependency collections', () => {
     const registrations = dependencies.getRegistrations(token, Quantity.MANY);
 
     expect(registrations).toHaveLength(2);
-    expect(dependencies.getRegistrations(BareService, Quantity.REQUIRED).item).toMatchObject(
-      { lazy: false, useClass: BareService },
-    );
+    expect(
+      dependencies.getRegistrations(BareService, Quantity.REQUIRED),
+    ).toMatchObject({ lazy: false, useClass: BareService });
     expect(dependencies.has(token)).toBe(true);
     expect(dependencies.snapshot()).toHaveLength(2);
     dependencies.delete(BareService);
     expect(dependencies.has(BareService)).toBe(false);
     dependencies.add(BareService);
     expect(
-      dependencies.getRegistrations(BareService, Quantity.OPTIONAL)?.item,
+      dependencies.getRegistrations(BareService, Quantity.OPTIONAL),
     ).toMatchObject({ useClass: BareService });
 
     let disposed = 0;
     const resolved = new ResolvedDependencyCollection();
-    resolved.add(token, 1, registrations[0].id);
+    resolved.add(token, 1, 0);
     resolved.add(
       token,
-      { dispose: () => disposed += 1 } as unknown as number,
-      registrations[1].id,
+      { dispose: () => (disposed += 1) } as unknown as number,
+      1,
     );
     expect(resolved.has(token)).toBe(true);
-    expect(
-      resolved.hasResolvedRegistration(token, registrations[0].id),
-    ).toBe(true);
-    expect(resolved.hasResolvedRegistration(token, 'missing')).toBe(false);
-    expect(resolved.getResolvedRegistration(token, 'missing')).toBeUndefined();
-    expect(resolved.getResolvedRegistration(token, registrations[1].id)?.value).toBeDefined();
+    expect(resolved.hasResolvedRegistration(token, 0)).toBe(true);
+    expect(resolved.hasResolvedRegistration(token, 9999)).toBe(false);
+    expect(resolved.getResolvedRegistration(token, 9999)).toBeUndefined();
+    expect(resolved.getResolvedRegistration(token, 1)?.value).toBeDefined();
     expect(resolved.entries(token)).toHaveLength(2);
     expect(resolved.entries(createIdentifier('collection-empty'))).toEqual([]);
     expect(resolved.snapshot()).toHaveLength(1);

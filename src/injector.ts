@@ -2,7 +2,6 @@ import type {
   Dependency,
   DependencyOrInstance,
   DependencyPair,
-  DependencyRegistration,
 } from './dependencyCollection';
 import type { DependencyIdentifier } from './dependencyIdentifier';
 import type {
@@ -56,6 +55,7 @@ import {
   getDebugProviderLabel,
 } from './injectorDebugUtils';
 import {
+  linkInjectorForDiscovery,
   markInjectorDisposedForDiscovery,
   registerInjectorForDiscovery,
 } from './injectorDiscovery';
@@ -203,14 +203,14 @@ export class Injector {
   private readonly dependencyCollection: DependencyCollection;
   private readonly resolvedDependencyCollection: ResolvedDependencyCollection;
 
-  private readonly asyncLoadedItems = new WeakMap<
-    DependencyRegistration<any>,
-    SyncDependencyItem<any>
+  private readonly asyncLoadedItems = new Map<
+    DependencyIdentifier<any>,
+    Map<number, SyncDependencyItem<any>>
   >();
 
-  private readonly asyncPendingPromises = new WeakMap<
-    DependencyRegistration<any>,
-    Promise<any>
+  private readonly asyncPendingPromises = new Map<
+    DependencyIdentifier<any>,
+    Map<number, Promise<any>>
   >();
 
   private readonly debugGroupIds = new Map<DependencyIdentifier<any>, string>();
@@ -281,8 +281,10 @@ export class Injector {
 
     if (this.parent) {
       this.parent.children.push(this);
+      linkInjectorForDiscovery(this, this.parent);
+    } else {
+      registerInjectorForDiscovery(this);
     }
-    registerInjectorForDiscovery(this, this.parent);
     this.lifecycleAttached = true;
     return true;
   }
@@ -378,6 +380,8 @@ export class Injector {
     // Call `dispose` method on each instantiated dependencies if they are `IDisposable` and clear collections.
     this.dependencyCollection.dispose();
     this.resolvedDependencyCollection.dispose();
+    this.asyncLoadedItems.clear();
+    this.asyncPendingPromises.clear();
 
     // Detach itself from parent.
     this.deleteSelfFromParent();
@@ -737,22 +741,18 @@ export class Injector {
 
   private _resolveDependency<T>(
     id: DependencyIdentifier<T>,
-    registration: DependencyRegistration<T>,
+    item: DependencyItem<T>,
     shouldCache = true,
+    registrationId?: number,
   ): T | AsyncHook<T> {
-    return this._resolveDependencyItem(
-      id,
-      registration.item,
-      shouldCache,
-      registration,
-    );
+    return this._resolveDependencyItem(id, item, shouldCache, registrationId);
   }
 
   private _resolveDependencyItem<T>(
     id: DependencyIdentifier<T>,
     item: DependencyItem<T>,
     shouldCache: boolean,
-    registration?: DependencyRegistration<T>,
+    registrationId?: number,
   ): T | AsyncHook<T> {
     let result: T | AsyncHook<T>;
 
@@ -764,31 +764,35 @@ export class Injector {
           id,
           item as ValueDependencyItem<T>,
           shouldCache,
-          registration?.id,
+          registrationId,
         );
       } else if (isFactoryDependencyItem(item)) {
         result = this._resolveFactory(
           id,
           item as FactoryDependencyItem<T>,
           shouldCache,
-          registration?.id,
+          registrationId,
         );
       } else if (isClassDependencyItem(item)) {
         result = this._resolveClass(
           id,
           item as ClassDependencyItem<T>,
           shouldCache,
-          registration?.id,
+          registrationId,
         );
       } else if (isExistingDependencyItem(item)) {
         result = this._resolveExisting(
           id,
           item as ExistingDependencyItem<T>,
           shouldCache,
-          registration?.id,
+          registrationId,
         );
       } else {
-        result = this._resolveAsync(id, registration!);
+        result = this._resolveAsync(
+          id,
+          item as AsyncDependencyItem<T>,
+          registrationId,
+        );
       }
 
       popupResolvingStack();
@@ -804,7 +808,7 @@ export class Injector {
     id: DependencyIdentifier<T>,
     item: ExistingDependencyItem<T>,
     shouldCache: boolean,
-    registrationId?: string,
+    registrationId?: number,
   ): T {
     const thing = this.get(normalizeForwardRef(item.useExisting));
     if (shouldCache) {
@@ -817,7 +821,7 @@ export class Injector {
     id: DependencyIdentifier<T>,
     item: ValueDependencyItem<T>,
     shouldCache: boolean,
-    registrationId?: string,
+    registrationId?: number,
   ): T {
     const thing = item.useValue;
     if (shouldCache) {
@@ -830,7 +834,7 @@ export class Injector {
     id: DependencyIdentifier<T> | null,
     item: ClassDependencyItem<T>,
     shouldCache: boolean,
-    registrationId?: string,
+    registrationId?: number,
   ): T {
     let thing: T;
 
@@ -964,7 +968,7 @@ export class Injector {
     id: DependencyIdentifier<T>,
     item: FactoryDependencyItem<T>,
     shouldCache: boolean,
-    registrationId?: string,
+    registrationId?: number,
   ): T {
     this.markNewResolution(id);
 
@@ -1012,21 +1016,25 @@ export class Injector {
 
   private _resolveAsync<T>(
     id: DependencyIdentifier<T>,
-    registration: DependencyRegistration<T>,
+    item: AsyncDependencyItem<T>,
+    registrationId?: number,
   ): AsyncHook<T> {
     const asyncLoader: AsyncHook<T> = {
       __symbol: AsyncHookSymbol,
-      whenReady: () => this._resolveAsyncImpl(id, registration),
+      whenReady: () => this._resolveAsyncImpl(id, item, registrationId),
     };
     return asyncLoader;
   }
 
   private _resolveAsyncImpl<T>(
     id: DependencyIdentifier<T>,
-    registration: DependencyRegistration<T>,
+    item: AsyncDependencyItem<T>,
+    registrationId?: number,
   ): Promise<T> {
-    const item = registration.item as AsyncDependencyItem<T>;
-    const pending = this.asyncPendingPromises.get(registration);
+    const resolvedRegistrationId = registrationId ?? -1;
+    const pending = this.asyncPendingPromises
+      .get(id)
+      ?.get(resolvedRegistrationId);
     if (pending) {
       return pending as Promise<T>;
     }
@@ -1038,7 +1046,7 @@ export class Injector {
         const resolvedEntry =
           this.resolvedDependencyCollection.getResolvedRegistration(
             id,
-            registration.id,
+            resolvedRegistrationId,
           );
         if (resolvedEntry) {
           return resolvedEntry.value as T;
@@ -1063,14 +1071,30 @@ export class Injector {
           ret = thing;
         }
 
-        this.asyncLoadedItems.set(registration, loadedItem);
-        this.resolvedDependencyCollection.add(id, ret, registration.id);
+        let loadedItems = this.asyncLoadedItems.get(id);
+        if (!loadedItems) {
+          loadedItems = new Map();
+          this.asyncLoadedItems.set(id, loadedItems);
+        }
+        loadedItems.set(resolvedRegistrationId, loadedItem);
+        this.resolvedDependencyCollection.add(id, ret, resolvedRegistrationId);
 
         return ret;
       })
-      .finally(() => this.asyncPendingPromises.delete(registration));
+      .finally(() => {
+        const pendingByRegistration = this.asyncPendingPromises.get(id);
+        pendingByRegistration?.delete(resolvedRegistrationId);
+        if (pendingByRegistration && pendingByRegistration.size === 0) {
+          this.asyncPendingPromises.delete(id);
+        }
+      });
 
-    this.asyncPendingPromises.set(registration, promise);
+    let pendingByRegistration = this.asyncPendingPromises.get(id);
+    if (!pendingByRegistration) {
+      pendingByRegistration = new Map();
+      this.asyncPendingPromises.set(id, pendingByRegistration);
+    }
+    pendingByRegistration.set(resolvedRegistrationId, promise);
     return promise;
   }
 
@@ -1129,13 +1153,25 @@ export class Injector {
       id,
       quantity,
     )!;
+    const registrationIds =
+      target.injector.dependencyCollection.getRegistrationIds(id);
     if (Array.isArray(registrations)) {
-      return registrations.map((registration) =>
-        target.injector._resolveDependency(id, registration, shouldCache),
+      return registrations.map((item, index) =>
+        target.injector._resolveDependency(
+          id,
+          item,
+          shouldCache,
+          registrationIds[index],
+        ),
       );
     }
 
-    return target.injector._resolveDependency(id, registrations, shouldCache);
+    return target.injector._resolveDependency(
+      id,
+      registrations,
+      shouldCache,
+      registrationIds[0],
+    );
   }
 
   private _normalizeResolutionOptions(
@@ -1198,16 +1234,14 @@ export class Injector {
       return false;
     }
 
-    const items = target.injector.dependencyCollection
-      .snapshot()
-      .find(([identifier]) => identifier === id)?.[1];
+    const items = target.injector.dependencyCollection.peek(id);
     if (!items) return false;
 
     if (quantity !== Quantity.MANY && items.length !== 1) {
       return false;
     }
 
-    return items.some(({ item }) => isAsyncDependencyItem(item));
+    return items.some((item) => isAsyncDependencyItem(item));
   }
 
   private _debugGroupId(identifier: DependencyIdentifier<any>): string {
@@ -1235,14 +1269,14 @@ export class Injector {
           ([candidate]) => candidate === identifier,
         )?.[1] ?? [];
       const resolved = resolvedByIdentifier.get(identifier) ?? [];
-      const declaredIds = new Set(
-        declaredRegistrations.map((registration) => registration.id),
-      );
+      const declaredRegistrationIds =
+        this.dependencyCollection.getRegistrationIds(identifier);
+      const declaredIds = new Set(declaredRegistrationIds);
       const registrations: InjectorDebugRegistration[] =
-        declaredRegistrations.map((registration) => {
-          const item = registration.item;
+        declaredRegistrations.map((item, registrationIndex) => {
+          const registrationId = declaredRegistrationIds[registrationIndex];
           const loadedItem = isAsyncDependencyItem(item)
-            ? this.asyncLoadedItems.get(registration)
+            ? this.asyncLoadedItems.get(identifier)?.get(registrationId)
             : undefined;
           const loadedProviderKind = loadedItem
             ? getDebugProviderKind(loadedItem)
@@ -1252,7 +1286,7 @@ export class Injector {
             : getDebugProviderLabel(item);
 
           return Object.freeze({
-            id: registration.id,
+            id: String(registrationId),
             dependencies: getDebugDependencies(item, loadedItem),
             ...(isFactoryDependencyItem(item) && item.dynamic
               ? { dynamic: true as const }
@@ -1267,7 +1301,7 @@ export class Injector {
             providerLabel,
             status: this.resolvedDependencyCollection.hasResolvedRegistration(
               identifier,
-              registration.id,
+              registrationId,
             )
               ? ('created' as const)
               : isAsyncDependencyItem(item)
@@ -1280,7 +1314,7 @@ export class Injector {
         if (declaredIds.has(resolvedEntry.registrationId)) continue;
         registrations.push(
           Object.freeze({
-            id: resolvedEntry.registrationId,
+            id: String(resolvedEntry.registrationId),
             dependencies: Object.freeze([]),
             identifier,
             identifierLabel: prettyPrintIdentifier(identifier),
@@ -1342,14 +1376,13 @@ export class Injector {
       target.injector.resolvedDependencyCollection.entries(request.identifier);
     const hasResolved =
       !normalizedRequest.withNew && resolvedEntries.length > 0;
-    const registrationIds = hasResolved
-      ? resolvedEntries.map((entry) => entry.registrationId)
-      : (
-          target.injector.dependencyCollection
-            .snapshot()
-            .find(([identifier]) => identifier === request.identifier)?.[1] ??
-            []
-        ).map((registration) => registration.id);
+    const declaredRegistrationIds =
+      target.injector.dependencyCollection.getRegistrationIds(
+        request.identifier,
+      );
+    const registrationIds: string[] = hasResolved
+      ? resolvedEntries.map((entry) => String(entry.registrationId))
+      : declaredRegistrationIds.map((registrationId) => String(registrationId));
     const actual = registrationIds.length;
     const landing = {
       groupId: target.injector._debugGroupId(request.identifier),
