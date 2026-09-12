@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/wzhudev/redi/compare/v1.1.2...v1.2.0) (2026-07-16)
+
+### Features
+
+- add Injector Discovery and side-effect-free `injector.debug` registration and Resolution Explain tooling
+- add the publishable React-based `@wendellhu/redi-devtools` Dependency Graph Panel and opt-in Overlay setup
+
+### Bug Fixes
+
+- align SELF, WithNew, and MANY runtime lookup semantics with Resolution Explain
+- deduplicate async registration loads while preserving per-registration cache identity
+- recognize undefined value providers and normalize alias labels
+- harden React Injector ownership across speculative and StrictMode rendering
+
 ## [1.1.3](https://github.com/wzhudev/redi/compare/v1.1.2...v1.1.3) (2026-09-11)
 
 

@@ -31,6 +31,28 @@ export { WithNew } from './dependencyWithNew';
 export { type IDisposable, isDisposable } from './dispose';
 export { RediError } from './error';
 export { type IAccessor, Injector } from './injector';
+export type {
+  InjectorDebugApi,
+  InjectorDebugDependencyDescriptor,
+  InjectorDebugIdentifierGroup,
+  InjectorDebugProviderKind,
+  InjectorDebugRegistration,
+  InjectorDebugRegistrationStatus,
+  InjectorDebugResolution,
+  InjectorDebugResolutionLanding,
+  InjectorDebugResolutionRequest,
+} from './injectorDebug';
+export {
+  getInjectorDiscoveryMetadata,
+  getInjectorDiscoverySnapshot,
+  ignoreInjectorForDiscovery,
+  type InjectorDiscoveryMetadata,
+  type InjectorDiscoveryRecord,
+  type InjectorDiscoverySnapshot,
+  mergeInjectorDiscoveryMetadata,
+  registerInjectorForDiscovery,
+  setInjectorDiscoveryMetadata,
+} from './injectorDiscovery';
 export { InjectSelf } from './injectSelf';
 export { LookUp, Quantity } from './types';
 

@@ -178,11 +178,11 @@ export interface ValueDependencyItem<T> extends DependencyItemHooks<T> {
 export function isValueDependencyItem<T>(
   thing: unknown,
 ): thing is ValueDependencyItem<T> {
-  if (thing && typeof (thing as any).useValue !== 'undefined') {
-    return true;
-  }
-
-  return false;
+  return (
+    thing !== null &&
+    (typeof thing === 'object' || typeof thing === 'function') &&
+    'useValue' in thing
+  );
 }
 
 /**

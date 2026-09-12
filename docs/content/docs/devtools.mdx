@@ -1,0 +1,196 @@
+import { Callout } from 'nextra/components';
+import { DevtoolsDemo } from '../../components/DevtoolsDemo';
+
+# Developer Tools
+
+`@wendellhu/redi-devtools` visualizes one live root Injector tree at a time
+without calling `get()` or instantiating providers. You can embed the shared
+Debugger Panel in a debug route or explicitly mount it as an Overlay.
+
+<Callout type="warning">
+  Mount the debugger only in development or in a protected internal route. The
+  package is inert when imported, but rendering the Panel or calling
+  `setupDebugger()` enables inspection of the current JavaScript process.
+</Callout>
+
+## Requirements
+
+| Package | Supported version |
+| --- | --- |
+| `@wendellhu/redi` | `>=1.2.0 <2` |
+| `react` | `>=18.0.0` |
+| `react-dom` | `>=18.0.0` |
+
+Install the UI package as a development dependency:
+
+```shell npm2yarn
+npm install --save-dev @wendellhu/redi-devtools
+```
+
+## Live Demo
+
+This is the real `DebuggerPanel`, backed by a live root and child Injector in
+this page. Select an Injector or Registration to inspect its details, search the
+active tree, or use an Injector's controls to center and collapse it. Use the
+buttons to resolve a factory registration or load an async provider and watch
+their status change; the lazy `AuditService` remains untouched.
+
+The fixture deliberately binds an abstract `ILogger` created with
+`createIdentifier<Logger>()` to `ConsoleLogger` through `useClass`. It also
+registers `SearchDashboardPlugin` and `ExportDashboardPlugin` under the same
+`IDashboardPlugin` token; Dashboard requests them through `@Many()`, producing
+two concrete dependency targets in the graph.
+
+<DevtoolsDemo />
+
+## Embed the Debugger Panel
+
+The following Next.js client page creates parent and child Injector scopes. It gives
+the graph a cross-scope dependency edge and leaves one lazy provider untouched,
+so the Panel has useful state to display immediately.
+
+```tsx filename="app/debug/dependencies/page.tsx"
+'use client';
+
+import { DebuggerPanel } from '@wendellhu/redi-devtools';
+import '@wendellhu/redi-devtools/style.css';
+import {
+  connectDependencies,
+  useDependency,
+} from '@wendellhu/redi/react-bindings';
+
+class ApiClient {
+  readonly name = 'ApiClient';
+}
+
+class AuditService {}
+
+class ProjectService {
+  constructor(readonly api: ApiClient) {}
+}
+
+const FeatureScope = connectDependencies(
+  function FeatureScopeContent() {
+    const projects = useDependency(ProjectService);
+
+    return <p>Resolved through {projects.api.name}</p>;
+  },
+  [
+    [
+      ProjectService,
+      {
+        useFactory: (api: ApiClient) => new ProjectService(api),
+        deps: [ApiClient],
+      },
+    ],
+  ],
+);
+
+const DemoApplication = connectDependencies(
+  function ApplicationScope() {
+    return <FeatureScope />;
+  },
+  [
+    [ApiClient],
+    [AuditService, { useClass: AuditService, lazy: true }],
+  ],
+);
+
+export default function DependencyDebugPage() {
+  return (
+    <main>
+      <DemoApplication />
+      <DebuggerPanel pollInterval={2000} style={{ height: 560 }} />
+    </main>
+  );
+}
+```
+
+The Panel will show:
+
+- separate application and feature Injector compound nodes connected as a tree;
+- a cross-cluster edge from `ProjectService` to `ApiClient`;
+- `ApiClient` and `ProjectService` as created;
+- `AuditService` as `not-created`;
+- React component hints attached by `connectDependencies`.
+
+Use the root switch to choose a parentless Injector, search within its complete
+tree, and select an Injector or Registration to inspect its details. Click
+**Refresh** for an immediate projection. Set `pollInterval={false}` to disable
+automatic polling while keeping manual refresh available.
+
+## Mount the Overlay on Demand
+
+The Overlay uses the same graph surface as the Panel. In Next.js, load it only
+on the client and dispose it when the owner unmounts:
+
+```tsx filename="app/DevtoolsOverlay.tsx"
+'use client';
+
+import type { DebuggerHandle } from '@wendellhu/redi-devtools';
+import '@wendellhu/redi-devtools/style.css';
+import { useEffect } from 'react';
+
+export function DevtoolsOverlay() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+
+    let cancelled = false;
+    let handle: DebuggerHandle | undefined;
+
+    void import('@wendellhu/redi-devtools').then(({ setupDebugger }) => {
+      if (!cancelled) {
+        handle = setupDebugger({ pollInterval: 2000 });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      handle?.dispose();
+    };
+  }, []);
+
+  return null;
+}
+```
+
+`setupDebugger()` requires a browser `document`. Its returned `dispose()` method
+is idempotent and removes both the React root and the Overlay host element.
+
+## Inspect Without UI
+
+Core exposes the same side-effect-free information used by the graph projector:
+
+```ts
+const groups = injector.debug.listRegistrations();
+
+const explanation = injector.debug.explain({
+  identifier: ProjectService,
+});
+
+console.log(groups, explanation);
+```
+
+Registration listing reports provider kind and creation state. Resolution
+Explain reports where runtime lookup would land, including explicit missing and
+quantity-mismatch outcomes, without resolving the requested dependency.
+
+<Callout>
+  `injector.debug` is a tooling compatibility surface. Keep application logic
+  on the regular `get()`, `getAsync()`, and injection APIs.
+</Callout>
+
+## What the Graph Represents
+
+| Graph element | Meaning |
+| --- | --- |
+| Injector Cluster | One independent compound node connected to its parent and children by structural tree edges |
+| Identifier Group | A visual boundary around Registrations sharing an Identifier in one Injector |
+| Registration | A class, value, factory, alias, async, or existing instance provider |
+| Dependency Edge | A directed edge to the concrete Registration selected by runtime lookup semantics |
+| `pending` | An async provider that has not loaded yet |
+| `not-created` | A provider that inspection has not instantiated |
+
+Disposed Injectors disappear from their root tree. Async registrations move from
+`pending` to their loaded provider shape on a later refresh, and missing
+optional or required dependencies remain visible as explicit edge outcomes.

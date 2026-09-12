@@ -1,16 +1,121 @@
-import type { Dependency } from '@wendellhu/redi';
-import { Injector } from '@wendellhu/redi';
+import type { Dependency, InjectorDiscoveryMetadata } from '@wendellhu/redi';
+import {
+  getInjectorDiscoveryMetadata,
+  Injector,
+  setInjectorDiscoveryMetadata,
+} from '@wendellhu/redi';
 import React, { useEffect, useRef } from 'react';
 import { RediConsumer, RediProvider } from './reactContext';
 
-function RediInjector(
-  props: React.PropsWithChildren<{ dependencies: Dependency[] }>,
-) {
-  const { children, dependencies } = props;
-  const childInjectorRef = useRef<Injector | null>(null);
+type ReactDiscoverySource = 'connectDependencies' | 'connectInjector';
 
-  // dispose the injector when the container Injector unmounts
-  useEffect(() => () => childInjectorRef.current?.dispose(), []);
+interface ReactDiscoveryAssociations {
+  readonly baseline: unknown;
+  readonly hints: Map<symbol, unknown>;
+}
+
+const reactDiscoveryAssociations = new WeakMap<
+  Injector,
+  ReactDiscoveryAssociations
+>();
+
+function readDiscoveryMetadata(
+  injector: Injector,
+): InjectorDiscoveryMetadata | undefined {
+  return getInjectorDiscoveryMetadata(injector);
+}
+
+function publishReactDiscoveryHint(
+  injector: Injector,
+  react: unknown,
+): void {
+  const metadata = { ...(readDiscoveryMetadata(injector) ?? {}) };
+  if (react === undefined) {
+    delete metadata.react;
+  } else {
+    metadata.react = react;
+  }
+  setInjectorDiscoveryMetadata(injector, metadata);
+}
+
+function associateReactDiscoveryHint(
+  injector: Injector,
+  associationId: symbol,
+  metadata: InjectorDiscoveryMetadata,
+): () => void {
+  let associations = reactDiscoveryAssociations.get(injector);
+  if (!associations) {
+    associations = {
+      baseline: readDiscoveryMetadata(injector)?.react,
+      hints: new Map(),
+    };
+    reactDiscoveryAssociations.set(injector, associations);
+  }
+
+  associations.hints.set(associationId, metadata.react);
+  publishReactDiscoveryHint(injector, metadata.react);
+
+  return () => {
+    const current = reactDiscoveryAssociations.get(injector);
+    if (!current || !current.hints.delete(associationId)) return;
+    const remaining = [...current.hints.values()];
+    if (remaining.length > 0) {
+      publishReactDiscoveryHint(injector, remaining[remaining.length - 1]);
+    } else {
+      publishReactDiscoveryHint(injector, current.baseline);
+      reactDiscoveryAssociations.delete(injector);
+    }
+  };
+}
+
+function createReactDiscoveryMetadata<P>(
+  source: ReactDiscoverySource,
+  Comp: React.ComponentType<P>,
+): InjectorDiscoveryMetadata {
+  return Object.freeze({
+    react: Object.freeze({
+      source,
+      componentName: Comp.displayName || Comp.name || 'Anonymous',
+    }),
+  });
+}
+
+function RediInjector(
+  props: React.PropsWithChildren<{
+    dependencies: Dependency[];
+    discoveryMetadata: InjectorDiscoveryMetadata;
+  }>,
+) {
+  const { children, dependencies, discoveryMetadata } = props;
+  const childInjectorRef = useRef<Injector | null>(null);
+  const detachedInjectorRef = useRef<ReturnType<
+    typeof Injector.createDetached
+  > | null>(null);
+  const discoveryAssociationRef = useRef(Symbol('redi-react-provider'));
+  const lifecycleGenerationRef = useRef(0);
+
+  useEffect(() => {
+    const childInjector = childInjectorRef.current!;
+    const lifecycleGeneration = lifecycleGenerationRef.current + 1;
+    lifecycleGenerationRef.current = lifecycleGeneration;
+    detachedInjectorRef.current!.attach();
+    const removeDiscoveryHint = associateReactDiscoveryHint(
+      childInjector,
+      discoveryAssociationRef.current,
+      discoveryMetadata,
+    );
+
+    return () => {
+      removeDiscoveryHint();
+      // StrictMode immediately replays effects in development. Waiting for the
+      // replay prevents its simulated cleanup from disposing the live injector.
+      queueMicrotask(() => {
+        if (lifecycleGenerationRef.current === lifecycleGeneration) {
+          childInjector.dispose();
+        }
+      });
+    };
+  }, [discoveryMetadata]);
 
   return (
     <RediConsumer>
@@ -21,10 +126,15 @@ function RediInjector(
         if (childInjectorRef.current) {
           childInjector = childInjectorRef.current;
         } else {
-          childInjector = context.injector
-            ? context.injector.createChild(dependencies)
-            : new Injector(dependencies);
-
+          // React may abandon or replay render before committing an effect.
+          // A detached candidate can resolve through its parent but is not
+          // strongly retained by either the parent or Discovery until commit.
+          const detachedInjector = Injector.createDetached(
+            dependencies,
+            context.injector,
+          );
+          detachedInjectorRef.current = detachedInjector;
+          childInjector = detachedInjector.injector;
           childInjectorRef.current = childInjector;
         }
 
@@ -65,7 +175,22 @@ export function connectInjector<P>(
   Comp: React.ComponentType<P>,
   injector: Injector,
 ): React.ComponentType<P> {
+  const discoveryMetadata = createReactDiscoveryMetadata(
+    'connectInjector',
+    Comp,
+  );
+
   return function ComponentWithInjector(props: P) {
+    const discoveryAssociationRef = useRef(Symbol('redi-react-provider'));
+
+    useEffect(() => {
+      return associateReactDiscoveryHint(
+        injector,
+        discoveryAssociationRef.current,
+        discoveryMetadata,
+      );
+    }, [discoveryMetadata, injector]);
+
     return (
       <RediProvider value={{ injector }}>
         <Comp {...(props as P & React.JSX.IntrinsicAttributes)} />
@@ -105,9 +230,17 @@ export function connectDependencies<P>(
   Comp: React.ComponentType<P>,
   dependencies: Dependency[],
 ): React.ComponentType<P> {
+  const discoveryMetadata = createReactDiscoveryMetadata(
+    'connectDependencies',
+    Comp,
+  );
+
   return function ComponentWithInjector(props: P) {
     return (
-      <RediInjector dependencies={dependencies}>
+      <RediInjector
+        dependencies={dependencies}
+        discoveryMetadata={discoveryMetadata}
+      >
         <Comp {...(props as P & React.JSX.IntrinsicAttributes)} />
       </RediInjector>
     );
