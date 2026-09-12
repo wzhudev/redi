@@ -1,0 +1,372 @@
+[
+  {
+    "name": "primitives :: new Injector(value registrations=100)",
+    "unit": "ops/sec",
+    "value": 327761.39,
+    "group": "primitives",
+    "latencyMeanMs": 0.005913,
+    "p99Ms": 0.009244,
+    "rmePercent": 6.119,
+    "samples": 50740
+  },
+  {
+    "name": "primitives :: new Injector(value registrations=1000)",
+    "unit": "ops/sec",
+    "value": 36041.231,
+    "group": "primitives",
+    "latencyMeanMs": 0.052442,
+    "p99Ms": 0.793578,
+    "rmePercent": 6.639,
+    "samples": 5721
+  },
+  {
+    "name": "primitives :: new Injector(value registrations=10000)",
+    "unit": "ops/sec",
+    "value": 2613.597,
+    "group": "primitives",
+    "latencyMeanMs": 0.855722,
+    "p99Ms": 3.602081,
+    "rmePercent": 10.494,
+    "samples": 352
+  },
+  {
+    "name": "primitives :: new Injector(class registrations=100)",
+    "unit": "ops/sec",
+    "value": 321646.832,
+    "group": "primitives",
+    "latencyMeanMs": 0.00592,
+    "p99Ms": 0.009771,
+    "rmePercent": 6.123,
+    "samples": 50673
+  },
+  {
+    "name": "primitives :: new Injector(class registrations=1000)",
+    "unit": "ops/sec",
+    "value": 38532.676,
+    "group": "primitives",
+    "latencyMeanMs": 0.054859,
+    "p99Ms": 0.848391,
+    "rmePercent": 7.152,
+    "samples": 5479
+  },
+  {
+    "name": "primitives :: new Injector(class registrations=10000)",
+    "unit": "ops/sec",
+    "value": 2705.225,
+    "group": "primitives",
+    "latencyMeanMs": 0.854703,
+    "p99Ms": 3.100758,
+    "rmePercent": 9.685,
+    "samples": 351
+  },
+  {
+    "name": "resolve :: hot class chain (depth=20)",
+    "unit": "ops/sec",
+    "value": 45126353.79,
+    "group": "resolve",
+    "latencyMeanMs": 0.000039,
+    "p99Ms": 0.000633,
+    "rmePercent": 5.632,
+    "samples": 7639
+  },
+  {
+    "name": "resolve :: hot value token",
+    "unit": "ops/sec",
+    "value": 32697904.065,
+    "group": "resolve",
+    "latencyMeanMs": 0.000047,
+    "p99Ms": 0.000648,
+    "rmePercent": 5.204,
+    "samples": 6326
+  },
+  {
+    "name": "resolve :: hot alias chain (depth=50)",
+    "unit": "ops/sec",
+    "value": 51453563.159,
+    "group": "resolve",
+    "latencyMeanMs": 0.000037,
+    "p99Ms": 0.00064,
+    "rmePercent": 5.994,
+    "samples": 8157
+  },
+  {
+    "name": "resolve :: cold alias chain (depth=50)",
+    "unit": "ops/sec",
+    "value": 299760.192,
+    "group": "resolve",
+    "latencyMeanMs": 0.00606,
+    "p99Ms": 0.008349,
+    "rmePercent": 6.11,
+    "samples": 49508
+  },
+  {
+    "name": "resolve :: cold factory chain (depth=50)",
+    "unit": "ops/sec",
+    "value": 210039.908,
+    "group": "resolve",
+    "latencyMeanMs": 0.007854,
+    "p99Ms": 0.011425,
+    "rmePercent": 5.797,
+    "samples": 38251
+  },
+  {
+    "name": "resolve :: optional miss",
+    "unit": "ops/sec",
+    "value": 29411764.19,
+    "group": "resolve",
+    "latencyMeanMs": 0.000054,
+    "p99Ms": 0.000157,
+    "rmePercent": 5.016,
+    "samples": 5519970
+  },
+  {
+    "name": "resolve :: has() missing",
+    "unit": "ops/sec",
+    "value": 35714285.224,
+    "group": "resolve",
+    "latencyMeanMs": 0.000029,
+    "p99Ms": 0.000036,
+    "rmePercent": 0.247,
+    "samples": 10447051
+  },
+  {
+    "name": "instantiate :: cold deep chain (depth=10)",
+    "unit": "ops/sec",
+    "value": 871080.138,
+    "group": "instantiate",
+    "latencyMeanMs": 0.001959,
+    "p99Ms": 0.00302,
+    "rmePercent": 5.771,
+    "samples": 153345
+  },
+  {
+    "name": "instantiate :: cold deep chain (depth=50)",
+    "unit": "ops/sec",
+    "value": 159058.374,
+    "group": "instantiate",
+    "latencyMeanMs": 0.01087,
+    "p99Ms": 0.019223,
+    "rmePercent": 6.116,
+    "samples": 27623
+  },
+  {
+    "name": "instantiate :: cold deep chain (depth=100)",
+    "unit": "ops/sec",
+    "value": 73610.6,
+    "group": "instantiate",
+    "latencyMeanMs": 0.025367,
+    "p99Ms": 0.635916,
+    "rmePercent": 6.528,
+    "samples": 11842
+  },
+  {
+    "name": "instantiate :: cold wide graph (width=10)",
+    "unit": "ops/sec",
+    "value": 817661.487,
+    "group": "instantiate",
+    "latencyMeanMs": 0.002248,
+    "p99Ms": 0.003169,
+    "rmePercent": 5.781,
+    "samples": 133580
+  },
+  {
+    "name": "instantiate :: cold wide graph (width=50)",
+    "unit": "ops/sec",
+    "value": 171408.982,
+    "group": "instantiate",
+    "latencyMeanMs": 0.01154,
+    "p99Ms": 0.027289,
+    "rmePercent": 6.429,
+    "samples": 25997
+  },
+  {
+    "name": "instantiate :: cold wide graph (width=200)",
+    "unit": "ops/sec",
+    "value": 42045.072,
+    "group": "instantiate",
+    "latencyMeanMs": 0.048617,
+    "p99Ms": 0.766002,
+    "rmePercent": 6.553,
+    "samples": 6171
+  },
+  {
+    "name": "instantiate :: hot deep chain (depth=100)",
+    "unit": "ops/sec",
+    "value": 48325520.711,
+    "group": "instantiate",
+    "latencyMeanMs": 0.000037,
+    "p99Ms": 0.000616,
+    "rmePercent": 5.667,
+    "samples": 8129
+  },
+  {
+    "name": "hierarchy :: parent lookup (depth=1)",
+    "unit": "ops/sec",
+    "value": 21276595.129,
+    "group": "hierarchy",
+    "latencyMeanMs": 0.000093,
+    "p99Ms": 0.000251,
+    "rmePercent": 5.757,
+    "samples": 3211289
+  },
+  {
+    "name": "hierarchy :: parent lookup (depth=3)",
+    "unit": "ops/sec",
+    "value": 17857142.612,
+    "group": "hierarchy",
+    "latencyMeanMs": 0.00013,
+    "p99Ms": 0.000351,
+    "rmePercent": 6.072,
+    "samples": 2303825
+  },
+  {
+    "name": "hierarchy :: parent lookup (depth=5)",
+    "unit": "ops/sec",
+    "value": 12987012.886,
+    "group": "hierarchy",
+    "latencyMeanMs": 0.000193,
+    "p99Ms": 0.000385,
+    "rmePercent": 6.436,
+    "samples": 1557283
+  },
+  {
+    "name": "hierarchy :: parent lookup (depth=10)",
+    "unit": "ops/sec",
+    "value": 8333333.291,
+    "group": "hierarchy",
+    "latencyMeanMs": 0.000322,
+    "p99Ms": 0.000523,
+    "rmePercent": 6.36,
+    "samples": 931475
+  },
+  {
+    "name": "hierarchy :: self shadowed token",
+    "unit": "ops/sec",
+    "value": 22727272.55,
+    "group": "hierarchy",
+    "latencyMeanMs": 0.000063,
+    "p99Ms": 0.000173,
+    "rmePercent": 4.131,
+    "samples": 4783220
+  },
+  {
+    "name": "hierarchy :: skip-self shadowed token",
+    "unit": "ops/sec",
+    "value": 20000000.505,
+    "group": "hierarchy",
+    "latencyMeanMs": 0.000091,
+    "p99Ms": 0.000242,
+    "rmePercent": 5.73,
+    "samples": 3311773
+  },
+  {
+    "name": "variants:many :: cold MANY (count=32)",
+    "unit": "ops/sec",
+    "value": 471475.72,
+    "group": "variants:many",
+    "latencyMeanMs": 0.003296,
+    "p99Ms": 0.004445,
+    "rmePercent": 4.888,
+    "samples": 91078
+  },
+  {
+    "name": "variants:many :: hot MANY (count=32)",
+    "unit": "ops/sec",
+    "value": 14563248.19,
+    "group": "variants:many",
+    "latencyMeanMs": 0.000092,
+    "p99Ms": 0.000792,
+    "rmePercent": 4.512,
+    "samples": 3276
+  },
+  {
+    "name": "variants:factory :: cold factory with 3 deps",
+    "unit": "ops/sec",
+    "value": 2747252.751,
+    "group": "variants:factory",
+    "latencyMeanMs": 0.000695,
+    "p99Ms": 0.001261,
+    "rmePercent": 5.644,
+    "samples": 431712
+  },
+  {
+    "name": "variants:factory :: hot factory with 3 deps",
+    "unit": "ops/sec",
+    "value": 48612123.861,
+    "group": "variants:factory",
+    "latencyMeanMs": 0.000038,
+    "p99Ms": 0.000596,
+    "rmePercent": 6.138,
+    "samples": 7999
+  },
+  {
+    "name": "variants:instance :: createInstance no deps",
+    "unit": "ops/sec",
+    "value": 26262573.206,
+    "group": "variants:instance",
+    "latencyMeanMs": 0.000074,
+    "p99Ms": 0.000723,
+    "rmePercent": 5.802,
+    "samples": 4077
+  },
+  {
+    "name": "variants:instance :: createInstance cached dep",
+    "unit": "ops/sec",
+    "value": 17478239.592,
+    "group": "variants:instance",
+    "latencyMeanMs": 0.000105,
+    "p99Ms": 0.000789,
+    "rmePercent": 5.549,
+    "samples": 2859
+  },
+  {
+    "name": "variants:instance :: createInstance @WithNew dep",
+    "unit": "ops/sec",
+    "value": 9748393.952,
+    "group": "variants:instance",
+    "latencyMeanMs": 0.000189,
+    "p99Ms": 0.000943,
+    "rmePercent": 5.659,
+    "samples": 1589
+  },
+  {
+    "name": "variants:lazy :: cold eager",
+    "unit": "ops/sec",
+    "value": 8474576.276,
+    "group": "variants:lazy",
+    "latencyMeanMs": 0.000202,
+    "p99Ms": 0.000568,
+    "rmePercent": 4.754,
+    "samples": 1483569
+  },
+  {
+    "name": "variants:lazy :: cold lazy",
+    "unit": "ops/sec",
+    "value": 3558718.9,
+    "group": "variants:lazy",
+    "latencyMeanMs": 0.000467,
+    "p99Ms": 0.001184,
+    "rmePercent": 5.008,
+    "samples": 642189
+  },
+  {
+    "name": "variants:async :: getAsync (value)",
+    "unit": "ops/sec",
+    "value": 13333333.347,
+    "group": "variants:async",
+    "latencyMeanMs": 0.000102,
+    "p99Ms": 0.000255,
+    "rmePercent": 3.949,
+    "samples": 2927053
+  },
+  {
+    "name": "variants:async :: get (value)",
+    "unit": "ops/sec",
+    "value": 18518518.487,
+    "group": "variants:async",
+    "latencyMeanMs": 0.000085,
+    "p99Ms": 0.000192,
+    "rmePercent": 5.136,
+    "samples": 3513300
+  }
+]
