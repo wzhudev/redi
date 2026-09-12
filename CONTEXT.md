@@ -44,11 +44,11 @@ The DI Debugger UI as a React component the application mounts at a location it 
 
 ## Injector Discovery (Injector 发现)
 
-How the DI Debugger learns which Injectors exist in a running application. Discovery is hybrid: the core library always keeps a lightweight registry of created Injectors (whether or not the Debugger Package is installed), React bindings may enrich that picture with where an Injector sits in the UI tree, and the developer may still explicitly register or ignore Injectors.
+How the DI Debugger learns which Injectors exist in a running application. Discovery is hybrid: the core library always keeps a lightweight, **weak** registry of **root** Injectors (whether or not the Debugger Package is installed), child Injectors are reached by traversing that forest, React bindings may enrich that picture with where an Injector sits in the UI tree, and the developer may still explicitly register or ignore Injectors. Because the registry holds weak references, an Injector that is dropped without `dispose()` does not leak or stay discoverable.
 
 ## Debugger Package (调试器包)
 
-The DI Debugger ships as its own npm package, `@wendellhu/redi-devtools`, separate from `@wendellhu/redi`. The core library always maintains a lightweight Injector registry for discovery; the Overlay, Panel, and Dependency Graph UI live in the Debugger Package.
+The DI Debugger ships as its own npm package, `@wendellhu/redi-devtools`, separate from `@wendellhu/redi`. The core library always maintains a lightweight, weak registry of root Injectors for discovery; the Overlay, Panel, and Dependency Graph UI live in the Debugger Package.
 
 ## Resolution Explain (解析说明)
 
