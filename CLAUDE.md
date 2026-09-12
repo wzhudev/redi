@@ -14,6 +14,12 @@ bun test                     # Run all tests with bun:test
 bun run coverage             # Run tests with coverage report
 bun run watch                # Run tests in watch mode
 
+# Benchmarking (see bench/README.md)
+bun run bench                # Run the full benchmark suite
+bun run bench --filter=resolve
+bun run bench:compare        # Compare against bench/baseline.json
+bun run bench:update-baseline
+
 # Building
 bun run build                # Build the library using rolldown
 

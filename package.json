@@ -32,8 +32,12 @@
     "watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
     "build": "rolldown build -c rolldown.config.ts",
+    "bench": "bun run bench/index.ts",
+    "bench:json": "bun run bench/index.ts --json",
+    "bench:compare": "bun run bench/index.ts --compare=bench/baseline.json",
+    "bench:update-baseline": "bun run bench/index.ts --update-baseline",
     "release": "release-it",
-    "prettier": "prettier --write ./src ./test",
+    "prettier": "prettier --write ./src ./bench",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "dev:doc": "bun --filter redi-site dev",
@@ -63,6 +67,7 @@
     "rolldown": "1.0.0-beta.24",
     "rolldown-plugin-dts": "^0.13.14",
     "rxjs": "^7.8.2",
+    "tinybench": "^6.2.0",
     "typescript": "^6.0.2"
   },
   "peerDependencies": {

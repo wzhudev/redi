@@ -2,6 +2,7 @@ import type { DependencyIdentifier } from './dependencyIdentifier';
 import type { Ctor } from './dependencyItem';
 import {
   getDependencyByIndex,
+  invalidateDependencies,
   RequiredDecoratorMisusedError,
   setDependency,
 } from './decorators';
@@ -65,6 +66,7 @@ export function retrieveQuantity<T>(quantity: Quantity, arr: T[]): T[] | T {
 function changeQuantity(target: Ctor<any>, index: number, quantity: Quantity) {
   const descriptor = getDependencyByIndex(target, index);
   descriptor.quantity = quantity;
+  invalidateDependencies(target);
 }
 
 function quantifyDecoratorFactoryProducer(quantity: Quantity) {

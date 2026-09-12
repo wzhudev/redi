@@ -1,5 +1,9 @@
 import type { DependencyIdentifier } from './dependencyIdentifier';
-import type { FactoryDep, FactoryDepModifier } from './dependencyItem';
+import type {
+  FactoryDep,
+  FactoryDependencyItem,
+  FactoryDepModifier,
+} from './dependencyItem';
 import { Self, SkipSelf } from './dependencyLookUp';
 import { Many, Optional } from './dependencyQuantity';
 import { LookUp, Quantity } from './types';
@@ -17,6 +21,31 @@ export interface DependencyDescriptor<T> {
  */
 export interface Dependencies {
   dependencies: DependencyDescriptor<any>[];
+}
+
+/**
+ * Cache of normalized factory dependencies keyed by the factory item object.
+ * Factory items are long-lived objects owned by a dependency registration, so
+ * re-normalizing their `deps` on every resolution is pure overhead.
+ */
+const factoryDependenciesCache = new WeakMap<
+  FactoryDependencyItem<any>,
+  DependencyDescriptor<any>[]
+>();
+
+/**
+ * @internal
+ */
+export function getFactoryDependencies(
+  item: FactoryDependencyItem<any>,
+): DependencyDescriptor<any>[] {
+  let cached = factoryDependenciesCache.get(item);
+  if (!cached) {
+    cached = normalizeFactoryDeps(item.deps);
+    factoryDependenciesCache.set(item, cached);
+  }
+
+  return cached;
 }
 
 export function normalizeFactoryDeps(

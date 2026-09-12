@@ -1,10 +1,11 @@
 import type { Ctor } from './dependencyItem';
-import { getDependencyByIndex } from './decorators';
+import { getDependencyByIndex, invalidateDependencies } from './decorators';
 import { LookUp } from './types';
 
 function changeLookup(target: Ctor<any>, index: number, lookUp: LookUp) {
   const descriptor = getDependencyByIndex(target, index);
   descriptor.lookUp = lookUp;
+  invalidateDependencies(target);
 }
 
 function lookupDecoratorFactoryProducer(lookUp: LookUp) {
