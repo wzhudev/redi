@@ -5,6 +5,7 @@ import type {
 } from './dependencyIdentifier';
 import type { Ctor } from './dependencyItem';
 import type { LookUp } from './types';
+import { normalizeForwardRef } from './dependencyForwardRef';
 import { IdentifierDecoratorSymbol } from './dependencyIdentifier';
 import { prettyPrintIdentifier } from './dependencyItem';
 import { RediError } from './error';
@@ -45,6 +46,8 @@ export class IdentifierUndefinedError extends RediError {
   }
 }
 
+const EMPTY_DEPENDENCIES: DependencyDescriptor<any>[] = [];
+
 /**
  * @internal
  */
@@ -52,7 +55,61 @@ export function getDependencies<T>(
   registerTarget: Ctor<T>,
 ): DependencyDescriptor<any>[] {
   const target = registerTarget as any;
-  return target[DEPENDENCIES] || [];
+  return target[DEPENDENCIES] || EMPTY_DEPENDENCIES;
+}
+
+/**
+ * A cache of classes that have already had their dependency descriptors
+ * sorted by `paramIndex` and had their `forwardRef`s unwrapped. Building this
+ * per resolution is pure overhead in the cold path, so the result is cached
+ * and invalidated whenever a class' descriptors are mutated.
+ */
+const sortedDependenciesCache = new WeakMap<
+  Ctor<any>,
+  DependencyDescriptor<any>[]
+>();
+
+/**
+ * @internal
+ */
+export function getSortedDependencies<T>(
+  registerTarget: Ctor<T>,
+): DependencyDescriptor<any>[] {
+  const cached = sortedDependenciesCache.get(registerTarget);
+  if (cached) {
+    return cached;
+  }
+
+  const dependencies = getDependencies(registerTarget);
+  if (dependencies.length === 0) {
+    sortedDependenciesCache.set(registerTarget, dependencies);
+    return dependencies;
+  }
+
+  const sorted = dependencies
+    .slice()
+    .sort((a, b) => a.paramIndex - b.paramIndex);
+
+  for (let index = 0; index < sorted.length; index += 1) {
+    const descriptor = sorted[index];
+    const identifier = normalizeForwardRef(descriptor.identifier);
+    if (identifier !== descriptor.identifier) {
+      sorted[index] = { ...descriptor, identifier };
+    }
+  }
+
+  sortedDependenciesCache.set(registerTarget, sorted);
+  return sorted;
+}
+
+/**
+ * Drop the cached, sorted descriptors of a class. Must be called whenever a
+ * class' dependency metadata is mutated.
+ *
+ * @internal
+ */
+export function invalidateDependencies<T>(registerTarget: Ctor<T>): void {
+  sortedDependenciesCache.delete(registerTarget);
 }
 
 /**
@@ -106,6 +163,8 @@ export function setDependency<T, U>(
     target[DEPENDENCIES] = [descriptor];
     target[TARGET] = target;
   }
+
+  invalidateDependencies(registerTarget);
 }
 
 const knownIdentifiers = new Set<string>();

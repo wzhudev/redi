@@ -15,7 +15,7 @@ import type {
   ValueDependencyItem,
 } from './dependencyItem';
 import type { IDisposable } from './dispose';
-import { getDependencies } from './decorators';
+import { getSortedDependencies } from './decorators';
 import {
   DependencyCollection,
   DependencyNotFoundError,
@@ -24,8 +24,7 @@ import {
   pushResolvingStack,
   ResolvedDependencyCollection,
 } from './dependencyCollection';
-import { normalizeFactoryDeps } from './dependencyDescriptor';
-import { normalizeForwardRef } from './dependencyForwardRef';
+import { getFactoryDependencies } from './dependencyDescriptor';
 import {
   AsyncHookSymbol,
   isAsyncDependencyItem,
@@ -770,12 +769,7 @@ export class Injector {
     const Ctor = item.useClass;
     this.markNewResolution(Ctor);
 
-    const declaredDependencies = getDependencies(Ctor)
-      .sort((a, b) => a.paramIndex - b.paramIndex)
-      .map((descriptor) => ({
-        ...descriptor,
-        identifier: normalizeForwardRef(descriptor.identifier),
-      }));
+    const declaredDependencies = getSortedDependencies(Ctor);
 
     const resolvedArgs: any[] = [];
 
@@ -805,7 +799,7 @@ export class Injector {
       }
     }
 
-    let args = [...extraParams];
+    let args = extraParams;
     const firstDependencyArgIndex =
       declaredDependencies.length > 0
         ? declaredDependencies[0].paramIndex
@@ -842,7 +836,7 @@ export class Injector {
   ): T {
     this.markNewResolution(id);
 
-    const declaredDependencies = normalizeFactoryDeps(item.deps);
+    const declaredDependencies = getFactoryDependencies(item);
 
     const resolvedArgs: any[] = [];
     for (const dep of declaredDependencies) {

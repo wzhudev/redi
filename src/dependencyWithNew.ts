@@ -1,9 +1,10 @@
 import type { Ctor } from './dependencyItem';
-import { getDependencyByIndex } from './decorators';
+import { getDependencyByIndex, invalidateDependencies } from './decorators';
 
 function changeToSelf(target: Ctor<any>, index: number, withNew: boolean) {
   const descriptor = getDependencyByIndex(target, index);
   descriptor.withNew = withNew;
+  invalidateDependencies(target);
 }
 
 function withNewDecoratorFactoryProducer(withNew: boolean) {
